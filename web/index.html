@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Earth Evidence Atlas</title>
+<meta name="description" content="Pick NASA Earth data and a place, see how fast it changes, and test whether the trend holds.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Ccircle cx=%278%27 cy=%278%27 r=%277%27 fill=%27%230b5cad%27/%3E%3C/svg%3E">
+<link rel="preload" href="/static/fonts/nasalization.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="stylesheet" href="/static/vendor/leaflet.css">
+<link rel="stylesheet" href="/static/vendor/maplibre-gl.css">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="on-globe">
+<header class="top">
+  <div class="brand">
+    <h1 id="logo"><span class="logo-text">Earth Evidence Atlas</span><span class="spark" aria-hidden="true"></span></h1>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="globe" role="tab"><svg class="ic"><use href="/static/icons.svg#i-globe"/></svg>Globe</button>
+    <button class="tab" data-tab="atlas" role="tab"><svg class="ic"><use href="/static/icons.svg#i-search"/></svg>Detective</button>
+    <button class="tab" data-tab="lab" role="tab"><svg class="ic"><use href="/static/icons.svg#i-flask"/></svg>False alarms</button>
+    <button class="tab" data-tab="about" role="tab"><svg class="ic"><use href="/static/icons.svg#i-book"/></svg>Methods</button>
+  </nav>
+</header>
+
+<main id="globe" class="panel globe-panel active">
+  <canvas id="gStars" aria-hidden="true"></canvas>
+  <div id="globeMap"></div>
+  <aside class="gpanel gleft" aria-label="Globe controls">
+    <label class="glabel" for="gVar">Dataset</label>
+    <div class="row">
+      <select id="gVar"></select>
+      <span id="gVarInfo" class="ibtn ghosticon" tabindex="0" aria-label="About this dataset"><svg class="ic"><use href="/static/icons.svg#i-info"/></svg></span>
+    </div>
+    <p id="gVarMeta" class="ginfo"></p>
+    <div class="row gtools">
+      <label class="switch" data-tip="Show data on the globe"><input type="checkbox" id="gShow" checked aria-label="Show data"><span></span></label>
+      <div id="gMode" class="seg" role="radiogroup" aria-label="Show on the globe">
+        <button class="ibtn on" data-mode="trend" aria-label="Trend" data-tip="Trend"><svg class="ic"><use href="/static/icons.svg#i-trend"/></svg></button>
+        <button class="ibtn" data-mode="year" aria-label="Year by year" data-tip="Year by year"><svg class="ic"><use href="/static/icons.svg#i-calendar"/></svg></button>
+      </div>
+      <button id="gFade" class="ibtn on" aria-pressed="true" aria-label="Fade non-significant cells" data-tip="Fade non-significant cells"><svg class="ic"><use href="/static/icons.svg#i-filter"/></svg></button>
+    </div>
+    <div id="gYearRow" class="row">
+      <button id="gPlay" class="ibtn" aria-label="Play years" data-tip="Play years"><svg class="ic"><use href="/static/icons.svg#i-play"/></svg></button>
+      <input type="range" id="gYear" min="2001" max="2024" value="2024" aria-label="Year">
+      <b id="gYearV" class="num-out">2024</b>
+    </div>
+    <label class="glabel" for="gImagery"><svg class="ic"><use href="/static/icons.svg#i-layers"/></svg>Imagery</label>
+    <div class="row">
+      <select id="gImagery"></select>
+      <select id="gImgMonth" aria-label="Month" hidden>
+        <option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option>
+        <option value="5">May</option><option value="6">Jun</option><option value="7" selected>Jul</option><option value="8">Aug</option>
+        <option value="9">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+      </select>
+    </div>
+    <p id="gImgNote" class="ginfo"></p>
+    <label class="row ginline gopacity" data-tip="How strongly the data covers the imagery"><svg class="ic muted"><use href="/static/icons.svg#i-opacity"/></svg>Data opacity<input type="range" id="gOpacity" min="0" max="1" step="0.05" value="0.8" aria-label="Data opacity"></label>
+    <span class="glabel" id="gPlacesLabel">Places</span>
+    <div id="gRegions" class="row gchips" role="group" aria-labelledby="gPlacesLabel">
+      <button id="gWorld" class="chip" data-r="world" data-tip="Zoom out to the whole globe" aria-pressed="false" disabled><svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-globe"/></svg>World</button>
+    </div>
+    <p id="gPlaceNote" class="ginfo" role="status" hidden></p>
+    <label id="gOthersRow" class="row ginline small" data-tip="Areas other visitors have analysed" hidden><span class="switch"><input type="checkbox" id="gShowOthers"><span></span></span>Areas from others</label>
+    <button id="gDraw" class="btn ghost gdraw"><svg class="ic"><use href="/static/icons.svg#i-select"/></svg>Select area</button>
+  </aside>
+  <aside id="gResult" class="gpanel gright" hidden aria-label="Selected area">
+    <button id="gClose" class="ibtn gclose" aria-label="Close" data-tip="Close"><svg class="ic"><use href="/static/icons.svg#i-close"/></svg></button>
+    <h3>Selected area</h3>
+    <p id="gSelInfo" class="ginfo"></p>
+    <div class="row">
+      <select id="gModel" aria-label="Dataset"></select>
+      <button id="gGo" class="btn">Analyse</button>
+    </div>
+    <div id="gProg" class="gprog" hidden><div class="gbar"><div id="gProgBar"></div></div><p id="gProgMsg" class="ginfo"></p></div>
+    <div id="gOut" class="result"></div>
+    <div id="gChart" class="chart small"></div>
+  </aside>
+  <div id="gLegend" class="gpanel glegend"></div>
+</main>
+
+<main id="atlas" class="panel">
+  <section class="controls" aria-label="Choose what to investigate">
+    <div class="step">
+      <span class="num">1</span>
+      <div class="field">
+        <label>Question</label>
+        <div id="varCards" class="cards"></div>
+      </div>
+    </div>
+    <div class="step">
+      <span class="num">2</span>
+      <div class="field">
+        <label for="region">Place</label>
+        <div class="row">
+          <select id="region" class="grow"></select>
+          <button id="hideArea" class="ibtn" hidden aria-label="Hide this area" data-tip="Hide this area from your lists"><svg class="ic"><use href="/static/icons.svg#i-close"/></svg></button>
+        </div>
+        <p id="regionStory" class="hint"></p>
+        <label class="row ginline small" data-tip="Areas other visitors have analysed"><span class="switch light"><input type="checkbox" id="showOthers"><span></span></span>Areas from others</label>
+        <p id="selInfo" class="hint"></p>
+      </div>
+    </div>
+    <div class="step">
+      <span class="num">3</span>
+      <div class="field">
+        <label>Period</label>
+        <div class="row">
+          <select id="start" aria-label="Start year"></select>
+          <span>–</span>
+          <select id="end" aria-label="End year"></select>
+        </div>
+        <div class="period-range" id="periodRange" role="group" aria-label="Analysis period timeline">
+          <div class="period-track" aria-hidden="true"></div>
+          <input type="range" id="startSlider" aria-label="Start of period">
+          <input type="range" id="endSlider" aria-label="End of period">
+        </div>
+        <div class="period-limits" aria-hidden="true">
+          <span id="firstYear"></span><span id="lastYear"></span>
+        </div>
+        <div class="row seasons" role="radiogroup" aria-label="Season">
+          <button data-m="1,2,3,4,5,6,7,8,9,10,11,12" class="chip on">Year</button>
+          <button data-m="12,1,2" class="chip">DJF</button>
+          <button data-m="3,4,5" class="chip">MAM</button>
+          <button data-m="6,7,8" class="chip">JJA</button>
+          <button data-m="9,10,11" class="chip">SON</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="answer" class="card answer" aria-live="polite">
+    <div class="answer-q"><span class="answer-tag">Answer</span><h2 id="answerQ"></h2></div>
+    <div id="answerBody"><p class="hint">Pick a question above.</p></div>
+  </section>
+
+  <section class="grid">
+    <div class="mapbox">
+      <div id="map"></div>
+      <div class="maptools">
+        <button id="sigOnly" class="ibtn" aria-pressed="false" aria-label="Fade non-significant cells" data-tip="Fade non-significant cells"><svg class="ic"><use href="/static/icons.svg#i-filter"/></svg></button>
+        <button id="showCoverage" class="ibtn" aria-pressed="false" aria-label="Show data coverage" data-tip="Show data coverage"><svg class="ic"><use href="/static/icons.svg#i-grid"/></svg></button>
+        <div id="legend" class="legend"></div>
+      </div>
+      <p id="mapSummary" class="hint"></p>
+    </div>
+
+    <div class="side">
+      <article id="card" class="card result">
+        <p class="hint">Loading…</p>
+      </article>
+      <div class="card">
+        <div class="cardhead">
+          <h3>Over time</h3>
+          <span class="hint">vs. the usual value for each month</span>
+        </div>
+        <div id="chart" class="chart"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid2">
+    <div class="card">
+      <div class="cardhead">
+        <h3>Does it hold?</h3>
+        <span class="hint">Each square is a start/end year. Click to use it.</span>
+      </div>
+      <div id="matrix" class="chart"></div>
+      <p id="matrixNote" class="hint"></p>
+    </div>
+    <div class="card">
+      <div class="cardhead"><h3>Evidence</h3></div>
+      <div class="row">
+        <a id="dlCsv" class="btn" href="#"><svg class="ic"><use href="/static/icons.svg#i-download"/></svg>CSV</a>
+        <a id="dlJson" class="btn" href="#"><svg class="ic"><use href="/static/icons.svg#i-download"/></svg>JSON</a>
+        <button id="copyLink" class="btn ghost"><svg class="ic"><use href="/static/icons.svg#i-link"/></svg><span>Copy link</span></button>
+      </div>
+      <h4>Typical year</h4>
+      <div id="season" class="chart small"></div>
+      <h4>Source</h4>
+      <div id="source" class="source"></div>
+    </div>
+  </section>
+</main>
+
+<main id="lab" class="panel">
+  <div class="banner">Simulation with synthetic data
+    <span class="sim-info" tabindex="0" aria-label="About the simulation" data-tiphtml="<b>How these data are generated</b><br>The lab generates random monthly values with no underlying trend to show how month-to-month persistence can produce false alarms."><svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-info"/></svg></span>
+  </div>
+  <section class="grid2">
+    <div class="card">
+      <h3>Can noise look like a trend?</h3>
+      <p>This series has <b>no trend</b>, but each month remembers the last one, like real weather. A naive test is often fooled; the corrected one is not.</p>
+      <div class="row wrap">
+        <label class="row ginline">Years <input type="range" id="simYears" min="5" max="40" value="10"><b id="simYearsV" class="num-out">10</b></label>
+        <label class="row ginline">Memory <input type="range" id="simPhi" min="0" max="0.9" step="0.05" value="0.7"><b id="simPhiV" class="num-out">0.7</b></label>
+        <button id="simNew" class="btn"><svg class="ic"><use href="/static/icons.svg#i-shuffle"/></svg>New series</button>
+      </div>
+      <div id="simChart" class="chart"></div>
+      <div id="simOut" class="sim"></div>
+    </div>
+    <div class="card">
+      <h3>How often are we fooled?</h3>
+      <p>200 trendless series. An honest test is fooled about 5% of the time.</p>
+      <button id="simMany" class="btn"><svg class="ic"><use href="/static/icons.svg#i-play"/></svg>Run 200</button>
+      <div id="simMulti" class="chart small"></div>
+      <p id="simMultiOut" class="hint"></p>
+    </div>
+  </section>
+</main>
+
+<main id="about" class="panel">
+  <section class="card prose" id="aboutBody"></section>
+</main>
+
+<footer class="foot">
+  NASA Space Apps Challenge 2026 · Data: NASA (MODIS, MERRA-2 via POWER, GISTEMP).
+  <br>AI disclosure: code written with Claude (Anthropic). Earth analyses use the cited NASA data.
+</footer>
+
+<div id="tip" class="tip" role="tooltip" hidden></div>
+
+<script src="/static/vendor/leaflet.js"></script>
+<script src="/static/vendor/plotly.min.js"></script>
+<script src="/static/vendor/maplibre-gl.js"></script>
+<script src="/static/vendor/topojson-client.min.js"></script>
+<script src="/static/app.js"></script>
+<script src="/static/globe.js"></script>
+</body>
+</html>

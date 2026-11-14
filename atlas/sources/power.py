@@ -1,0 +1,74 @@
+"""NASA POWER monthly regional adapter (no login required).
+
+AI-generated with Claude; team review pending.
+Docs: https://power.larc.nasa.gov/docs/services/api/temporal/monthly/
+"""
+from __future__ import annotations
+
+import math
+import time
+
+import httpx
+import numpy as np
+
+from ..config import VARIABLES, get_region
+from .common import month_index, write_cube
+
+API = "https://power.larc.nasa.gov/api/temporal/monthly/regional"
+PARAM = {"t2m": "T2M", "precip": "PRECTOTCORR", "soil_root": "GWETROOT"}
+MAX_SPAN = 10.0  # POWER regional requests are limited to a 10° box
+FILL = -999.0
+
+
+def _chunks(lo: float, hi: float):
+    n = max(1, math.ceil((hi - lo) / MAX_SPAN - 1e-9))
+    step = (hi - lo) / n
+    return [(lo + i * step, lo + (i + 1) * step) for i in range(n)]
+
+
+def _get(client: httpx.Client, params: dict) -> dict:
+    for attempt in range(5):
+        try:
+            r = client.get(API, params=params, timeout=300)
+            if r.status_code == 200:
+                return r.json()
+            err = r.text[:300]
+        except httpx.HTTPError as e:  # network hiccup
+            err = repr(e)
+        time.sleep(5 * (attempt + 1))
+    raise RuntimeError(f"POWER request failed: {err}")
+
+
+def fetch(var_id: str, region_id: str, log=print, progress=None):
+    v, reg = VARIABLES[var_id], get_region(region_id)
+    w, s, e, n = reg.bbox
+    y0, y1 = v.years
+    points: dict[tuple[float, float], dict] = {}
+    boxes = [(a, b) for a in _chunks(s, n) for b in _chunks(w, e)]
+    done = 0
+    with httpx.Client(headers={"User-Agent": "earth-evidence-atlas/0.1"}) as client:
+        for (la0, la1), (lo0, lo1) in boxes:
+            params = {"latitude-min": la0, "latitude-max": la1, "longitude-min": lo0,
+                      "longitude-max": lo1, "parameters": PARAM[var_id], "community": "AG",
+                      "start": y0, "end": y1, "format": "json"}
+            log(f"POWER {PARAM[var_id]} {region_id} box lat {la0:.1f}-{la1:.1f} lon {lo0:.1f}-{lo1:.1f}")
+            js = _get(client, params)
+            for f in js["features"]:
+                lon, lat = f["geometry"]["coordinates"][:2]
+                points[(round(lat, 4), round(lon, 4))] = f["properties"]["parameter"][PARAM[var_id]]
+            done += 1
+            if progress:
+                progress(done / len(boxes), f"POWER box {done}/{len(boxes)}")
+    lats = sorted({p[0] for p in points})
+    lons = sorted({p[1] for p in points})
+    times = month_index(y0, y1)
+    keys = [f"{t.year}{t.month:02d}" for t in times]
+    arr = np.full((len(times), len(lats), len(lons)), np.nan, "float32")
+    li = {x: i for i, x in enumerate(lats)}
+    lj = {x: j for j, x in enumerate(lons)}
+    for (la, lo), series in points.items():
+        vals = np.array([series.get(k, FILL) for k in keys], "float32")
+        vals[vals <= FILL + 1] = np.nan
+        arr[:, li[la], lj[lo]] = vals
+    return write_cube(var_id, region_id, arr, times, lats, lons,
+                      extra_attrs={"api": API, "parameter": PARAM[var_id], "grid": "0.5 x 0.625 deg (MERRA-2)"})

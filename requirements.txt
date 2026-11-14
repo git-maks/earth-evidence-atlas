@@ -1,0 +1,15 @@
+# Earth Evidence Atlas – Python 3.11 (versions used on 2026-11-14)
+fastapi==0.162.7
+uvicorn[standard]==0.54.0
+numpy==2.4.6
+scipy==1.17.1
+pandas==3.1.1
+xarray==2026.9.0
+netCDF4==1.7.5.1.post1
+h5netcdf==1.8.3
+rasterio==1.4.4
+pystac-client==0.9.1
+planetary-computer==1.0.0
+httpx==0.28.1
+pytest==9.2.0
+earthaccess==0.17.0   # for the planned Earthdata Login adapters (MOD13C2, MOD11C3, IMERG)
