@@ -1,0 +1,653 @@
+{
+  "app": {
+    "name": "Earth Evidence Atlas",
+    "description": "Pick NASA Earth data and a place, see how fast it changes, and test whether the trend holds."
+  },
+  "navigation": {
+    "globe": "Globe",
+    "detective": "Detective",
+    "lab": "False alarms",
+    "methods": "Methods"
+  },
+  "common": {
+    "loading": "Loading…",
+    "running": "Running…",
+    "close": "Close",
+    "cancel": "Cancel",
+    "analyse": "Analyse",
+    "selectArea": "Select area",
+    "selectedArea": "Selected area",
+    "hideArea": "Hide this area",
+    "hideAreaHint": "Hide this area from your lists",
+    "areasFromOthers": "Areas from others",
+    "areasFromOthersHint": "Areas other visitors have analysed",
+    "noData": "no data",
+    "noDataSuffix": " (no data)",
+    "significant": "significant",
+    "notSignificant": "not significant",
+    "link": "link",
+    "licence": "Licence: {license}",
+    "notAvailable": "n/a",
+    "pValue": "p = {value}",
+    "pValueBelow": "p < {value}",
+    "pValueUnavailable": "p n/a",
+    "perDecade": "/decade",
+    "seconds": "{seconds} s",
+    "progressMessage": "{message} · {seconds} s",
+    "dataPercent": "{percent}% data",
+    "trend": "Trend",
+    "month": "Month",
+    "year": "Year",
+    "startYear": "Start year",
+    "endYear": "End year",
+    "dataset": "Dataset",
+    "source": "Source",
+    "copyLink": "Copy link",
+    "copied": "Copied",
+    "csv": "CSV",
+    "json": "JSON"
+  },
+  "calendar": {
+    "allYear": "all year",
+    "selectedMonths": "selected months",
+    "season": "Season",
+    "seasons": {
+      "djf": {
+        "label": "DJF",
+        "description": "winter (Dec–Feb)"
+      },
+      "mam": {
+        "label": "MAM",
+        "description": "spring (Mar–May)"
+      },
+      "jja": {
+        "label": "JJA",
+        "description": "summer (Jun–Aug)"
+      },
+      "son": {
+        "label": "SON",
+        "description": "autumn (Sep–Nov)"
+      }
+    },
+    "months": {
+      "1": {
+        "full": "January",
+        "short": "Jan",
+        "narrow": "J"
+      },
+      "2": {
+        "full": "February",
+        "short": "Feb",
+        "narrow": "F"
+      },
+      "3": {
+        "full": "March",
+        "short": "Mar",
+        "narrow": "M"
+      },
+      "4": {
+        "full": "April",
+        "short": "Apr",
+        "narrow": "A"
+      },
+      "5": {
+        "full": "May",
+        "short": "May",
+        "narrow": "M"
+      },
+      "6": {
+        "full": "June",
+        "short": "Jun",
+        "narrow": "J"
+      },
+      "7": {
+        "full": "July",
+        "short": "Jul",
+        "narrow": "J"
+      },
+      "8": {
+        "full": "August",
+        "short": "Aug",
+        "narrow": "A"
+      },
+      "9": {
+        "full": "September",
+        "short": "Sep",
+        "narrow": "S"
+      },
+      "10": {
+        "full": "October",
+        "short": "Oct",
+        "narrow": "O"
+      },
+      "11": {
+        "full": "November",
+        "short": "Nov",
+        "narrow": "N"
+      },
+      "12": {
+        "full": "December",
+        "short": "Dec",
+        "narrow": "D"
+      }
+    },
+    "directions": {
+      "north": "N",
+      "south": "S",
+      "east": "E",
+      "west": "W"
+    }
+  },
+  "globe": {
+    "controlsLabel": "Globe controls",
+    "aboutDataset": "About this dataset",
+    "showDataHint": "Show data on the globe",
+    "showData": "Show data",
+    "displayModeLabel": "Show on the globe",
+    "yearByYear": "Year by year",
+    "fadeNonSignificant": "Fade non-significant cells",
+    "playYears": "Play years",
+    "pause": "Pause",
+    "imagery": "Imagery",
+    "imageryYear": "Imagery year",
+    "dataOpacity": "Data opacity",
+    "dataOpacityHint": "How strongly the data covers the imagery",
+    "places": "Places",
+    "world": "World",
+    "worldHint": "Zoom out to the whole globe",
+    "allPlaces": "All places",
+    "allPlacesHint": "Show data across the available places",
+    "myArea": "My area",
+    "area": "Area",
+    "dragToSelect": "Drag on the globe",
+    "noDatasetData": "No data yet for this dataset.",
+    "loadingCoverage": "Loading data coverage…",
+    "coverageError": "Could not load data coverage for this dataset.",
+    "loadingMonthlyLayer": "Loading global monthly layer…",
+    "latestMonthlyLayer": "Latest monthly layer",
+    "colourKey": "Colour key",
+    "gibsUnavailable": "NASA GIBS is unavailable.",
+    "gibsRegionalFallback": "NASA GIBS is unavailable. Showing regional data.",
+    "annualComparison": "{year} vs. average",
+    "trendPeriod": "Trend {start}–{end}",
+    "unitVsAverage": "{unit} vs average",
+    "tooFewData": "Too few data here",
+    "cellTrend": "{slope} {unit} · {pValue} · {significance}",
+    "cellAnomaly": "{year}: {value} {unit} vs average",
+    "selectionCoordinates": "{south}°…{north}° N, {west}°…{east}° E · {width}° × {height}°",
+    "tooLargeSuffix": " (too large)",
+    "downloadNotice": "New areas are downloaded from NASA on the fly.",
+    "downloading": "Downloading from NASA… ≈ {seconds} s",
+    "fullAnalysis": "Full analysis",
+    "imageryUnavailableBefore": "Not available before {year}.",
+    "imageryFollowsYear": "{date} · follows the year",
+    "imageryLayers": {
+      "bluemarble": "Blue Marble",
+      "truecolor": "True colour (day)",
+      "ndvi": "Vegetation (month)",
+      "lst": "Surface heat (month)",
+      "merra": "Air temperature (month)",
+      "imerg": "Rain (day)"
+    },
+    "attribution": "Imagery: {imagery} · borders: {borders} · stars: {stars}"
+  },
+  "detective": {
+    "controlsLabel": "Choose what to investigate",
+    "question": "Question",
+    "place": "Place",
+    "period": "Period",
+    "periodTimeline": "Analysis period timeline",
+    "periodStart": "Start of period",
+    "periodEnd": "End of period",
+    "yearSeason": "Year",
+    "answer": "Answer",
+    "pickQuestion": "Pick a question above.",
+    "areaCoordinates": "Area {coordinates} (W,S,E,N)",
+    "wholeRegionHint": "Whole region. Click a cell or use Select area on the map.",
+    "wholeRegion": "Whole region",
+    "resetSelectionHint": "Back to the whole region",
+    "selectAreaHint": "Drag a rectangle to analyse the selected part of the current region. Press Esc to cancel.",
+    "selectAreaTooltipHtml": "<b>Select area</b><br>Drag a rectangle to analyse the selected part of the current region. Press Esc to cancel.",
+    "dragToSelect": "Drag on the map to select an area",
+    "showCoverage": "Show data coverage",
+    "tooFewData": "Too few data ({percent}% of months)",
+    "cellTrend": "{slope} {unit} · {pValue} · {significance} · {percent}% data",
+    "coverageSummary": "Share of months with valid data.",
+    "mapSummary": "{positive} up, {negative} down · {significant} of {total} cells significant",
+    "fdrHint": "False discovery rate control, q = {q}. Tested one by one, {uncorrected} cells would look significant.",
+    "noAnswer": "No answer for this selection.",
+    "noAnswerWithNote": "No answer for this selection ({note}).",
+    "howWeKnow": "How we know",
+    "otherPeriodsAgree": "Other periods agree",
+    "confidenceRange": "95% range {low} to {high} · {start}–{end} · {season}",
+    "pValue": "p-value",
+    "pValueHint": "Corrected for month-to-month memory",
+    "mannKendallP": "Mann–Kendall p",
+    "mannKendallHint": "Rank-based test, robust to outliers",
+    "senSlope": "Sen slope",
+    "senSlopeHint": "Median of all pairwise slopes",
+    "effectiveN": "n / effective n",
+    "effectiveNHint": "Months used / effective independent months",
+    "validData": "Valid data",
+    "gridCellsHint": "{count} grid cells",
+    "gridCellsHintOne": "{count} grid cell",
+    "overTime": "Over time",
+    "anomalyHint": "vs. the usual value for each month",
+    "robustnessTitle": "Does it hold?",
+    "robustnessHint": "Each square is a start/end year. Click to use it.",
+    "evidence": "Evidence",
+    "typicalYear": "Typical year",
+    "basemapAttribution": "Basemap: {source} Blue Marble"
+  },
+  "charts": {
+    "month": "Month",
+    "runningMean": "12-month mean",
+    "trend": "Trend",
+    "confidenceRange": "95% range",
+    "anomalyAxis": "Anomaly ({unit})",
+    "minimumMatrixPeriod": "Pick at least 10 years to compare periods.",
+    "matrixNote": "Dot = significant. Periods of {minYears}+ years. Mixed colours = depends on the period.",
+    "matrixNoteWithStep": "Dot = significant. Periods of {minYears}+ years, every {step} years. Mixed colours = depends on the period."
+  },
+  "lab": {
+    "banner": "Simulation with synthetic data",
+    "aboutSimulation": "About the simulation",
+    "generationTitle": "How these data are generated",
+    "generationDescription": "The lab generates random monthly values with no underlying trend to show how month-to-month persistence can produce false alarms.",
+    "generationTooltipHtml": "<b>How these data are generated</b><br>The lab generates random monthly values with no underlying trend to show how month-to-month persistence can produce false alarms.",
+    "noiseTitle": "Can noise look like a trend?",
+    "noiseDescriptionHtml": "This series has <b>no trend</b>, but each month remembers the last one, like real weather. A naive test is often fooled; the corrected one is not.",
+    "years": "Years",
+    "memory": "Memory",
+    "newSeries": "New series",
+    "frequencyTitle": "How often are we fooled?",
+    "frequencyDescription": "200 trendless series. An honest test is fooled about 5% of the time.",
+    "runMany": "Run 200",
+    "simulatedSeries": "Simulated (no trend)",
+    "fittedLine": "Fitted line",
+    "simulationLabel": "SIMULATION",
+    "fooled": "fooled",
+    "notFooled": "not fooled",
+    "fittedSlope": "Fitted slope",
+    "trueValue": "true value: 0",
+    "naiveTest": "Naive test",
+    "correctedTest": "Corrected test",
+    "effectiveNHint": "Effective n ≈ {effective} of {total} months",
+    "honestTarget": "Honest target",
+    "fooledCount": "Fooled {count} of {total} times",
+    "honestTest": "An honest 5% test",
+    "fooledAxis": "% fooled",
+    "settingsSummary": "{years} years, memory {memory}."
+  },
+  "methods": {
+    "toolTitle": "What this tool does",
+    "toolDescriptionHtml": "Pick NASA Earth data and a place. See <b>what</b> changes, <b>where</b>, <b>how fast</b>, and whether it is <b>significant</b> – then check if it holds for other periods.",
+    "dataTitle": "Data",
+    "variableColumn": "Variable",
+    "productColumn": "Product",
+    "gridYearsColumn": "Grid / years",
+    "citationLicenceColumn": "Citation & licence",
+    "methodsTitle": "Methods",
+    "references": "References: Santer B.D. et al. (2000) J. Geophys. Res. 105, 7337–7356 · Hirsch R.M., Slack J.R., Smith R.A. (1982) Water Resour. Res. 18, 107–121 · Sen P.K. (1968) JASA 63, 1379–1389 · Benjamini Y., Hochberg Y. (1995) JRSS-B 57, 289–300 · Wilks D.S. (2016) BAMS 97, 2263–2273.",
+    "limitsTitle": "What the tool will not tell you",
+    "limitsDescription": "A trend is not a cause. The tool never says “the climate is not changing” or “humans caused this”: it reports what this series, place and period can and cannot show.",
+    "notes": {
+      "deseasonalisation": {
+        "label": "deseasonalisation",
+        "text": "Each calendar month's mean over the selected period is subtracted (anomalies)."
+      },
+      "trend": {
+        "label": "trend",
+        "text": "Ordinary least squares slope of the anomalies, reported per decade."
+      },
+      "uncertainty": {
+        "label": "uncertainty",
+        "text": "95% confidence interval with AR(1) effective sample size correction (Santer et al. 2000)."
+      },
+      "cross_check": {
+        "label": "cross check",
+        "text": "Seasonal Mann–Kendall test and seasonal Sen slope (Hirsch et al. 1982)."
+      },
+      "map_multiple_testing": {
+        "label": "map multiple testing",
+        "text": "Benjamini–Hochberg false discovery rate across map cells, q = 0.05 (Wilks 2016)."
+      },
+      "regional_mean": {
+        "label": "regional mean",
+        "text": "cos(latitude)-weighted mean of cell anomalies; months with < 50% area coverage are dropped."
+      },
+      "minimum_data": {
+        "label": "minimum data",
+        "text": "A trend is computed only if at least {percent}% of the selected months are valid."
+      }
+    }
+  },
+  "footer": {
+    "data": "NASA Space Apps Challenge 2026 · Data: NASA (MODIS, MERRA-2 via POWER, GISTEMP)."
+  },
+  "verdicts": {
+    "insufficient_data": {
+      "title": "Not enough data",
+      "text": "Too many gaps or too few years. Try a longer period or a bigger area."
+    },
+    "ci_includes_zero": {
+      "title": "No clear trend",
+      "text": "The range of likely slopes includes zero. That is not proof of no change."
+    },
+    "depends_on_period": {
+      "title": "Depends on the period",
+      "text": "Significant here, but many other start/end years disagree. Be careful."
+    },
+    "trend_detected": {
+      "title": "Trend detected",
+      "agree": "Significant at 5%, corrected for autocorrelation. Mann–Kendall agrees.",
+      "disagree": "Significant at 5%, corrected for autocorrelation. Mann–Kendall does not confirm it – check outliers."
+    }
+  },
+  "answers": {
+    "headlines": {
+      "insufficient_data": "Not enough data to say.",
+      "ci_includes_zero": "We can't tell yet.",
+      "depends_on_period": "It depends on the period.",
+      "comparisonAgree": "Yes – they agree.",
+      "comparisonPartial": "Partly.",
+      "comparisonDisagree": "No – they disagree."
+    },
+    "places": {
+      "selectedArea": "the selected area",
+      "world": "the whole world"
+    },
+    "when": {
+      "period": "{start}–{end}",
+      "periodAndSeason": "{start}–{end}, {season}"
+    },
+    "insufficientData": "Too many months are missing in {place} for {when} (valid data {percent}%). Try a longer period or a bigger area.",
+    "periodDependency": "But only {agreeing} of {total} other start/end periods point the same way, so the direction is not settled.",
+    "size": {
+      "total": "Over {years} years that adds up to about {totalChange} {unit}.",
+      "withSwing": "Over {years} years that adds up to about {totalChange} {unit}, {ratio}× the usual year-to-year swing (±{swing} {unit}).",
+      "withRelative": "Over {years} years that adds up to about {totalChange} {unit}, or {relative}% of the usual level.",
+      "withSwingAndRelative": "Over {years} years that adds up to about {totalChange} {unit}, {ratio}× the usual year-to-year swing (±{swing} {unit}), or {relative}% of the usual level."
+    },
+    "selectedCells": "Based on {count} grid cells in the selected area.",
+    "selectedCellsOne": "Based on {count} grid cell in the selected area.",
+    "mapDistribution": "Across the map, {upPercent}% of grid cells went up and {downPercent}% went down; {significantPercent}% show a significant trend after correcting for many tests.",
+    "fastestWarming": "Fastest warming: around {latitude}°{latitudeDirection}, {longitude}°{longitudeDirection}, {slope} {unit}.",
+    "confidence": {
+      "periods": "{agreeing} of {total} other start/end periods give the same direction",
+      "mkAgrees": "the rank-based Mann–Kendall test agrees",
+      "mkDisagrees": "the rank-based Mann–Kendall test does not confirm it",
+      "summary": "How sure: {details}."
+    },
+    "how": {
+      "trend": "Trend {slope} {unit}, 95% range {low} to {high}.",
+      "autocorrelation": "{pValue} after correcting for month-to-month memory (effective n ≈ {effective} of {total} months).",
+      "rankTest": "Mann–Kendall {pValue}; Sen slope {slope}.",
+      "anomalies": "Monthly values minus the usual value for each calendar month; {percent}% valid data."
+    },
+    "note": "Built from the numbers on this page by fixed rules; no AI text generation.",
+    "comparison": {
+      "result": "The morning satellite (Terra) shows {slope} {unit} for the same area and {start}–{end}. {conclusion}",
+      "otherDataset": "The other dataset shows {slope} {unit} for the same area and {start}–{end}. {conclusion}",
+      "agree": "They agree: same direction, both significant.",
+      "partial": "Same direction, but not both significant.",
+      "disagree": "They disagree on the direction – treat the result with care."
+    },
+    "variables": {
+      "ndvi": {
+        "headlineUp": "Greener.",
+        "headlineDown": "Browner.",
+        "up": "Vegetation in {place} got greener: {slope} {unit} ({when}).",
+        "down": "Vegetation in {place} got browner: {slope} {unit} ({when}).",
+        "uncertain": "Vegetation in {place} changed by {slope} {unit} ({when}), but the likely range ({low} to {high}) includes zero. That is not proof of no change, only that this period cannot show one."
+      },
+      "lst_day": {
+        "headlineUp": "Yes – hotter.",
+        "headlineDown": "No – cooler.",
+        "up": "The ground by day in {place} got hotter: {slope} {unit} ({when}).",
+        "down": "The ground by day in {place} got cooler: {slope} {unit} ({when}).",
+        "uncertain": "The ground by day in {place} changed by {slope} {unit} ({when}), but the likely range ({low} to {high}) includes zero. That is not proof of no change, only that this period cannot show one."
+      },
+      "lst_day_aqua": {
+        "headlineUp": "Hotter.",
+        "headlineDown": "Cooler.",
+        "up": "Afternoon ground temperature in {place} got hotter: {slope} {unit} ({when}).",
+        "down": "Afternoon ground temperature in {place} got cooler: {slope} {unit} ({when}).",
+        "uncertain": "Afternoon ground temperature in {place} changed by {slope} {unit} ({when}), but the likely range ({low} to {high}) includes zero. That is not proof of no change, only that this period cannot show one."
+      },
+      "t2m": {
+        "headlineUp": "Yes – warmer.",
+        "headlineDown": "No – cooler.",
+        "up": "The air in {place} got warmer: {slope} {unit} ({when}).",
+        "down": "The air in {place} got cooler: {slope} {unit} ({when}).",
+        "uncertain": "The air in {place} changed by {slope} {unit} ({when}), but the likely range ({low} to {high}) includes zero. That is not proof of no change, only that this period cannot show one."
+      },
+      "precip": {
+        "headlineUp": "More.",
+        "headlineDown": "Less.",
+        "up": "More rain and snow fell in {place}: {slope} {unit} ({when}).",
+        "down": "Less rain and snow fell in {place}: {slope} {unit} ({when}).",
+        "uncertain": "Rain and snow in {place} changed by {slope} {unit} ({when}), but the likely range ({low} to {high}) includes zero. That is not proof of no change, only that this period cannot show one."
+      },
+      "soil_root": {
+        "headlineUp": "Wetter.",
+        "headlineDown": "Drier.",
+        "up": "Root-zone soil in {place} got wetter: {slope} {unit} ({when}).",
+        "down": "Root-zone soil in {place} got drier: {slope} {unit} ({when}).",
+        "uncertain": "Root-zone soil in {place} changed by {slope} {unit} ({when}), but the likely range ({low} to {high}) includes zero. That is not proof of no change, only that this period cannot show one."
+      },
+      "gistemp": {
+        "headlineUp": "Warming.",
+        "headlineDown": "Cooling.",
+        "up": "Surface temperature in {place} got warmer: {slope} {unit} ({when}).",
+        "down": "Surface temperature in {place} got cooler: {slope} {unit} ({when}).",
+        "uncertain": "Surface temperature in {place} changed by {slope} {unit} ({when}), but the likely range ({low} to {high}) includes zero. That is not proof of no change, only that this period cannot show one."
+      },
+      "generic": {
+        "headlineUp": "Up.",
+        "headlineDown": "Down.",
+        "up": "{variable} in {place} increased: {slope} {unit} ({when}).",
+        "down": "{variable} in {place} decreased: {slope} {unit} ({when}).",
+        "uncertain": "{variable} in {place} changed by {slope} {unit} ({when}), but the likely range ({low} to {high}) includes zero. That is not proof of no change, only that this period cannot show one."
+      }
+    }
+  },
+  "errors": {
+    "analysisFailed": "Could not analyse: {message}",
+    "answerUnavailable": "Answer unavailable: {message}",
+    "mapUnavailable": "Map unavailable: {message}",
+    "unknownVariableOrRegion": "unknown variable or region",
+    "unknownVariable": "unknown variable",
+    "dataNotBuilt": "data for {variable}/{region} has not been built yet",
+    "monthsFormat": "months must be comma-separated integers 1-12",
+    "monthsRange": "months must be 1-12",
+    "minimumPeriod": "choose a period of at least 5 years",
+    "bboxFormat": "bbox must be west,south,east,north",
+    "bboxOrder": "bbox must have west<east and south<north",
+    "bboxArray": "bbox must be [west, south, east, north]",
+    "yearRange": "year must be within {start}-{end}",
+    "emptyBbox": "empty bbox (areas crossing the date line are not supported yet)",
+    "areaTooLarge": "area too large for {product}: max {maxSide}° per side and {maxArea} deg² (selected {width}° × {height}°)",
+    "unknownJob": "unknown job",
+    "powerRequestFailed": "POWER request failed: {message}"
+  },
+  "jobs": {
+    "ready": "ready",
+    "waiting": "waiting",
+    "covered": "covered by existing data: {region}",
+    "alreadyComputed": "already computed",
+    "downloading": "downloading {url}",
+    "modisYearDone": "MODIS {year} done",
+    "powerBox": "POWER box {done}/{total}",
+    "modisReadFailed": "read failed ({message})",
+    "modisTiles": "{variable} {region} {year}: {tiles} granule-tiles, {failures} failed",
+    "powerBoxBounds": "POWER {parameter} {region} box lat {south}-{north} lon {west}-{east}"
+  },
+  "mapControls": {
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "resetBearing": "Reset bearing to north",
+    "dragPan": "Map",
+    "attributionToggle": "Toggle attribution",
+    "attributionLabel": "Map attribution"
+  },
+  "catalog": {
+    "regions": {
+      "central_europe": {
+        "name": "Central Europe (Poland and neighbours)",
+        "story": "Do hot recent years make a trend?",
+        "shortName": "Central Europe"
+      },
+      "nw_india": {
+        "name": "North-west India (Punjab, Haryana, Rajasthan)",
+        "story": "Greener fields, but more water?",
+        "shortName": "NW India"
+      },
+      "amazon_arc": {
+        "name": "Southern Amazon 'arc of deforestation' (Rondônia, Mato Grosso)",
+        "story": "Forest loss changes heat and green.",
+        "shortName": "Amazon"
+      },
+      "world": {
+        "name": "Whole world",
+        "story": "Where did it warm fastest?",
+        "shortName": "World"
+      }
+    },
+    "customRegion": {
+      "name": "Custom area {south}°{southDirection}–{north}°{northDirection}, {west}°{westDirection}–{east}°{eastDirection}",
+      "story": "Area picked on the globe."
+    },
+    "variables": {
+      "ndvi": {
+        "name": "Vegetation greenness (NDVI)",
+        "question": "Greener or browner?",
+        "definition": "NDVI compares red and near-infrared light reflected by plants; higher values mean denser, healthier green vegetation (−0.2 water/bare … 0.9 dense forest).",
+        "units": "NDVI (unitless)",
+        "trend_units": "NDVI per decade",
+        "product": "MOD13A1 v061 (Terra, 16-day, 500 m)",
+        "provider": "NASA LP DAAC; COG mirror on Microsoft Planetary Computer",
+        "kind": "satellite observation",
+        "resolution": "500 m product, averaged to 0.1° grid (≈ 8–11 km)",
+        "license": "NASA EOSDIS data: no restrictions on reuse (NASA Earth Science Data Policy)",
+        "citation": "Didan, K. (2021). MODIS/Terra Vegetation Indices 16-Day L3 Global 500m SIN Grid V061. NASA EOSDIS LP DAAC. doi:10.5067/MODIS/MOD13A1.061",
+        "url": "https://doi.org/10.5067/MODIS/MOD13A1.061",
+        "caveats": [
+          "Monthly value = mean of 16-day composites starting in that month, read from 8× COG overviews (≈ 4 km) before averaging to 0.1°.",
+          "The per-pixel quality layer is not applied in this prototype; values outside the valid range are removed.",
+          "Terra's orbit drifted after 2022; the default period stops at 2024.",
+          "A change in NDVI can come from land-use change (clearing, irrigation), not only from climate."
+        ]
+      },
+      "lst_day": {
+        "name": "Daytime land surface temperature",
+        "question": "Hotter ground by day?",
+        "definition": "How hot the ground/canopy surface is around 10:30 local time, measured from space in clear-sky conditions – not the air temperature you feel.",
+        "units": "°C",
+        "trend_units": "°C per decade",
+        "product": "MOD11A2 v061 (Terra, 8-day, 1 km)",
+        "provider": "NASA LP DAAC; COG mirror on Microsoft Planetary Computer",
+        "kind": "satellite observation",
+        "resolution": "1 km product, averaged to 0.1° grid (≈ 8–11 km)",
+        "license": "NASA EOSDIS data: no restrictions on reuse (NASA Earth Science Data Policy)",
+        "citation": "Wan, Z., Hook, S., Hulley, G. (2021). MODIS/Terra Land Surface Temperature/Emissivity 8-Day L3 Global 1km SIN Grid V061. NASA EOSDIS LP DAAC. doi:10.5067/MODIS/MOD11A2.061",
+        "url": "https://doi.org/10.5067/MODIS/MOD11A2.061",
+        "caveats": [
+          "Only clear-sky observations exist: cloudy months contribute fewer values (see coverage).",
+          "Monthly value = mean of 8-day composites starting in that month, read from 4× COG overviews (≈ 4 km).",
+          "Terra's overpass time drifted after 2022; the default period stops at 2024."
+        ]
+      },
+      "lst_day_aqua": {
+        "name": "Afternoon land surface temperature (Aqua)",
+        "question": "Does a second satellite agree?",
+        "definition": "Same measurement as the Terra daytime surface temperature, but from the Aqua satellite passing around 13:30 local time; its orbit was kept stable until 2022, so it is a useful cross-check.",
+        "units": "°C",
+        "trend_units": "°C per decade",
+        "product": "MYD11A2 v061 (Aqua, 8-day, 1 km)",
+        "provider": "NASA LP DAAC; COG mirror on Microsoft Planetary Computer",
+        "kind": "satellite observation",
+        "resolution": "1 km product, averaged to 0.1° grid (≈ 8–11 km)",
+        "license": "NASA EOSDIS data: no restrictions on reuse (NASA Earth Science Data Policy)",
+        "citation": "Wan, Z., Hook, S., Hulley, G. (2021). MODIS/Aqua Land Surface Temperature/Emissivity 8-Day L3 Global 1km SIN Grid V061. NASA EOSDIS LP DAAC. doi:10.5067/MODIS/MYD11A2.061",
+        "url": "https://doi.org/10.5067/MODIS/MYD11A2.061",
+        "caveats": [
+          "Aqua starts in mid-2002; the cube starts in 2003 (first complete year).",
+          "Afternoon surface temperature differs from morning (Terra) values; compare trends, not levels.",
+          "Aqua's orbit also began drifting after 2022."
+        ]
+      },
+      "t2m": {
+        "name": "Air temperature at 2 m",
+        "question": "Warmer air?",
+        "definition": "Monthly mean air temperature two metres above the ground, from the NASA MERRA-2 reanalysis (a model that assimilates observations).",
+        "units": "°C",
+        "trend_units": "°C per decade",
+        "product": "NASA POWER monthly T2M (MERRA-2)",
+        "provider": "NASA Langley Research Center POWER Project",
+        "kind": "reanalysis model",
+        "resolution": "0.5° × 0.625° (≈ 50 km)",
+        "license": "NASA POWER data: free to use, acknowledgement requested",
+        "citation": "NASA Langley Research Center (LaRC) POWER Project, funded through the NASA Earth Science/Applied Science Program; MERRA-2 (Gelaro et al., 2017, J. Climate).",
+        "url": "https://power.larc.nasa.gov/",
+        "caveats": [
+          "Reanalysis = model constrained by observations; not a direct satellite measurement."
+        ]
+      },
+      "precip": {
+        "name": "Precipitation",
+        "question": "More or less rain?",
+        "definition": "Average amount of rain and snow reaching the ground per day, from MERRA-2 corrected with observed precipitation.",
+        "units": "mm/day",
+        "trend_units": "mm/day per decade",
+        "product": "NASA POWER monthly PRECTOTCORR (MERRA-2, bias-corrected)",
+        "provider": "NASA Langley Research Center POWER Project",
+        "kind": "reanalysis model",
+        "resolution": "0.5° × 0.625° (≈ 50 km)",
+        "license": "NASA POWER data: free to use, acknowledgement requested",
+        "citation": "NASA Langley Research Center (LaRC) POWER Project; MERRA-2 bias-corrected precipitation (Reichle et al., 2017).",
+        "url": "https://power.larc.nasa.gov/",
+        "caveats": [
+          "Precipitation varies a lot year to year: long periods are needed before a trend is detectable.",
+          "Planned upgrade: GPM IMERG monthly (needs NASA Earthdata Login)."
+        ]
+      },
+      "soil_root": {
+        "name": "Root-zone soil wetness",
+        "question": "Drier or wetter soil?",
+        "definition": "How full the soil water store is in the root zone (top ~1 m): 0 = completely dry, 1 = saturated. Modelled by MERRA-2.",
+        "units": "fraction (0–1)",
+        "trend_units": "fraction per decade",
+        "product": "NASA POWER monthly GWETROOT (MERRA-2)",
+        "provider": "NASA Langley Research Center POWER Project",
+        "kind": "reanalysis model",
+        "resolution": "0.5° × 0.625° (≈ 50 km)",
+        "license": "NASA POWER data: free to use, acknowledgement requested",
+        "citation": "NASA Langley Research Center (LaRC) POWER Project; MERRA-2 land surface (Reichle et al., 2017).",
+        "url": "https://power.larc.nasa.gov/",
+        "caveats": [
+          "Model estimate: irrigation and groundwater pumping are not represented.",
+          "Planned independent check: SMAP (2015–) or GRACE water storage (needs Earthdata Login)."
+        ]
+      },
+      "gistemp": {
+        "name": "Surface temperature anomaly (GISTEMP v4)",
+        "question": "Where is it warming fastest?",
+        "definition": "Difference between the monthly surface temperature and its 1951–1980 average, combining weather stations on land and ships/buoys at sea.",
+        "units": "°C (anomaly vs 1951–1980)",
+        "trend_units": "°C per decade",
+        "product": "GISTEMP v4, 1200 km smoothing, GHCNv4 + ERSSTv5",
+        "provider": "NASA Goddard Institute for Space Studies",
+        "kind": "station-based analysis",
+        "resolution": "2° × 2° (≈ 220 km)",
+        "license": "NASA GISS data: free to use with citation",
+        "citation": "GISTEMP Team (2026). GISS Surface Temperature Analysis (GISTEMP), version 4. NASA GISS. Lenssen et al. (2019, 2024).",
+        "url": "https://data.giss.nasa.gov/gistemp/",
+        "caveats": [
+          "Grid cells far from stations are filled from neighbours up to 1200 km away; polar and early-period values are less certain.",
+          "Small regions contain only a few 2° cells."
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,653 @@
+{
+  "app": {
+    "name": "Earth Evidence Atlas",
+    "description": "Elige datos de la NASA sobre la Tierra y un lugar, observa a qué velocidad cambia y comprueba si la tendencia se mantiene."
+  },
+  "navigation": {
+    "globe": "Globo",
+    "detective": "Detective",
+    "lab": "Falsas alarmas",
+    "methods": "Métodos"
+  },
+  "common": {
+    "loading": "Cargando…",
+    "running": "En curso…",
+    "close": "Cerrar",
+    "cancel": "Cancelar",
+    "analyse": "Analizar",
+    "selectArea": "Seleccionar área",
+    "selectedArea": "Área seleccionada",
+    "hideArea": "Ocultar esta área",
+    "hideAreaHint": "Ocultar esta área de tus listas",
+    "areasFromOthers": "Áreas de otros usuarios",
+    "areasFromOthersHint": "Áreas que han analizado otros visitantes",
+    "noData": "sin datos",
+    "noDataSuffix": " (sin datos)",
+    "significant": "significativa",
+    "notSignificant": "no significativa",
+    "link": "enlace",
+    "licence": "Licencia: {license}",
+    "notAvailable": "n/d",
+    "pValue": "p = {value}",
+    "pValueBelow": "p < {value}",
+    "pValueUnavailable": "p n/d",
+    "perDecade": "/década",
+    "seconds": "{seconds} s",
+    "progressMessage": "{message} · {seconds} s",
+    "dataPercent": "{percent}% de datos",
+    "trend": "Tendencia",
+    "month": "Mes",
+    "year": "Año",
+    "startYear": "Año inicial",
+    "endYear": "Año final",
+    "dataset": "Conjunto de datos",
+    "source": "Fuente",
+    "copyLink": "Copiar enlace",
+    "copied": "Copiado",
+    "csv": "CSV",
+    "json": "JSON"
+  },
+  "calendar": {
+    "allYear": "todo el año",
+    "selectedMonths": "meses seleccionados",
+    "season": "Estación",
+    "seasons": {
+      "djf": {
+        "label": "DEF",
+        "description": "invierno (dic–feb)"
+      },
+      "mam": {
+        "label": "MAM",
+        "description": "primavera (mar–may)"
+      },
+      "jja": {
+        "label": "JJA",
+        "description": "verano (jun–ago)"
+      },
+      "son": {
+        "label": "SON",
+        "description": "otoño (sep–nov)"
+      }
+    },
+    "months": {
+      "1": {
+        "full": "enero",
+        "short": "ene",
+        "narrow": "E"
+      },
+      "2": {
+        "full": "febrero",
+        "short": "feb",
+        "narrow": "F"
+      },
+      "3": {
+        "full": "marzo",
+        "short": "mar",
+        "narrow": "M"
+      },
+      "4": {
+        "full": "abril",
+        "short": "abr",
+        "narrow": "A"
+      },
+      "5": {
+        "full": "mayo",
+        "short": "may",
+        "narrow": "M"
+      },
+      "6": {
+        "full": "junio",
+        "short": "jun",
+        "narrow": "J"
+      },
+      "7": {
+        "full": "julio",
+        "short": "jul",
+        "narrow": "J"
+      },
+      "8": {
+        "full": "agosto",
+        "short": "ago",
+        "narrow": "A"
+      },
+      "9": {
+        "full": "septiembre",
+        "short": "sep",
+        "narrow": "S"
+      },
+      "10": {
+        "full": "octubre",
+        "short": "oct",
+        "narrow": "O"
+      },
+      "11": {
+        "full": "noviembre",
+        "short": "nov",
+        "narrow": "N"
+      },
+      "12": {
+        "full": "diciembre",
+        "short": "dic",
+        "narrow": "D"
+      }
+    },
+    "directions": {
+      "north": "N",
+      "south": "S",
+      "east": "E",
+      "west": "O"
+    }
+  },
+  "globe": {
+    "controlsLabel": "Controles del globo",
+    "aboutDataset": "Acerca de este conjunto de datos",
+    "showDataHint": "Mostrar datos en el globo",
+    "showData": "Mostrar datos",
+    "displayModeLabel": "Mostrar en el globo",
+    "yearByYear": "Año a año",
+    "fadeNonSignificant": "Atenuar las celdas sin una tendencia significativa",
+    "playYears": "Reproducir años",
+    "pause": "Pausar",
+    "imagery": "Imágenes",
+    "imageryYear": "Año de las imágenes",
+    "dataOpacity": "Opacidad de los datos",
+    "dataOpacityHint": "Cuánto cubren los datos las imágenes de fondo",
+    "places": "Lugares",
+    "world": "Mundo",
+    "worldHint": "Alejar para ver todo el globo",
+    "allPlaces": "Todos los lugares",
+    "allPlacesHint": "Mostrar datos de todos los lugares disponibles",
+    "myArea": "Mi área",
+    "area": "Área",
+    "dragToSelect": "Arrastra sobre el globo",
+    "noDatasetData": "Todavía no hay datos de este conjunto.",
+    "loadingCoverage": "Cargando la cobertura de datos…",
+    "coverageError": "No se pudo cargar la cobertura de este conjunto de datos.",
+    "loadingMonthlyLayer": "Cargando la capa mensual global…",
+    "latestMonthlyLayer": "Última capa mensual",
+    "colourKey": "Escala de colores",
+    "gibsUnavailable": "NASA GIBS no está disponible.",
+    "gibsRegionalFallback": "NASA GIBS no está disponible. Se muestran los datos regionales.",
+    "annualComparison": "{year} respecto a la media",
+    "trendPeriod": "Tendencia {start}–{end}",
+    "unitVsAverage": "{unit} respecto a la media",
+    "tooFewData": "Aquí hay muy pocos datos",
+    "cellTrend": "{slope} {unit} · {pValue} · {significance}",
+    "cellAnomaly": "{year}: {value} {unit} respecto a la media",
+    "selectionCoordinates": "{south}°…{north}° N, {west}°…{east}° E · {width}° × {height}°",
+    "tooLargeSuffix": " (demasiado grande)",
+    "downloadNotice": "Los datos de las nuevas áreas se descargan de la NASA al solicitarlos.",
+    "downloading": "Descargando de la NASA… ≈ {seconds} s",
+    "fullAnalysis": "Análisis completo",
+    "imageryUnavailableBefore": "No disponible antes de {year}.",
+    "imageryFollowsYear": "{date} · se ajusta al año seleccionado",
+    "imageryLayers": {
+      "bluemarble": "Blue Marble",
+      "truecolor": "Color real (día)",
+      "ndvi": "Vegetación (mes)",
+      "lst": "Temperatura de la superficie (mes)",
+      "merra": "Temperatura del aire (mes)",
+      "imerg": "Lluvia (día)"
+    },
+    "attribution": "Imágenes: {imagery} · fronteras: {borders} · estrellas: {stars}"
+  },
+  "detective": {
+    "controlsLabel": "Elige qué investigar",
+    "question": "Pregunta",
+    "place": "Lugar",
+    "period": "Período",
+    "periodTimeline": "Línea temporal del período de análisis",
+    "periodStart": "Inicio del período",
+    "periodEnd": "Fin del período",
+    "yearSeason": "Todo el año",
+    "answer": "Respuesta",
+    "pickQuestion": "Elige una de las preguntas de arriba.",
+    "areaCoordinates": "Área {coordinates} (O,S,E,N)",
+    "wholeRegionHint": "Toda la región. Haz clic en una celda o usa Seleccionar área en el mapa.",
+    "wholeRegion": "Toda la región",
+    "resetSelectionHint": "Volver a toda la región",
+    "selectAreaHint": "Arrastra para dibujar un rectángulo y analizar la parte seleccionada de la región actual. Pulsa Esc para cancelar.",
+    "selectAreaTooltipHtml": "<b>Seleccionar área</b><br>Arrastra para dibujar un rectángulo y analizar la parte seleccionada de la región actual. Pulsa Esc para cancelar.",
+    "dragToSelect": "Arrastra sobre el mapa para seleccionar un área",
+    "showCoverage": "Mostrar la cobertura de datos",
+    "tooFewData": "Muy pocos datos ({percent}% de los meses)",
+    "cellTrend": "{slope} {unit} · {pValue} · {significance} · {percent}% de datos",
+    "coverageSummary": "Proporción de meses con datos válidos.",
+    "mapSummary": "{positive} al alza, {negative} a la baja · {significant} de {total} celdas con una tendencia significativa",
+    "fdrHint": "Control de la tasa de falsos descubrimientos, q = {q}. Si se evaluaran por separado, {uncorrected} celdas parecerían significativas.",
+    "noAnswer": "No hay respuesta para esta selección.",
+    "noAnswerWithNote": "No hay respuesta para esta selección ({note}).",
+    "howWeKnow": "Cómo lo sabemos",
+    "otherPeriodsAgree": "Otros períodos coinciden",
+    "confidenceRange": "Intervalo del 95% de {low} a {high} · {start}–{end} · {season}",
+    "pValue": "Valor p",
+    "pValueHint": "Corregido por la persistencia de un mes a otro",
+    "mannKendallP": "Valor p de Mann–Kendall",
+    "mannKendallHint": "Prueba basada en rangos, resistente a valores atípicos",
+    "senSlope": "Pendiente de Sen",
+    "senSlopeHint": "Mediana de las pendientes entre todos los pares de puntos",
+    "effectiveN": "n / n efectivo",
+    "effectiveNHint": "Meses utilizados / número efectivo de meses independientes",
+    "validData": "Datos válidos",
+    "gridCellsHint": "{count} celdas de la cuadrícula",
+    "gridCellsHintOne": "{count} celda de la cuadrícula",
+    "overTime": "A lo largo del tiempo",
+    "anomalyHint": "respecto al valor habitual de cada mes",
+    "robustnessTitle": "¿Se mantiene?",
+    "robustnessHint": "Cada casilla representa un par de años inicial y final. Haz clic para seleccionarlo.",
+    "evidence": "Evidencia",
+    "typicalYear": "Año típico",
+    "basemapAttribution": "Mapa base: {source} Blue Marble"
+  },
+  "charts": {
+    "month": "Mes",
+    "runningMean": "Media de 12 meses",
+    "trend": "Tendencia",
+    "confidenceRange": "Intervalo del 95%",
+    "anomalyAxis": "Anomalía ({unit})",
+    "minimumMatrixPeriod": "Elige al menos 10 años para comparar períodos.",
+    "matrixNote": "Punto = tendencia significativa. Períodos de {minYears} años o más. Colores distintos = depende del período.",
+    "matrixNoteWithStep": "Punto = tendencia significativa. Períodos de {minYears} años o más, cada {step} años. Colores distintos = depende del período."
+  },
+  "lab": {
+    "banner": "Simulación con datos sintéticos",
+    "aboutSimulation": "Acerca de la simulación",
+    "generationTitle": "Cómo se generan estos datos",
+    "generationDescription": "El laboratorio genera valores mensuales aleatorios sin una tendencia subyacente para mostrar cómo la persistencia de un mes a otro puede producir falsas alarmas.",
+    "generationTooltipHtml": "<b>Cómo se generan estos datos</b><br>El laboratorio genera valores mensuales aleatorios sin una tendencia subyacente para mostrar cómo la persistencia de un mes a otro puede producir falsas alarmas.",
+    "noiseTitle": "¿Puede el ruido parecer una tendencia?",
+    "noiseDescriptionHtml": "Esta serie <b>no tiene tendencia</b>, pero cada mes conserva parte del anterior, como ocurre con el tiempo real. Una prueba sin corrección suele dar falsas alarmas; la corregida las evita.",
+    "years": "Años",
+    "memory": "Persistencia",
+    "newSeries": "Nueva serie",
+    "frequencyTitle": "¿Con qué frecuencia nos engaña el ruido?",
+    "frequencyDescription": "200 series sin tendencia. Una prueba bien calibrada da falsas alarmas aproximadamente el 5% de las veces.",
+    "runMany": "Simular 200 series",
+    "simulatedSeries": "Simulada (sin tendencia)",
+    "fittedLine": "Recta ajustada",
+    "simulationLabel": "SIMULACIÓN",
+    "fooled": "falsa alarma",
+    "notFooled": "sin falsa alarma",
+    "fittedSlope": "Pendiente ajustada",
+    "trueValue": "valor real: 0",
+    "naiveTest": "Prueba sin corrección",
+    "correctedTest": "Prueba corregida",
+    "effectiveNHint": "n efectivo ≈ {effective} de {total} meses",
+    "honestTarget": "Objetivo de una prueba bien calibrada",
+    "fooledCount": "Falsa alarma en {count} de {total} ocasiones",
+    "honestTest": "Una prueba bien calibrada al 5%",
+    "fooledAxis": "% de falsas alarmas",
+    "settingsSummary": "{years} años, persistencia {memory}."
+  },
+  "methods": {
+    "toolTitle": "Qué hace esta herramienta",
+    "toolDescriptionHtml": "Elige datos de la NASA sobre la Tierra y un lugar. Observa <b>qué</b> cambia, <b>dónde</b>, <b>a qué velocidad</b> y si el cambio es <b>significativo</b>; después comprueba si se mantiene en otros períodos.",
+    "dataTitle": "Datos",
+    "variableColumn": "Variable",
+    "productColumn": "Producto",
+    "gridYearsColumn": "Cuadrícula / años",
+    "citationLicenceColumn": "Referencia y licencia",
+    "methodsTitle": "Métodos",
+    "references": "Referencias: Santer B.D. et al. (2000) J. Geophys. Res. 105, 7337–7356 · Hirsch R.M., Slack J.R., Smith R.A. (1982) Water Resour. Res. 18, 107–121 · Sen P.K. (1968) JASA 63, 1379–1389 · Benjamini Y., Hochberg Y. (1995) JRSS-B 57, 289–300 · Wilks D.S. (2016) BAMS 97, 2263–2273.",
+    "limitsTitle": "Qué no te dirá la herramienta",
+    "limitsDescription": "Una tendencia no demuestra una causa. La herramienta nunca afirma que «el clima no está cambiando» ni que «los seres humanos causaron esto»: indica qué se puede y qué no se puede concluir a partir de esta serie, lugar y período.",
+    "notes": {
+      "deseasonalisation": {
+        "label": "desestacionalización",
+        "text": "Se resta la media de cada mes del calendario calculada para el período seleccionado (anomalías)."
+      },
+      "trend": {
+        "label": "tendencia",
+        "text": "Pendiente de las anomalías calculada por mínimos cuadrados ordinarios, expresada por década."
+      },
+      "uncertainty": {
+        "label": "incertidumbre",
+        "text": "Intervalo de confianza del 95% con corrección del tamaño muestral efectivo mediante AR(1) (Santer et al. 2000)."
+      },
+      "cross_check": {
+        "label": "comprobación independiente",
+        "text": "Prueba estacional de Mann–Kendall y pendiente estacional de Sen (Hirsch et al. 1982)."
+      },
+      "map_multiple_testing": {
+        "label": "pruebas múltiples en el mapa",
+        "text": "Control de la tasa de falsos descubrimientos de Benjamini–Hochberg entre las celdas del mapa, q = 0,05 (Wilks 2016)."
+      },
+      "regional_mean": {
+        "label": "media regional",
+        "text": "Media de las anomalías de las celdas ponderada por cos(latitud); se excluyen los meses con una cobertura inferior al 50% del área."
+      },
+      "minimum_data": {
+        "label": "datos mínimos",
+        "text": "Solo se calcula una tendencia si al menos el {percent}% de los meses seleccionados tienen datos válidos."
+      }
+    }
+  },
+  "footer": {
+    "data": "NASA Space Apps Challenge 2026 · Datos: NASA (MODIS, MERRA-2 a través de POWER, GISTEMP)."
+  },
+  "verdicts": {
+    "insufficient_data": {
+      "title": "Datos insuficientes",
+      "text": "Hay demasiados datos ausentes o muy pocos años. Prueba con un período más largo o un área más grande."
+    },
+    "ci_includes_zero": {
+      "title": "Sin tendencia clara",
+      "text": "El intervalo de pendientes plausibles incluye el cero. Eso no demuestra que no haya cambios."
+    },
+    "depends_on_period": {
+      "title": "Depende del período",
+      "text": "Aquí la tendencia es significativa, pero muchos otros pares de años inicial y final dan resultados distintos. Interpreta el resultado con cautela."
+    },
+    "trend_detected": {
+      "title": "Tendencia detectada",
+      "agree": "Significativa al 5%, con corrección por autocorrelación. La prueba de Mann–Kendall coincide.",
+      "disagree": "Significativa al 5%, con corrección por autocorrelación. La prueba de Mann–Kendall no la confirma; revisa los valores atípicos."
+    }
+  },
+  "answers": {
+    "headlines": {
+      "insufficient_data": "No hay datos suficientes para responder.",
+      "ci_includes_zero": "Aún no podemos determinarlo.",
+      "depends_on_period": "Depende del período.",
+      "comparisonAgree": "Sí, coinciden.",
+      "comparisonPartial": "En parte.",
+      "comparisonDisagree": "No, no coinciden."
+    },
+    "places": {
+      "selectedArea": "el área seleccionada",
+      "world": "todo el mundo"
+    },
+    "when": {
+      "period": "{start}–{end}",
+      "periodAndSeason": "{start}–{end}, {season}"
+    },
+    "insufficientData": "Faltan demasiados meses en {place} durante {when} ({percent}% de datos válidos). Prueba con un período más largo o un área más grande.",
+    "periodDependency": "Pero solo {agreeing} de los otros {total} períodos con distintos años inicial y final apuntan en la misma dirección, por lo que esta no está clara.",
+    "size": {
+      "total": "En {years} años, el cambio acumulado es de aproximadamente {totalChange} {unit}.",
+      "withSwing": "En {years} años, el cambio acumulado es de aproximadamente {totalChange} {unit}, {ratio} veces la variación interanual habitual (±{swing} {unit}).",
+      "withRelative": "En {years} años, el cambio acumulado es de aproximadamente {totalChange} {unit}, equivalente al {relative}% del nivel habitual.",
+      "withSwingAndRelative": "En {years} años, el cambio acumulado es de aproximadamente {totalChange} {unit}, {ratio} veces la variación interanual habitual (±{swing} {unit}), equivalente al {relative}% del nivel habitual."
+    },
+    "selectedCells": "Basado en {count} celdas de la cuadrícula del área seleccionada.",
+    "selectedCellsOne": "Basado en {count} celda de la cuadrícula del área seleccionada.",
+    "mapDistribution": "En el mapa, el {upPercent}% de las celdas mostró un aumento y el {downPercent}% una disminución; el {significantPercent}% presenta una tendencia significativa tras corregir por pruebas múltiples.",
+    "fastestWarming": "Calentamiento más rápido: cerca de {latitude}°{latitudeDirection}, {longitude}°{longitudeDirection}, {slope} {unit}.",
+    "confidence": {
+      "periods": "{agreeing} de los otros {total} períodos con distintos años inicial y final apuntan en la misma dirección",
+      "mkAgrees": "la prueba de Mann–Kendall basada en rangos coincide",
+      "mkDisagrees": "la prueba de Mann–Kendall basada en rangos no lo confirma",
+      "summary": "Grado de certeza: {details}."
+    },
+    "how": {
+      "trend": "Tendencia de {slope} {unit}, intervalo del 95% de {low} a {high}.",
+      "autocorrelation": "{pValue} tras corregir por la persistencia de un mes a otro (n efectivo ≈ {effective} de {total} meses).",
+      "rankTest": "Mann–Kendall: {pValue}; pendiente de Sen: {slope}.",
+      "anomalies": "Valores mensuales menos el valor habitual de cada mes del calendario; {percent}% de datos válidos."
+    },
+    "note": "Elaborado a partir de las cifras de esta página mediante reglas fijas; sin generación de texto por IA.",
+    "comparison": {
+      "result": "El satélite de la mañana (Terra) muestra {slope} {unit} para la misma área y el período {start}–{end}. {conclusion}",
+      "otherDataset": "El otro conjunto de datos muestra {slope} {unit} para la misma área y el período {start}–{end}. {conclusion}",
+      "agree": "Coinciden: misma dirección y ambas tendencias son significativas.",
+      "partial": "Misma dirección, pero no ambas tendencias son significativas.",
+      "disagree": "No coinciden en la dirección; interpreta el resultado con cautela."
+    },
+    "variables": {
+      "ndvi": {
+        "headlineUp": "Más verde.",
+        "headlineDown": "Más marrón.",
+        "up": "La vegetación de {place} se volvió más verde: {slope} {unit} ({when}).",
+        "down": "La vegetación de {place} se volvió más marrón: {slope} {unit} ({when}).",
+        "uncertain": "La vegetación de {place} cambió a un ritmo de {slope} {unit} ({when}), pero el intervalo plausible (de {low} a {high}) incluye el cero. Eso no demuestra que no haya cambios, solo que este período no permite detectarlos."
+      },
+      "lst_day": {
+        "headlineUp": "Sí, más caliente.",
+        "headlineDown": "No, más fresco.",
+        "up": "El suelo de {place} se calentó durante el día: {slope} {unit} ({when}).",
+        "down": "El suelo de {place} se enfrió durante el día: {slope} {unit} ({when}).",
+        "uncertain": "La temperatura diurna del suelo en {place} cambió a un ritmo de {slope} {unit} ({when}), pero el intervalo plausible (de {low} a {high}) incluye el cero. Eso no demuestra que no haya cambios, solo que este período no permite detectarlos."
+      },
+      "lst_day_aqua": {
+        "headlineUp": "Más caliente.",
+        "headlineDown": "Más fresco.",
+        "up": "La temperatura del suelo por la tarde aumentó en {place}: {slope} {unit} ({when}).",
+        "down": "La temperatura del suelo por la tarde disminuyó en {place}: {slope} {unit} ({when}).",
+        "uncertain": "La temperatura del suelo por la tarde en {place} cambió a un ritmo de {slope} {unit} ({when}), pero el intervalo plausible (de {low} a {high}) incluye el cero. Eso no demuestra que no haya cambios, solo que este período no permite detectarlos."
+      },
+      "t2m": {
+        "headlineUp": "Sí, más cálido.",
+        "headlineDown": "No, más fresco.",
+        "up": "El aire de {place} se calentó: {slope} {unit} ({when}).",
+        "down": "El aire de {place} se enfrió: {slope} {unit} ({when}).",
+        "uncertain": "La temperatura del aire en {place} cambió a un ritmo de {slope} {unit} ({when}), pero el intervalo plausible (de {low} a {high}) incluye el cero. Eso no demuestra que no haya cambios, solo que este período no permite detectarlos."
+      },
+      "precip": {
+        "headlineUp": "Más.",
+        "headlineDown": "Menos.",
+        "up": "Cayó más lluvia y nieve en {place}: {slope} {unit} ({when}).",
+        "down": "Cayó menos lluvia y nieve en {place}: {slope} {unit} ({when}).",
+        "uncertain": "La cantidad de lluvia y nieve en {place} cambió a un ritmo de {slope} {unit} ({when}), pero el intervalo plausible (de {low} a {high}) incluye el cero. Eso no demuestra que no haya cambios, solo que este período no permite detectarlos."
+      },
+      "soil_root": {
+        "headlineUp": "Más húmedo.",
+        "headlineDown": "Más seco.",
+        "up": "El suelo de la zona radicular en {place} se volvió más húmedo: {slope} {unit} ({when}).",
+        "down": "El suelo de la zona radicular en {place} se volvió más seco: {slope} {unit} ({when}).",
+        "uncertain": "La humedad del suelo en la zona radicular de {place} cambió a un ritmo de {slope} {unit} ({when}), pero el intervalo plausible (de {low} a {high}) incluye el cero. Eso no demuestra que no haya cambios, solo que este período no permite detectarlos."
+      },
+      "gistemp": {
+        "headlineUp": "Calentamiento.",
+        "headlineDown": "Enfriamiento.",
+        "up": "La temperatura de la superficie aumentó en {place}: {slope} {unit} ({when}).",
+        "down": "La temperatura de la superficie disminuyó en {place}: {slope} {unit} ({when}).",
+        "uncertain": "La temperatura de la superficie en {place} cambió a un ritmo de {slope} {unit} ({when}), pero el intervalo plausible (de {low} a {high}) incluye el cero. Eso no demuestra que no haya cambios, solo que este período no permite detectarlos."
+      },
+      "generic": {
+        "headlineUp": "Aumento.",
+        "headlineDown": "Disminución.",
+        "up": "{variable} aumentó en {place}: {slope} {unit} ({when}).",
+        "down": "{variable} disminuyó en {place}: {slope} {unit} ({when}).",
+        "uncertain": "El cambio de {variable} en {place} fue de {slope} {unit} ({when}), pero el intervalo plausible (de {low} a {high}) incluye el cero. Eso no demuestra que no haya cambios, solo que este período no permite detectarlos."
+      }
+    }
+  },
+  "errors": {
+    "analysisFailed": "No se pudo realizar el análisis: {message}",
+    "answerUnavailable": "Respuesta no disponible: {message}",
+    "mapUnavailable": "Mapa no disponible: {message}",
+    "unknownVariableOrRegion": "variable o región desconocida",
+    "unknownVariable": "variable desconocida",
+    "dataNotBuilt": "todavía no se han preparado los datos de {variable}/{region}",
+    "monthsFormat": "los meses deben ser números enteros del 1 al 12 separados por comas",
+    "monthsRange": "los meses deben estar entre 1 y 12",
+    "minimumPeriod": "elige un período de al menos 5 años",
+    "bboxFormat": "bbox debe tener el formato oeste,sur,este,norte",
+    "bboxOrder": "bbox debe cumplir oeste<este y sur<norte",
+    "bboxArray": "bbox debe ser [oeste, sur, este, norte]",
+    "yearRange": "el año debe estar entre {start} y {end}",
+    "emptyBbox": "área de delimitación vacía (todavía no se admiten áreas que crucen la línea internacional de cambio de fecha)",
+    "areaTooLarge": "área demasiado grande para {product}: máximo {maxSide}° por lado y {maxArea} grados² (selección: {width}° × {height}°)",
+    "unknownJob": "tarea desconocida",
+    "powerRequestFailed": "Falló la solicitud a POWER: {message}"
+  },
+  "jobs": {
+    "ready": "listo",
+    "waiting": "en espera",
+    "covered": "cubierto por datos existentes: {region}",
+    "alreadyComputed": "ya calculado",
+    "downloading": "descargando {url}",
+    "modisYearDone": "MODIS {year} completado",
+    "powerBox": "Área de POWER {done}/{total}",
+    "modisReadFailed": "falló la lectura ({message})",
+    "modisTiles": "{variable} {region} {year}: {tiles} teselas de gránulos, {failures} fallidas",
+    "powerBoxBounds": "POWER {parameter} {region}: área lat {south}-{north}, lon {west}-{east}"
+  },
+  "mapControls": {
+    "zoomIn": "Acercar",
+    "zoomOut": "Alejar",
+    "resetBearing": "Orientar al norte",
+    "dragPan": "Mapa",
+    "attributionToggle": "Mostrar u ocultar atribuciones",
+    "attributionLabel": "Atribuciones del mapa"
+  },
+  "catalog": {
+    "regions": {
+      "central_europe": {
+        "name": "Europa Central (Polonia y países vecinos)",
+        "story": "¿Los años cálidos recientes marcan una tendencia?",
+        "shortName": "Europa Central"
+      },
+      "nw_india": {
+        "name": "Noroeste de la India (Punyab, Haryana, Rajastán)",
+        "story": "Campos más verdes, pero ¿más agua?",
+        "shortName": "NO de la India"
+      },
+      "amazon_arc": {
+        "name": "«Arco de deforestación» del sur de la Amazonía (Rondônia, Mato Grosso)",
+        "story": "La pérdida de bosque cambia la temperatura y la vegetación.",
+        "shortName": "Amazonía"
+      },
+      "world": {
+        "name": "Todo el mundo",
+        "story": "¿Dónde se calentó más rápido?",
+        "shortName": "Mundo"
+      }
+    },
+    "customRegion": {
+      "name": "Área personalizada {south}°{southDirection}–{north}°{northDirection}, {west}°{westDirection}–{east}°{eastDirection}",
+      "story": "Área seleccionada en el globo."
+    },
+    "variables": {
+      "ndvi": {
+        "name": "Verdor de la vegetación (NDVI)",
+        "question": "¿Más verde o más marrón?",
+        "definition": "El NDVI compara la luz roja y la del infrarrojo cercano reflejadas por las plantas; los valores más altos indican una vegetación verde más densa y sana (de −0,2 para agua o suelo desnudo a 0,9 para bosque denso).",
+        "units": "NDVI (sin unidades)",
+        "trend_units": "NDVI por década",
+        "product": "MOD13A1 v061 (Terra, 16 días, 500 m)",
+        "provider": "NASA LP DAAC; réplica COG en Microsoft Planetary Computer",
+        "kind": "observación por satélite",
+        "resolution": "Producto de 500 m, promediado en una cuadrícula de 0,1° (≈ 8–11 km)",
+        "license": "Datos de NASA EOSDIS: reutilización sin restricciones (Política de Datos de Ciencias de la Tierra de la NASA)",
+        "citation": "Didan, K. (2021). MODIS/Terra Vegetation Indices 16-Day L3 Global 500m SIN Grid V061. NASA EOSDIS LP DAAC. doi:10.5067/MODIS/MOD13A1.061",
+        "url": "https://doi.org/10.5067/MODIS/MOD13A1.061",
+        "caveats": [
+          "Valor mensual = media de los compuestos de 16 días que comienzan en ese mes, leídos de las versiones de resolución reducida 8× de los COG (≈ 4 km) antes de promediarlos a 0,1°.",
+          "Este prototipo no aplica la capa de calidad por píxel; se eliminan los valores fuera del intervalo válido.",
+          "La órbita de Terra comenzó a derivar después de 2022; el período predeterminado termina en 2024.",
+          "Un cambio en el NDVI puede deberse a cambios en el uso del suelo (tala, riego), no solo al clima."
+        ]
+      },
+      "lst_day": {
+        "name": "Temperatura diurna de la superficie terrestre",
+        "question": "¿Suelo más caliente durante el día?",
+        "definition": "Temperatura de la superficie del suelo o del dosel vegetal alrededor de las 10:30, hora local, medida desde el espacio con cielo despejado; no es la temperatura del aire que sientes.",
+        "units": "°C",
+        "trend_units": "°C por década",
+        "product": "MOD11A2 v061 (Terra, 8 días, 1 km)",
+        "provider": "NASA LP DAAC; réplica COG en Microsoft Planetary Computer",
+        "kind": "observación por satélite",
+        "resolution": "Producto de 1 km, promediado en una cuadrícula de 0,1° (≈ 8–11 km)",
+        "license": "Datos de NASA EOSDIS: reutilización sin restricciones (Política de Datos de Ciencias de la Tierra de la NASA)",
+        "citation": "Wan, Z., Hook, S., Hulley, G. (2021). MODIS/Terra Land Surface Temperature/Emissivity 8-Day L3 Global 1km SIN Grid V061. NASA EOSDIS LP DAAC. doi:10.5067/MODIS/MOD11A2.061",
+        "url": "https://doi.org/10.5067/MODIS/MOD11A2.061",
+        "caveats": [
+          "Solo hay observaciones con cielo despejado: los meses nublados aportan menos valores (consulta la cobertura).",
+          "Valor mensual = media de los compuestos de 8 días que comienzan en ese mes, leídos de las versiones de resolución reducida 4× de los COG (≈ 4 km).",
+          "La hora de paso de Terra comenzó a desplazarse después de 2022; el período predeterminado termina en 2024."
+        ]
+      },
+      "lst_day_aqua": {
+        "name": "Temperatura de la superficie terrestre por la tarde (Aqua)",
+        "question": "¿Coincide un segundo satélite?",
+        "definition": "La misma medición que la temperatura diurna de la superficie de Terra, pero desde el satélite Aqua, que pasa alrededor de las 13:30, hora local; su órbita se mantuvo estable hasta 2022, por lo que sirve como comprobación independiente.",
+        "units": "°C",
+        "trend_units": "°C por década",
+        "product": "MYD11A2 v061 (Aqua, 8 días, 1 km)",
+        "provider": "NASA LP DAAC; réplica COG en Microsoft Planetary Computer",
+        "kind": "observación por satélite",
+        "resolution": "Producto de 1 km, promediado en una cuadrícula de 0,1° (≈ 8–11 km)",
+        "license": "Datos de NASA EOSDIS: reutilización sin restricciones (Política de Datos de Ciencias de la Tierra de la NASA)",
+        "citation": "Wan, Z., Hook, S., Hulley, G. (2021). MODIS/Aqua Land Surface Temperature/Emissivity 8-Day L3 Global 1km SIN Grid V061. NASA EOSDIS LP DAAC. doi:10.5067/MODIS/MYD11A2.061",
+        "url": "https://doi.org/10.5067/MODIS/MYD11A2.061",
+        "caveats": [
+          "Aqua comienza a mediados de 2002; el cubo de datos empieza en 2003 (primer año completo).",
+          "La temperatura de la superficie por la tarde difiere de los valores de la mañana (Terra); compara las tendencias, no los niveles.",
+          "La órbita de Aqua también comenzó a derivar después de 2022."
+        ]
+      },
+      "t2m": {
+        "name": "Temperatura del aire a 2 m",
+        "question": "¿Aire más cálido?",
+        "definition": "Temperatura media mensual del aire a dos metros del suelo, procedente del reanálisis MERRA-2 de la NASA (un modelo que asimila observaciones).",
+        "units": "°C",
+        "trend_units": "°C por década",
+        "product": "NASA POWER T2M mensual (MERRA-2)",
+        "provider": "NASA Langley Research Center POWER Project",
+        "kind": "modelo de reanálisis",
+        "resolution": "0,5° × 0,625° (≈ 50 km)",
+        "license": "Datos de NASA POWER: uso libre; se solicita reconocimiento de la fuente",
+        "citation": "NASA Langley Research Center (LaRC) POWER Project, funded through the NASA Earth Science/Applied Science Program; MERRA-2 (Gelaro et al., 2017, J. Climate).",
+        "url": "https://power.larc.nasa.gov/",
+        "caveats": [
+          "Reanálisis = modelo ajustado mediante observaciones; no es una medición directa por satélite."
+        ]
+      },
+      "precip": {
+        "name": "Precipitación",
+        "question": "¿Más o menos lluvia?",
+        "definition": "Cantidad media diaria de lluvia y nieve que llega al suelo, procedente de MERRA-2 y corregida con observaciones de precipitación.",
+        "units": "mm/día",
+        "trend_units": "mm/día por década",
+        "product": "NASA POWER PRECTOTCORR mensual (MERRA-2, con corrección de sesgo)",
+        "provider": "NASA Langley Research Center POWER Project",
+        "kind": "modelo de reanálisis",
+        "resolution": "0,5° × 0,625° (≈ 50 km)",
+        "license": "Datos de NASA POWER: uso libre; se solicita reconocimiento de la fuente",
+        "citation": "NASA Langley Research Center (LaRC) POWER Project; MERRA-2 bias-corrected precipitation (Reichle et al., 2017).",
+        "url": "https://power.larc.nasa.gov/",
+        "caveats": [
+          "La precipitación varía mucho de un año a otro: se necesitan períodos largos para detectar una tendencia.",
+          "Mejora prevista: GPM IMERG mensual (requiere NASA Earthdata Login)."
+        ]
+      },
+      "soil_root": {
+        "name": "Humedad del suelo en la zona radicular",
+        "question": "¿Suelo más seco o más húmedo?",
+        "definition": "Grado de llenado de la reserva de agua del suelo en la zona de las raíces (aproximadamente el primer metro): 0 = completamente seco, 1 = saturado. Calculado con el modelo MERRA-2.",
+        "units": "fracción (0–1)",
+        "trend_units": "fracción por década",
+        "product": "NASA POWER GWETROOT mensual (MERRA-2)",
+        "provider": "NASA Langley Research Center POWER Project",
+        "kind": "modelo de reanálisis",
+        "resolution": "0,5° × 0,625° (≈ 50 km)",
+        "license": "Datos de NASA POWER: uso libre; se solicita reconocimiento de la fuente",
+        "citation": "NASA Langley Research Center (LaRC) POWER Project; MERRA-2 land surface (Reichle et al., 2017).",
+        "url": "https://power.larc.nasa.gov/",
+        "caveats": [
+          "Estimación de un modelo: no representa el riego ni la extracción de aguas subterráneas.",
+          "Comprobación independiente prevista: SMAP (desde 2015) o almacenamiento de agua de GRACE (requiere Earthdata Login)."
+        ]
+      },
+      "gistemp": {
+        "name": "Anomalía de la temperatura de la superficie (GISTEMP v4)",
+        "question": "¿Dónde se está calentando más rápido?",
+        "definition": "Diferencia entre la temperatura mensual de la superficie y su media de 1951–1980, combinando estaciones meteorológicas en tierra y barcos y boyas en el mar.",
+        "units": "°C (anomalía respecto a 1951–1980)",
+        "trend_units": "°C por década",
+        "product": "GISTEMP v4, suavizado de 1200 km, GHCNv4 + ERSSTv5",
+        "provider": "NASA Goddard Institute for Space Studies",
+        "kind": "análisis basado en estaciones",
+        "resolution": "2° × 2° (≈ 220 km)",
+        "license": "Datos de NASA GISS: uso libre con cita de la fuente",
+        "citation": "GISTEMP Team (2026). GISS Surface Temperature Analysis (GISTEMP), version 4. NASA GISS. Lenssen et al. (2019, 2024).",
+        "url": "https://data.giss.nasa.gov/gistemp/",
+        "caveats": [
+          "Las celdas alejadas de las estaciones se rellenan con valores de celdas vecinas situadas hasta a 1200 km; los valores polares y de los primeros años del período son menos fiables.",
+          "Las regiones pequeñas solo contienen unas pocas celdas de 2°."
+        ]
+      }
+    }
+  }
+}
