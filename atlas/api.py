@@ -19,7 +19,7 @@ from functools import lru_cache
 import numpy as np
 import pandas as pd
 import xarray as xr
-from fastapi import Body, FastAPI, HTTPException, Query
+from fastapi import Body, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -30,7 +30,13 @@ from .config import (REGIONS, ROOT, VARIABLES, add_custom_region, cube_path, cus
                      prune_custom_regions, touch_custom_region)
 from .sources.common import IO_LOCK
 
-app = FastAPI(title="Earth Evidence Atlas API", version="0.1.0")
+# Public mode for the internet-facing demo (ATLAS_PUBLIC=1): no API docs pages, limits on compute jobs.
+PUBLIC = os.environ.get("ATLAS_PUBLIC") == "1"
+PUBLIC_LIMITS = dict(max_active_jobs=3, per_visitor_active=1, per_visitor_per_hour=8, max_sim_runs=1000)
+
+app = FastAPI(title="Earth Evidence Atlas API", version="0.1.0",
+              docs_url=None if PUBLIC else "/docs", redoc_url=None if PUBLIC else "/redoc",
+              openapi_url=None if PUBLIC else "/openapi.json")
 
 # Optional clean-up of user-made areas for a public demo, e.g. ATLAS_PRUNE_DAYS=7 ATLAS_MAX_CUSTOM=60.
 # Off by default so a local copy never deletes anything.
@@ -320,6 +326,8 @@ def simulate(seed: int = 7, years: int = Query(12, ge=5, le=60), phi: float = Qu
 def simulate_many(runs: int = Query(200, ge=10, le=5000), years: int = Query(12, ge=5, le=60),
                   phi: float = Query(0.6, ge=0, le=0.95), seed: int = 1000):
     """SIMULATION – how often trendless AR(1) series are called significant (naive vs corrected)."""
+    if PUBLIC and runs > PUBLIC_LIMITS["max_sim_runs"]:
+        raise HTTPException(400, f"at most {PUBLIC_LIMITS['max_sim_runs']} runs on the public demo")
     from scipy import stats as st
     rng = np.random.default_rng(seed)
     n = years * 12
@@ -410,8 +418,25 @@ def _run_job(jid):
         job.update(status="error", message=f"{type(e).__name__}: {e}"[:300], finished=time.time())
 
 
+def _visitor(request: Request) -> str:
+    """Visitor address; behind Tailscale Funnel / a proxy the real one is in X-Forwarded-For."""
+    fwd = request.headers.get("x-forwarded-for", "")
+    return fwd.split(",")[0].strip() or (request.client.host if request.client else "?")
+
+
+def _check_public_quota(who: str) -> None:
+    now = time.time()
+    active = [j for j in JOBS.values() if j["status"] in ("queued", "running")]
+    if len(active) >= PUBLIC_LIMITS["max_active_jobs"]:
+        raise HTTPException(429, "The demo server is busy computing other areas. Please try again in a minute.")
+    if sum(j.get("who") == who for j in active) >= PUBLIC_LIMITS["per_visitor_active"]:
+        raise HTTPException(429, "Your previous area is still being computed. Please wait for it to finish.")
+    if sum(j.get("who") == who and now - j["started"] < 3600 for j in JOBS.values()) >= PUBLIC_LIMITS["per_visitor_per_hour"]:
+        raise HTTPException(429, "Hourly limit of new areas on the public demo reached. Built areas still work.")
+
+
 @app.post("/api/compute")
-def compute(var: str = Body(...), bbox: list[float] = Body(...)):
+def compute(request: Request, var: str = Body(...), bbox: list[float] = Body(...)):
     """Make data for (var, bbox) available: reuse a built cube that covers it, or start a job."""
     if var not in VARIABLES:
         raise HTTPException(404, "unknown variable")
@@ -443,9 +468,12 @@ def compute(var: str = Body(...), bbox: list[float] = Body(...)):
     for jid, j in JOBS.items():
         if j["var"] == var and j["region"] == reg.id and j["status"] in ("queued", "running"):
             return dict(status="queued", job=jid, region=reg.id, bbox=box)
+    who = _visitor(request)
+    if PUBLIC:
+        _check_public_quota(who)
     jid = uuid.uuid4().hex[:12]
     JOBS[jid] = dict(id=jid, var=var, region=reg.id, bbox=box, status="queued", progress=0.0,
-                     message="waiting", started=time.time(),
+                     message="waiting", started=time.time(), who=who,
                      estimate_s=round(5 + area * lim["seconds_per_deg2"] * (v.years[1] - v.years[0] + 1) / 24))
     _EXEC.submit(_run_job, jid)
     return dict(status="queued", job=jid, region=reg.id, bbox=box, estimate_s=JOBS[jid]["estimate_s"])
@@ -456,6 +484,7 @@ def job_status(jid: str):
     if jid not in JOBS:
         raise HTTPException(404, "unknown job")
     j = dict(JOBS[jid])
+    j.pop("who", None)  # never show visitor addresses
     j["elapsed_s"] = round(time.time() - j["started"], 1)
     return j
 
