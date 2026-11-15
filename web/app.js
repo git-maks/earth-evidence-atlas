@@ -348,6 +348,7 @@ function wireControls() {
       if (view === "resilience" && previous !== view) Resilience.enter();
       if (previous === "resilience" && view !== previous) writeHash();
       window.dispatchEvent(new Event("resize"));
+      window.dispatchEvent(new CustomEvent("atlas:tab", { detail: view })); // guided tour hook
       requestAnimationFrame(() => $$(`#${view} .chart`).forEach((el) => { if (el.data) Plotly.Plots.resize(el); }));
     };
     tab.onkeydown = (event) => {
@@ -609,6 +610,7 @@ let seq = 0, lastAnalysis = null, lastAnalysisQuery = "", lastMapQuery = "";
 function renderAnalysis(a) {
   renderAnswer(a); renderCard(a); renderChart(a); renderMatrix(a); renderSeason(a); renderSource(a);
   $("#detectiveResilience").hidden = !Resilience.canOpen(a);
+  window.dispatchEvent(new CustomEvent("atlas:analysis", { detail: a })); // guided tour hook
 }
 async function refreshAnalysis() {
   const my = ++seq;

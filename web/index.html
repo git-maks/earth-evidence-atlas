@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="/static/vendor/maplibre-gl.css">
 <link rel="stylesheet" href="/static/style.css">
 <link rel="stylesheet" href="/static/resilience.css">
+<link rel="stylesheet" href="/static/tour.css">
 </head>
 <body class="on-globe">
 <header class="top">
@@ -26,6 +27,9 @@
   </div>
   <button id="languageToggle" class="language-toggle" type="button" aria-expanded="false" aria-controls="languagePanel" data-i18n-attrs="aria-label:localisation.language;data-tip:localisation.language">
     <svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-language"/></svg>
+  </button>
+  <button id="tourLaunch" class="tour-launch" type="button" data-i18n-attrs="aria-label:tour.launchHint;data-tip:tour.launchHint">
+    <svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-help"/></svg><span data-i18n="tour.launch">Guided tour</span>
   </button>
   <aside id="languagePanel" class="language-panel" aria-labelledby="languageLabel" hidden>
     <label id="languageLabel" for="languageSelect" data-i18n="localisation.language"></label>
@@ -348,9 +352,11 @@
 <script src="/static/vendor/maplibre-gl.js"></script>
 <script src="/static/vendor/topojson-client.min.js"></script>
 <script src="/static/i18n.js"></script>
+<script src="/static/tour.js"></script>
 <script src="/static/app.js"></script>
 <script src="/static/globe-similarity.js"></script>
 <script src="/static/globe.js"></script>
 <script src="/static/resilience.js"></script>
+<script src="/static/tour-case1.js"></script>
 </body>
 </html>

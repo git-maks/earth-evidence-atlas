@@ -894,5 +894,97 @@
     "markerLabel": "Dopasowanie {rank} w pobliżu {coordinates}",
     "save": "Zapisz w miejscach",
     "saved": "Zapisano"
+  },
+  "tour": {
+    "launch": "Przewodnik",
+    "launchHint": "Uruchom 3-minutową sprawę z przewodnikiem",
+    "labels": {
+      "back": "Wstecz",
+      "doIt": "Zrób to za mnie",
+      "skip": "Pomiń",
+      "next": "Dalej",
+      "done": "Zakończ",
+      "close": "Zamknij przewodnik",
+      "stop": "Zatrzymaj",
+      "progress": "Krok {n} z {total}",
+      "board": "Tablica sprawy",
+      "what": "Co",
+      "where": "Gdzie",
+      "howMuch": "Ile",
+      "significant": "Istotne?"
+    },
+    "chapters": {
+      "where": "Gdzie?",
+      "hold": "Czy to się trzyma?",
+      "use": "Kto może z tego skorzystać?"
+    },
+    "welcome": {
+      "title": "Pierwszy raz tutaj? Rozwiąż 3-minutową sprawę.",
+      "text": "Czy grunt w łuku Amazonii się nagrzewa? Sprawdź to krok po kroku na prawdziwych danych NASA.",
+      "start": "Zacznij sprawę",
+      "explore": "Odkrywam sam"
+    },
+    "board": {
+      "whatValue": "Temperatura gruntu w dzień"
+    },
+    "steps": {
+      "intro": {
+        "title": "Sprawa 1: Czy grunt w łuku Amazonii się nagrzewa?",
+        "text": "Odpowiesz na cztery pytania na prawdziwych danych NASA: <b>co</b> się zmienia, <b>gdzie</b>, <b>jak bardzo</b> i czy to jest <b>istotne</b>. Zajmie to około 3 minut."
+      },
+      "turn": {
+        "text": "Przeciągnij glob, żeby go obrócić. Kółko myszy przybliża.",
+        "textTouch": "Przeciągnij glob jednym palcem, żeby go obrócić."
+      },
+      "var": {
+        "title": "Co: wybierz dane",
+        "text": "Wybierz <b>dzienną temperaturę powierzchni lądu</b> (MODIS). Ikona informacji wyjaśnia, co mierzy."
+      },
+      "place": {
+        "title": "Gdzie: leć nad łuk Amazonii",
+        "text": "Naciśnij <b>{place}</b>, żeby tam polecieć. Przerywana ramka pokazuje, gdzie dane są przygotowane.",
+        "textTouch": "Dotknij <b>{place}</b>, żeby tam polecieć. Przerywana ramka pokazuje, gdzie dane są przygotowane."
+      },
+      "draw": {
+        "text": "Naciśnij <b>{select}</b>, a potem przeciągnij ramkę wewnątrz przerywanego obrysu na globie.",
+        "textTouch": "Dotknij <b>{select}</b>, a potem przeciągnij palcem ramkę wewnątrz przerywanego obrysu."
+      },
+      "analyse": {
+        "title": "Ile: zmierz trend",
+        "text": "Naciśnij <b>{analyse}</b>. Dane dla tego obszaru są już przygotowane, więc odpowiedź pojawi się po kilku sekundach.",
+        "textTouch": "Dotknij <b>{analyse}</b>. Dane dla tego obszaru są już przygotowane, więc odpowiedź pojawi się po kilku sekundach."
+      },
+      "result": {
+        "text": "Twoja ramka: <b>{rate}</b> ({p}), {period}. Otwórz <b>{open}</b>, żeby sprawdzić, czy wynik się trzyma.",
+        "noData": "Oto odpowiedź dla Twojej ramki. Otwórz <b>{open}</b>, żeby sprawdzić, czy wynik się trzyma."
+      },
+      "answer": {
+        "title": "Czy to się trzyma? Odpowiedź",
+        "text": "Odpowiedź prostymi słowami: nagłówek, na ile możemy być pewni i o czym pamiętać. To stały szablon wypełniony obliczonymi liczbami."
+      },
+      "chart": {
+        "text": "Każdy punkt to miesiąc w porównaniu z jego zwykłą wartością. Czerwona linia to trend, a cieniowany pas pokazuje jego 95-procentowy zakres."
+      },
+      "matrix": {
+        "text": "Każdy kwadrat to inny rok początku i końca. {same} z {windows} okresów daje ten sam kierunek, więc wynik nie zależy od jednego szczęśliwego wyboru.",
+        "noData": "Każdy kwadrat to inny rok początku i końca. Jeśli większość kwadratów się zgadza, wynik nie zależy od jednego szczęśliwego wyboru."
+      },
+      "season": {
+        "text": "Opcjonalnie: wybierz <b>{season}</b> (czerwiec–sierpień), żeby sprawdzić jedną porę roku. Cała strona się zaktualizuje."
+      },
+      "resilience": {
+        "title": "Kto może z tego skorzystać?",
+        "text": "To samo miejsce ma zestawienie dla planistów i obrony cywilnej. Naciśnij <b>{open}</b>.",
+        "textTouch": "To samo miejsce ma zestawienie dla planistów i obrony cywilnej. Dotknij <b>{open}</b>."
+      },
+      "cards": {
+        "text": "Temperatura powietrza i gruntu, opad oraz wilgotność gleby dla tego samego obszaru obok siebie. Każda karta prowadzi z powrotem do Detektywa; ograniczenia są opisane niżej."
+      },
+      "final": {
+        "title": "Akta sprawy",
+        "text": "<b>{question}</b><br>Miejsce: {place} · Okres: {period}<br>Trend: {rate} (zakres 95% {ci}), {p}<br>Werdykt: {verdict}<br>Użyj <b>{copy}</b> w Detektywie, żeby udostępnić dokładnie tę analizę.",
+        "noData": "Znasz już całą ścieżkę: wybór danych, miejsca, pomiar trendu i sprawdzenie, czy się trzyma. Wróć w każdej chwili przyciskiem <b>{tour}</b>."
+      }
+    }
   }
 }

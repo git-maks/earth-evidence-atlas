@@ -894,5 +894,97 @@
     "markerLabel": "Match {rank} near {coordinates}",
     "save": "Save to Places",
     "saved": "Saved"
+  },
+  "tour": {
+    "launch": "Guided tour",
+    "launchHint": "Start the 3-minute guided case",
+    "labels": {
+      "back": "Back",
+      "doIt": "Do it for me",
+      "skip": "Skip",
+      "next": "Next",
+      "done": "Finish",
+      "close": "End tour",
+      "stop": "Stop",
+      "progress": "Step {n} of {total}",
+      "board": "Case board",
+      "what": "What",
+      "where": "Where",
+      "howMuch": "How much",
+      "significant": "Significant?"
+    },
+    "chapters": {
+      "where": "Where?",
+      "hold": "Does it hold?",
+      "use": "Who can use it?"
+    },
+    "welcome": {
+      "title": "New here? Take a 3-minute case.",
+      "text": "Is the ground heating up in the Amazon arc? Find out with real NASA data, step by step.",
+      "start": "Start case",
+      "explore": "Explore on my own"
+    },
+    "board": {
+      "whatValue": "Ground temperature by day"
+    },
+    "steps": {
+      "intro": {
+        "title": "Case 1: Is the ground heating up in the Amazon arc?",
+        "text": "You will answer four questions with real NASA data: <b>what</b> changes, <b>where</b>, <b>how much</b> and whether it is <b>significant</b>. It takes about 3 minutes."
+      },
+      "turn": {
+        "text": "Drag the globe to turn it. The mouse wheel zooms.",
+        "textTouch": "Drag the globe with one finger to turn it."
+      },
+      "var": {
+        "title": "What: pick the data",
+        "text": "Choose <b>Daytime land surface temperature</b> (MODIS). The info icon explains what it measures."
+      },
+      "place": {
+        "title": "Where: go to the Amazon arc",
+        "text": "Press <b>{place}</b> to fly there. The dashed outline shows where the data are prepared.",
+        "textTouch": "Tap <b>{place}</b> to fly there. The dashed outline shows where the data are prepared."
+      },
+      "draw": {
+        "text": "Press <b>{select}</b>, then drag a box inside the dashed outline on the globe.",
+        "textTouch": "Tap <b>{select}</b>, then drag a box with one finger inside the dashed outline."
+      },
+      "analyse": {
+        "title": "How much: measure the trend",
+        "text": "Press <b>{analyse}</b>. The data for this area are already prepared, so the answer takes a few seconds.",
+        "textTouch": "Tap <b>{analyse}</b>. The data for this area are already prepared, so the answer takes a few seconds."
+      },
+      "result": {
+        "text": "Your box: <b>{rate}</b> ({p}), {period}. Open the <b>{open}</b> to test whether it holds.",
+        "noData": "Here is the answer for your box. Open the <b>{open}</b> to test whether it holds."
+      },
+      "answer": {
+        "title": "Does it hold? The answer",
+        "text": "The answer in plain words: the headline, how sure we can be and what to keep in mind. It is a fixed template filled with the computed numbers."
+      },
+      "chart": {
+        "text": "Each point is a month compared with its usual value. The red line is the trend and the shaded band shows its 95% range."
+      },
+      "matrix": {
+        "text": "Each square is another start and end year. {same} of {windows} periods give the same direction, so the result does not depend on one lucky choice.",
+        "noData": "Each square is another start and end year. If most squares agree, the result does not depend on one lucky choice."
+      },
+      "season": {
+        "text": "Optional: pick <b>{season}</b> (June to August) to check one season. The whole page updates."
+      },
+      "resilience": {
+        "title": "Who can use it?",
+        "text": "The same place has a brief for planners and civil protection. Press <b>{open}</b>.",
+        "textTouch": "The same place has a brief for planners and civil protection. Tap <b>{open}</b>."
+      },
+      "cards": {
+        "text": "Air and ground temperature, rain and soil wetness for the same area, side by side. Each card links back to the Detective; the limits are listed below."
+      },
+      "final": {
+        "title": "Case file",
+        "text": "<b>{question}</b><br>Place: {place} · Period: {period}<br>Trend: {rate} (95% range {ci}), {p}<br>Verdict: {verdict}<br>Use <b>{copy}</b> in the Detective to share this exact analysis.",
+        "noData": "You have seen the whole path: pick data, choose a place, measure the trend and test whether it holds. Start again any time with <b>{tour}</b>."
+      }
+    }
   }
 }

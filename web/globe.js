@@ -329,7 +329,10 @@ function initGlobe() {
     spin();
   });
   // slow rotation until the operator touches the globe
-  ["mousedown", "touchstart", "wheel", "dragstart"].forEach((ev) => G.map.on(ev, () => { G.spin = false; }));
+  ["mousedown", "touchstart", "wheel", "dragstart"].forEach((ev) => G.map.on(ev, () => {
+    G.spin = false;
+    window.dispatchEvent(new CustomEvent("globe:move")); // guided tour hook: the user touched the globe
+  }));
   G.map.on("moveend", () => spin());
   G.map.on("mousemove", hover);
   G.map.on("mouseout", hideGlobeTip);
@@ -464,6 +467,7 @@ async function loadLayers(cached) {
 }
 function selectGlobePlace(place) {
   G.place = place;
+  window.dispatchEvent(new CustomEvent("globe:place", { detail: place })); // guided tour hook
   G.spin = false;
   if (G.drawing) setDrawing(false);
   $("#gClose").click();
@@ -774,6 +778,7 @@ function setSelection(b, final, preserveAnalysis = false) {
   G.map.getSource("sel").setData({ type: "FeatureCollection", features: b ? [rectPoly(b)] : [] });
   if (!preserveAnalysis && (!b || final)) clearGlobeAnalysis();
   if (!final) return;
+  window.dispatchEvent(new CustomEvent("globe:selection", { detail: b })); // guided tour hook
   const [w, s, e, n] = b;
   $("#gResult").hidden = false;
   const coordinate = (value) => I18N.number(value, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -894,6 +899,7 @@ function showResult(a, region) {
     xaxis: { gridcolor: "#2a3542", linecolor: "#2a3542" }, yaxis: { gridcolor: "#2a3542", linecolor: "#2a3542", zerolinecolor: "#4b5a6a" } }));
   $("#gOpen").onclick = () => openInDetective({ var: a.variable, region, start: a.start, end: a.end,
     months: a.months.join(",") === "1,2,12" ? "12,1,2" : a.months.join(","), bbox: a.bbox });
+  window.dispatchEvent(new CustomEvent("globe:result", { detail: a })); // guided tour hook
 }
 
 // ---------------------------------------------------------------- controls
@@ -1114,6 +1120,25 @@ window.localiseGlobe = async () => {
   }
 };
 
+// Actions the guided tour's ghost cursor runs: the same code paths as a user, never a new compute job by themselves.
+window.AtlasGlobe = {
+  turn() {
+    if (!G.map) return;
+    G.spin = false;
+    const c = G.map.getCenter();
+    G.map.easeTo({ center: [c.lng - 35, c.lat], duration: matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 1200 });
+    window.dispatchEvent(new CustomEvent("globe:move"));
+  },
+  selectPlace: (place) => selectGlobePlace(place),
+  drawBox(b) { if (G.drawing) setDrawing(false); setSelection(b, true); },
+  project(lng, lat) { // screen point of a coordinate, for the ghost cursor
+    const r = G.map.getContainer().getBoundingClientRect(), p = G.map.project([lng, lat]);
+    return { x: r.left + p.x, y: r.top + p.y };
+  },
+  get place() { return G.place; },
+  get selection() { return G.sel; },
+  get ready() { return Boolean(G.map && G.map.getSource("regions")); }, // map style and layers loaded
+};
 window.refreshGlobeAreas = () => { if (G.map && G.map.getSource("regions")) loadLayers(); };
 window.initGlobeTab = function () {
   $("#gShowOthers").onchange = (e) => { AREAS.setOthers(e.target.checked); loadLayers(); if (CAT) syncControls(); }; buildGlobeControls(); initGlobe(); };

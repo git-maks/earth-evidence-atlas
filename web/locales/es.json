@@ -894,5 +894,97 @@
     "markerLabel": "Coincidencia {rank} cerca de {coordinates}",
     "save": "Guardar en lugares",
     "saved": "Guardada"
+  },
+  "tour": {
+    "launch": "Visita guiada",
+    "launchHint": "Iniciar el caso guiado de 3 minutos",
+    "labels": {
+      "back": "Atrás",
+      "doIt": "Hazlo por mí",
+      "skip": "Saltar",
+      "next": "Siguiente",
+      "done": "Terminar",
+      "close": "Cerrar la visita",
+      "stop": "Detener",
+      "progress": "Paso {n} de {total}",
+      "board": "Tablero del caso",
+      "what": "Qué",
+      "where": "Dónde",
+      "howMuch": "Cuánto",
+      "significant": "¿Significativo?"
+    },
+    "chapters": {
+      "where": "¿Dónde?",
+      "hold": "¿Se sostiene?",
+      "use": "¿Quién puede usarlo?"
+    },
+    "welcome": {
+      "title": "¿Primera vez aquí? Resuelve un caso de 3 minutos.",
+      "text": "¿Se está calentando el suelo en el arco amazónico? Descúbrelo paso a paso con datos reales de la NASA.",
+      "start": "Empezar el caso",
+      "explore": "Explorar por mi cuenta"
+    },
+    "board": {
+      "whatValue": "Temperatura del suelo de día"
+    },
+    "steps": {
+      "intro": {
+        "title": "Caso 1: ¿Se está calentando el suelo en el arco amazónico?",
+        "text": "Responderás cuatro preguntas con datos reales de la NASA: <b>qué</b> cambia, <b>dónde</b>, <b>cuánto</b> y si es <b>significativo</b>. Lleva unos 3 minutos."
+      },
+      "turn": {
+        "text": "Arrastra el globo para girarlo. La rueda del ratón acerca la vista.",
+        "textTouch": "Arrastra el globo con un dedo para girarlo."
+      },
+      "var": {
+        "title": "Qué: elige los datos",
+        "text": "Elige <b>temperatura diurna de la superficie terrestre</b> (MODIS). El icono de información explica qué mide."
+      },
+      "place": {
+        "title": "Dónde: vuela al arco amazónico",
+        "text": "Pulsa <b>{place}</b> para volar allí. El contorno discontinuo muestra dónde están preparados los datos.",
+        "textTouch": "Toca <b>{place}</b> para volar allí. El contorno discontinuo muestra dónde están preparados los datos."
+      },
+      "draw": {
+        "text": "Pulsa <b>{select}</b> y luego arrastra un recuadro dentro del contorno discontinuo del globo.",
+        "textTouch": "Toca <b>{select}</b> y luego arrastra con un dedo un recuadro dentro del contorno discontinuo."
+      },
+      "analyse": {
+        "title": "Cuánto: mide la tendencia",
+        "text": "Pulsa <b>{analyse}</b>. Los datos de esta zona ya están preparados, así que la respuesta tarda unos segundos.",
+        "textTouch": "Toca <b>{analyse}</b>. Los datos de esta zona ya están preparados, así que la respuesta tarda unos segundos."
+      },
+      "result": {
+        "text": "Tu recuadro: <b>{rate}</b> ({p}), {period}. Abre el <b>{open}</b> para comprobar si se sostiene.",
+        "noData": "Esta es la respuesta para tu recuadro. Abre el <b>{open}</b> para comprobar si se sostiene."
+      },
+      "answer": {
+        "title": "¿Se sostiene? La respuesta",
+        "text": "La respuesta en palabras sencillas: el titular, cuánta seguridad tenemos y qué tener en cuenta. Es una plantilla fija rellenada con los números calculados."
+      },
+      "chart": {
+        "text": "Cada punto es un mes comparado con su valor habitual. La línea roja es la tendencia y la banda sombreada muestra su intervalo del 95 %."
+      },
+      "matrix": {
+        "text": "Cada cuadro es otro año de inicio y de fin. {same} de {windows} periodos dan la misma dirección, así que el resultado no depende de una elección afortunada.",
+        "noData": "Cada cuadro es otro año de inicio y de fin. Si la mayoría coincide, el resultado no depende de una elección afortunada."
+      },
+      "season": {
+        "text": "Opcional: elige <b>{season}</b> (junio a agosto) para revisar una estación. Toda la página se actualiza."
+      },
+      "resilience": {
+        "title": "¿Quién puede usarlo?",
+        "text": "El mismo lugar tiene un informe para planificación y protección civil. Pulsa <b>{open}</b>.",
+        "textTouch": "El mismo lugar tiene un informe para planificación y protección civil. Toca <b>{open}</b>."
+      },
+      "cards": {
+        "text": "Temperatura del aire y del suelo, lluvia y humedad del suelo para la misma zona, una al lado de otra. Cada tarjeta lleva de vuelta al Detective; los límites aparecen abajo."
+      },
+      "final": {
+        "title": "Expediente del caso",
+        "text": "<b>{question}</b><br>Lugar: {place} · Periodo: {period}<br>Tendencia: {rate} (intervalo del 95 % {ci}), {p}<br>Veredicto: {verdict}<br>Usa <b>{copy}</b> en el Detective para compartir exactamente este análisis.",
+        "noData": "Ya conoces todo el camino: elegir datos y lugar, medir la tendencia y comprobar si se sostiene. Vuelve cuando quieras con <b>{tour}</b>."
+      }
+    }
   }
 }

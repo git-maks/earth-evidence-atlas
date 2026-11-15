@@ -370,6 +370,14 @@ html { overflow-y: scroll; }
 .language-toggle .ic { width: 24px; height: 24px; }
 .language-toggle:hover, .language-toggle[aria-expanded="true"] { background: var(--accent-soft); color: var(--accent); }
 .language-toggle:focus-visible, .language-panel select:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+/* guided tour launcher, next to the language button */
+.tour-launch { position: fixed; z-index: 1100; left: calc(68px + env(safe-area-inset-left, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 0 14px 0 11px; border: 1px solid var(--line); border-radius: 12px;
+  background: var(--panel); color: var(--ink); box-shadow: var(--shadow); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.tour-launch .ic { width: 22px; height: 22px; }
+.tour-launch:hover { background: var(--accent-soft); color: var(--accent); }
+.tour-launch:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+body.atlas-tour-active .tour-launch, body.atlas-tour-active .language-toggle, body.atlas-tour-active .language-panel { visibility: hidden; }
 .language-panel { position: fixed; z-index: 1101; left: calc(16px + env(safe-area-inset-left, 0px));
   bottom: calc(72px + env(safe-area-inset-bottom, 0px)); width: 260px; max-width: calc(100vw - 48px);
   display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; padding: 14px;
@@ -402,6 +410,11 @@ html { overflow-y: scroll; }
   .language-toggle { position: absolute; top: 5px; right: 10px; left: auto; bottom: auto; width: 36px; height: 36px; padding: 7px;
     border-radius: 10px; box-shadow: none; }
   .language-toggle .ic { width: 18px; height: 18px; }
+  .brand { padding-right: 92px; }
+  .tour-launch { position: absolute; top: 5px; right: 52px; left: auto; bottom: auto; width: 36px; height: 36px; padding: 7px;
+    justify-content: center; border-radius: 10px; box-shadow: none; }
+  .tour-launch .ic { width: 20px; height: 20px; }
+  .tour-launch span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .language-panel { position: absolute; top: 50px; right: 10px; left: auto; bottom: auto; }
   /* globe first, then its legend, the selected-area result and the controls */
   .panel.globe-panel.active { display: flex; flex-direction: column; }

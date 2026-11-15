@@ -339,7 +339,7 @@
         id: step.id, title: text(step.title, ctx), html: text(step.text, ctx), chapters: chapterDots(step),
         progress: fill(label("progress"), { n: index + 1, total: steps.length }), mode,
         canBack: mode === "guided" && index > 0, canDoIt: mode === "guided" && !!step.ghost && !!ghostEl,
-        reading: !step.waitFor, last: index === steps.length - 1, targets: els, ghostEl,
+        reading: !step.waitFor, last: index === steps.length - 1, targets: els, selectors: step.targets || [], ghostEl,
         padding: step.padding == null ? 6 : step.padding, radius: step.radius == null ? 10 : step.radius, side: step.side || null,
       };
     }
@@ -347,13 +347,15 @@
     function resolveValue(v, ctx) { return typeof v === "function" ? v(ctx) : v; }
     function ghostPoints(step, el) { // fractions of the target box → screen points (used without the DOM layer)
       const g = step.ghost, gesture = g.gesture || "click", r = env.measure(el) || rect(0, 0, 0, 0);
-      const v = gesture === "select" || gesture === "click" ? {} : g.value || {}; // a select value is an option, not geometry
+      let v = gesture === "select" || gesture === "click" ? {} : g.value || {}; // a select value is an option, not geometry
+      if (gesture === "drag" && typeof v === "function") v = v(r) || {};
+      const at = (f) => f.x != null ? f : fracPoint(r, f);
       const from = g.from || v.from || [0.3, 0.3], to = g.to2 || v.to || [0.7, 0.7];
       const hoverAt = g.at || (Array.isArray(v) && typeof v[0] === "number" ? v : [0.5, 0.5]);
       let pts = [[0.5, 0.5]];
       if (gesture === "hover") pts = [hoverAt];
       else if (gesture === "path") pts = typeof g.points === "function" ? g.points(r) : typeof v === "function" ? v(r) : (g.points || (Array.isArray(v) ? v : pts));
-      return { from: fracPoint(r, from), to: fracPoint(r, to), points: pts.map((p) => p.x != null ? p : fracPoint(r, p)) };
+      return { from: at(from), to: at(to), points: pts.map(at) };
     }
     // the real action behind a gesture; `extra` carries points from the ghost animation
     function act(step, el, ctx, extra) {
@@ -369,6 +371,10 @@
     }
     function perform(step, el, real) {
       const ctx = current ? current.ctx : context(step);
+      if (el && el.isConnected === false) { // the app re-rendered the control since the step started
+        const again = env.query(step.ghost.to || (step.targets || [])[0]);
+        if (again) { el = again; if (current) current.ghostEl = again; }
+      }
       const doAct = (extra) => real ? act(step, el, ctx, extra) : undefined;
       const p = ui ? ui.perform(step, el, { real, act: doAct, value: resolveValue(step.ghost.value, ctx) })
         : Promise.resolve(real ? doAct() : undefined);
@@ -503,8 +509,10 @@
         if (!active || !current) return;
         const c = current;
         if (!c.step.ghost || !c.ghostEl) { api.next(); return; }
+        if (c.acting) return; // a second click while the ghost is already doing it
         if (ui) ui.cancelGhost();
-        c.busy = perform(c.step, c.ghostEl, true);
+        c.acting = true;
+        c.busy = perform(c.step, c.ghostEl, true).then(() => { c.acting = false; });
         if (c.waiter) c.waiter.arm(o.waitTimeout); else c.busy.then(() => { if (current === c) api.next(); });
       },
       pause() { if (!active || paused) return; paused = true; timers.forEach((tm) => tm.pause()); if (ui) ui.pause(); emit("pause", {}); },
@@ -647,15 +655,16 @@
       [btn.doIt, btn.next].forEach((b) => b.classList.toggle("atlas-tour-primary", b === primary));
       busy(false);
       if (fresh) {
-        setTargets(m.targets, m.padding, m.radius);
+        setTargets(m.targets, m.padding, m.radius, m.selectors);
         bubble.classList.remove("is-in"); void bubble.offsetWidth; bubble.classList.add("is-in");
         if (primary && !quiet) primary.focus({ preventScroll: true }); else if (!quiet) bubble.focus({ preventScroll: true });
         scrollPending = true;
       }
     }
 
-    function setTargets(els, pad, radius) {
-      targets = els || [];
+    let selectors = [];
+    function setTargets(els, pad, radius, sels) {
+      targets = els || []; selectors = sels || [];
       rootEl.dataset.pad = pad; rootEl.dataset.radius = radius;
       if (!targets.length) {
         // no target (intro card): every hole closes into its centre
@@ -689,6 +698,10 @@
       lastT = t;
       const v = vp(), pad = +rootEl.dataset.pad || 0, radius = +rootEl.dataset.radius || 0;
       // read everything first, write after: one layout per frame
+      if (selectors.length && targets.some((e) => !e.isConnected)) { // re-rendered by the app: find the new elements
+        const again = selectors.map((s) => doc.querySelector(s)).filter(Boolean);
+        if (again.length) targets = again;
+      }
       const rects = targets.filter((e) => e.isConnected).map((e) => toRect(e.getBoundingClientRect())).filter((r) => r.w > 0 || r.h > 0);
       const bw = bubble.offsetWidth, bh = bubble.offsetHeight;
       const goals = mergeRects(rects.map((r) => padRect(r, pad)), 2);
@@ -844,14 +857,16 @@
       if (!el || !el.isConnected) return;
       try {
         if (gesture === "drag") {
-          const from = g.from || v.from || [0.3, 0.3], to = g.to2 || v.to || [0.7, 0.7];
-          await flyTo(() => ptIn(el, from), tok); if (!alive()) return;
+          // value may be a function of the target box, re-read every frame (e.g. screen points of a place on a moving globe)
+          const spec = () => { const s = typeof g.value === "function" ? g.value(toRect(el.getBoundingClientRect())) || {} : v; return [g.from || s.from || [0.3, 0.3], g.to2 || s.to || [0.7, 0.7]]; };
+          const P = (f) => f.x != null ? f : ptIn(el, f);
+          await flyTo(() => P(spec()[0]), tok); if (!alive()) return;
           await press(true); if (!alive()) return;
-          const a = ptIn(el, from);
-          await moveAlong(() => [ptIn(el, from), ptIn(el, to)], 950, tok, null, true); if (!alive()) return;
+          const a = P(spec()[0]);
+          await moveAlong(() => [P(spec()[0]), P(spec()[1])], 950, tok, null, true); if (!alive()) return;
           ghost.classList.remove("is-down");
           trail.classList.add("is-out");
-          if (opt.real) await opt.act({ from: a, to: ptIn(el, to), points: [a, ptIn(el, to)] });
+          if (opt.real) await opt.act({ from: a, to: P(spec()[1]), points: [a, P(spec()[1])] });
         } else if (gesture === "path" || gesture === "hover") {
           const fr = gesture === "hover" ? [g.at || (Array.isArray(v) && typeof v[0] === "number" ? v : [0.5, 0.5])]
             : (typeof g.points === "function" || typeof v === "function" ? null : g.points || v);
