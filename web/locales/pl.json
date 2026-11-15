@@ -60,9 +60,9 @@
     "reportLink": "Link do raportu",
     "methods": "Metody analizy",
     "interpretation": "Ograniczenia interpretacji",
-    "who": "Kto może z tego korzystać?",
-    "civilian": "Cywilne. Szpitale i gminy mogą wskazać miejsca do oceny chłodzenia lub zaopatrzenia w wodę.",
-    "defence": "Obronne. Te same analizy pomagają wybrać wojskowe obiekty medyczne, magazyny lub poligony do oceny.",
+    "who": "Kto i w jaki sposób może korzystać z raportu?",
+    "civilian": "Zastosowania cywilne. Samorządy, szpitale i zarządcy infrastruktury mogą wykorzystać raport do wstępnego rozpoznania zmian temperatury, opadów i wilgotności gleby. Pomaga on wskazać obszary, w których warto przeprowadzić szczegółową ocenę potrzeb związanych z chłodzeniem budynków lub zaopatrzeniem w wodę.",
+    "defence": "Zastosowania obronne. Osoby odpowiedzialne za infrastrukturę wojskową mogą korzystać z tych samych wskaźników przy analizie warunków środowiskowych w rejonie placówek medycznych, magazynów i poligonów. Raport pomaga wskazać miejsca wymagające dodatkowych pomiarów i oceny potrzeb w zakresie chłodzenia obiektów oraz zaopatrzenia w wodę. Nie zastępuje lokalnej oceny konkretnego obiektu.",
     "limits": {
       "exposure": "Ryzyko obiektu zależy też od lokalnych warunków i zabezpieczeń.",
       "history": "Raport opisuje zmiany historyczne. Prognozy wymagają innych danych i metod.",

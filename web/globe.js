@@ -983,10 +983,6 @@ function buildGlobeControls() {
     $("#gStart").focus();
   };
   $("#gStart").onchange = $("#gEnd").onchange = changeGlobePeriod;
-  $("#gScroll").onclick = () => {
-    $("#gControls").focus({ preventScroll: true });
-    $("#gControls").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
-  };
   $$("#gMode .ibtn").forEach((c) => c.onclick = () => {
     G.mode = c.dataset.mode; $$("#gMode .ibtn").forEach((x) => { x.classList.toggle("on", x === c); x.setAttribute("aria-checked", x === c); });
     syncGlobeDisplay();

@@ -564,8 +564,12 @@ function renderChart(a) {
   );
   plot("chart", traces, layoutBase({ yaxis: { title: { text: t("charts.anomalyAxis", { unit: v.units.replace(/ \(.*\)/, "") }), font: { size: 12 } } } }));
 }
-function renderMatrix(a) {
-  const mx = a.matrix;
+let matrixContext = null;
+function renderMatrix(a, preserveMatrix = false) {
+  const key = JSON.stringify([a.variable, a.region, a.months, a.bbox]);
+  // A cell chooses an analysis period; keep the surrounding windows available for comparison.
+  if (!preserveMatrix || !matrixContext || matrixContext.key !== key) matrixContext = { key, matrix: a.matrix };
+  const mx = matrixContext.matrix;
   if (!mx) { Plotly.purge("matrix"); $("#matrixNote").textContent = t("charts.minimumMatrixPeriod"); return; }
   const z = mx.ends.map((e) => mx.starts.map((s) => { const c = mx.cells.find((c) => c.start === s && c.end === e); return c ? c.slope : null; }));
   const sig = mx.ends.map((e) => mx.starts.map((s) => { const c = mx.cells.find((c) => c.start === s && c.end === e); return c && c.p !== null ? (c.p < 0.05 ? "●" : "") : ""; }));
@@ -584,12 +588,18 @@ function renderMatrix(a) {
     textfont: { size: mx.starts.length > 14 ? 7 : 9, color: z.flat().map((v) => v !== null && Math.abs(v) / lim > 0.55 ? "#ffffff" : "#111111") },
   }, {
     type: "scatter", mode: "markers", x: [a.start], y: [a.end], marker: { symbol: "square-open", size: 14, color: dark() ? "#ffffff" : "#111", line: { width: 2 } }, hoverinfo: "skip", showlegend: false,
-  }], layoutBase({ hovermode: "closest", xaxis: { title: { text: t("common.startYear") }, dtick: tk * mx.step, tickangle: 0 }, yaxis: { title: { text: t("common.endYear") }, dtick: tk * mx.step }, margin: { l: 50, r: 10, t: 6, b: 40 } }));
+  }], layoutBase({ hovermode: "closest", dragmode: false,
+    xaxis: { title: { text: t("common.startYear") }, dtick: tk * mx.step, tickangle: 0, fixedrange: true,
+      range: [mx.starts[0] - mx.step / 2, mx.starts[mx.starts.length - 1] + mx.step / 2] },
+    yaxis: { title: { text: t("common.endYear") }, dtick: tk * mx.step, fixedrange: true,
+      range: [mx.ends[0] - mx.step / 2, mx.ends[mx.ends.length - 1] + mx.step / 2] },
+    margin: { l: 50, r: 10, t: 6, b: 40 } }));
   const el = $("#matrix");
   el.removeAllListeners && el.removeAllListeners("plotly_click");
   el.on("plotly_click", (ev) => {
-    const pt = ev.points[0]; if (!pt || pt.data.type !== "heatmap") return;
-    state.start = +pt.x; state.end = +pt.y; syncControls(); refresh(false);
+    const pt = ev.points[0]; if (!pt || pt.data.type !== "heatmap" || !Number.isFinite(pt.z)) return;
+    if (state.start === +pt.x && state.end === +pt.y) return;
+    state.start = +pt.x; state.end = +pt.y; syncControls(); hideTip(); refresh(false, true);
   });
   $("#matrixNote").textContent = t(mx.step > 1 ? "charts.matrixNoteWithStep" : "charts.matrixNote", { minYears: mx.min_len, step: mx.step });
 }
@@ -610,12 +620,12 @@ function renderSource(a) {
 
 // ---------------------------------------------------------------- refresh
 let seq = 0, lastAnalysis = null, lastAnalysisQuery = "", lastMapQuery = "";
-function renderAnalysis(a) {
-  renderAnswer(a); renderCard(a); renderChart(a); renderMatrix(a); renderSeason(a); renderSource(a);
+function renderAnalysis(a, preserveMatrix = false) {
+  renderAnswer(a); renderCard(a); renderChart(a); renderMatrix(a, preserveMatrix); renderSeason(a); renderSource(a);
   $("#detectiveResilience").hidden = !Resilience.canOpen(a);
   window.dispatchEvent(new CustomEvent("atlas:analysis", { detail: a })); // guided tour hook
 }
-async function refreshAnalysis() {
+async function refreshAnalysis(preserveMatrix = false) {
   const my = ++seq;
   const params = query(true);
   $("#detectiveResilience").hidden = true;
@@ -627,7 +637,7 @@ async function refreshAnalysis() {
     const a = await api("analysis", params);
     if (my !== seq) return;
     lastAnalysis = a._raw || a; lastAnalysisQuery = params;
-    renderAnalysis(a);
+    renderAnalysis(a, preserveMatrix);
   } catch (e) {
     if (my !== seq) return;
     $("#answer").classList.remove("loading");
@@ -636,11 +646,11 @@ async function refreshAnalysis() {
   }
 }
 let mapSeq = 0;
-async function refresh(regionChanged) {
+async function refresh(regionChanged, preserveMatrix = false) {
   const my = ++mapSeq;
   const params = query(false);
   if (regionChanged) { drawRegion(); drawSelection(); }
-  refreshAnalysis();
+  refreshAnalysis(preserveMatrix);
   try {
     const m = await api("map", params);
     if (my === mapSeq) { lastMapQuery = params; drawGrid(m); }
@@ -863,7 +873,7 @@ async function renderValidation() {
     $(".drawbanner button").textContent = t("common.cancel");
     setHeaderHeight();
     // Reuse the source results, including charts in inactive tabs, without navigation or recomputation.
-    if (lastAnalysis && lastAnalysisQuery === query(true)) renderAnalysis(I18N.response("analysis", lastAnalysis));
+    if (lastAnalysis && lastAnalysisQuery === query(true)) renderAnalysis(I18N.response("analysis", lastAnalysis), true);
     if (lastMap && lastMapQuery === query(false)) drawGrid(I18N.response("map", lastMap._raw || lastMap));
     if (window.localiseGlobe) window.localiseGlobe();
     Resilience.localise();

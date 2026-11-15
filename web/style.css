@@ -136,8 +136,8 @@ select, input:not([type=range]):not([type=checkbox]) { font: inherit; color: var
 /* ---------------- globe explorer */
 .panel.globe-panel { max-width: none; padding: 0; position: relative; }
 .panel.globe-panel { background: #010208; }
-#globeMap { height: calc(100vh - var(--hdr, 48px)); min-height: 520px; background: transparent; position: relative; z-index: 1; }
-#gStars { position: absolute; inset: 0; width: 100%; height: calc(100vh - var(--hdr, 48px)); min-height: 520px; z-index: 0; display: block; }
+#globeMap { height: calc(100vh - var(--hdr, 48px)); height: calc(100dvh - var(--hdr, 48px)); min-height: 0; background: transparent; position: relative; z-index: 1; }
+#gStars { position: absolute; inset: 0; width: 100%; height: calc(100vh - var(--hdr, 48px)); height: calc(100dvh - var(--hdr, 48px)); min-height: 0; z-index: 0; display: block; }
 .gpanel { position: absolute; z-index: 5; background: rgba(12,18,26,.86); color: #e6edf3; border: 1px solid rgba(255,255,255,.12);
   border-radius: 12px; padding: 14px; backdrop-filter: blur(6px); box-shadow: 0 8px 30px rgba(0,0,0,.35); }
 .gpanel h3 { color: #fff; }
@@ -171,7 +171,6 @@ select, input:not([type=range]):not([type=checkbox]) { font: inherit; color: var
 .ganalysis-actions .ghost { color: #b6f5f6; border-color: #4ad9dd; }
 .ganalysis-actions [aria-disabled="true"] { color: #b4c0cc; border-color: #687d92; cursor: default; }
 #detectiveResilience { margin-top: 8px; }
-.gscroll { display: none; }
 .glabel { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: #8fa3b8; margin: 12px 0 4px; }
 .gpanel select { width: 100%; }
 .ginline { font-size: 13px; }
@@ -429,10 +428,6 @@ body.atlas-tour-active .tour-launch, body.atlas-tour-active .language-toggle, bo
   .glegend { order: 2; width: 100%; }
   #gResult { order: 3; position: relative; inset: auto; width: 100%; min-width: 0; }
   .gleft { order: 4; }
-  .gscroll { display: inline-flex; position: absolute; z-index: 4; left: 12px;
-    top: calc(clamp(320px, 62svh, 118vw) - 80px); gap: 6px; align-items: center;
-    background: #0c121a; color: #e6edf3; border-color: #7cb7f7; }
-  .gscroll .ic { transform: rotate(90deg); }
   .gpanel { border-left: 0; border-right: 0; box-shadow: none; backdrop-filter: none; background: #0c121a; }
   .gpanel + .gpanel { border-top: 0; }
   .gleft .gtools { flex-wrap: nowrap; }
