@@ -77,6 +77,21 @@
     </div>
     <div id="gProg" class="gprog" hidden><div class="gbar"><div id="gProgBar"></div></div><p id="gProgMsg" class="ginfo"></p></div>
     <div id="gOut" class="result"></div>
+    <section id="gSimilar" class="gsimilar" hidden aria-labelledby="gSimilarToggle">
+      <button id="gSimilarToggle" type="button" class="btn ghost" aria-controls="gSimilarOptions" aria-expanded="false" data-i18n="similar.title">Find similar areas</button>
+      <div id="gSimilarOptions" hidden>
+        <form id="gSimilarForm" class="gsimilar-form">
+          <label><span data-i18n="similar.limit">Maximum results</span><input id="gSimilarLimit" type="number" min="1" max="20" value="5" required></label>
+          <label><span data-i18n="similar.tolerance">Maximum trend difference</span><input id="gSimilarTolerance" type="number" min="0" step="any" value="0.10" aria-describedby="gSimilarUnit" required></label>
+          <p id="gSimilarUnit" class="ginfo"></p>
+          <button id="gSimilarGo" class="btn" type="submit" data-i18n="similar.search">Search</button>
+        </form>
+        <p class="ginfo" data-i18n="similar.method"></p>
+        <p id="gSimilarStatus" class="ginfo" role="status"></p>
+        <p id="gSimilarReference" class="ginfo" hidden></p>
+        <ol id="gSimilarList" class="gmatch-list" aria-label="Similar areas" data-i18n-attrs="aria-label:similar.resultsLabel"></ol>
+      </div>
+    </section>
     <div id="gChart" class="chart small"></div>
   </aside>
   <div id="gLegend" class="gpanel glegend"></div>
@@ -254,6 +269,7 @@
 <script src="/static/vendor/topojson-client.min.js"></script>
 <script src="/static/i18n.js"></script>
 <script src="/static/app.js"></script>
+<script src="/static/globe-similarity.js"></script>
 <script src="/static/globe.js"></script>
 </body>
 </html>

@@ -728,5 +728,23 @@
       "pl": "Polski"
     },
     "loadError": "Nie udało się wczytać języka. Spróbuj ponownie."
+  },
+  "similar": {
+    "title": "Znajdź podobne obszary",
+    "limit": "Maksymalna liczba wyników",
+    "tolerance": "Maksymalna różnica trendu",
+    "search": "Szukaj",
+    "method": "Porównanie trendów ważonych szerokością geograficzną w tym samym okresie i rozmiarze okna. Okna muszą mieć co najmniej 70% obszaru z danymi i zgodny kierunek trendu.",
+    "resultsLabel": "Podobne obszary",
+    "running": "Przeszukiwanie globalnej siatki…",
+    "found": "Znalezione obszary ({count})",
+    "noMatches": "Brak dopasowań przy tej różnicy trendu. Spróbuj zwiększyć dopuszczalną różnicę.",
+    "noReference": "Wybrany obszar ma za mało danych w globalnej siatce.",
+    "loadError": "Nie udało się przeszukać globalnej siatki. Spróbuj ponownie.",
+    "reference": "Wybrane okno siatki (liczba komórek {cells}) · {trend}",
+    "trendDifference": "{trend} · różnica {difference}",
+    "markerLabel": "Dopasowanie {rank} w pobliżu {coordinates}",
+    "save": "Zapisz w miejscach",
+    "saved": "Zapisano"
   }
 }

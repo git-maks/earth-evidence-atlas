@@ -296,6 +296,14 @@ function initGlobe() {
     G.map.addLayer({ id: "borders", type: "line", source: "borders", paint: { "line-color": "#ffffff", "line-opacity": 0.45, "line-width": 0.7 } });
     G.map.addSource("regions", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
     G.map.addLayer({ id: "regions", type: "line", source: "regions", paint: { "line-color": "#7cc4ff", "line-width": 1.5, "line-dasharray": [2, 2] } });
+    G.map.addSource("similar", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+    G.map.addLayer({ id: "similar-fill", type: "fill", source: "similar", paint: {
+      "fill-color": "#4ad9dd", "fill-opacity": ["case", ["get", "active"], 0.34, 0.18],
+    } });
+    G.map.addLayer({ id: "similar-outline", type: "line", source: "similar", paint: { "line-color": "#091923", "line-width": 5 } });
+    G.map.addLayer({ id: "similar-line", type: "line", source: "similar", paint: {
+      "line-color": ["case", ["get", "active"], "#e5ffff", "#4ad9dd"], "line-width": 2.5,
+    } });
     G.map.addSource("sel", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
     G.map.addLayer({ id: "sel-fill", type: "fill", source: "sel", paint: { "fill-color": "#ffd166", "fill-opacity": 0.12 } });
     G.map.addLayer({ id: "sel", type: "line", source: "sel", paint: { "line-color": "#ffd166", "line-width": 2.5 } });
@@ -308,7 +316,12 @@ function initGlobe() {
   G.map.on("moveend", () => spin());
   G.map.on("mousemove", hover);
   G.map.on("mouseout", hideTip);
-  G.map.on("click", (e) => { if (!G.drawing) clickCell(e.lngLat); });
+  G.map.on("click", (e) => {
+    if (G.drawing) return;
+    const [match] = G.map.getLayer("similar-fill") ? G.map.queryRenderedFeatures(e.point, { layers: ["similar-fill"] }) : [];
+    if (match) focusSimilarArea(+match.properties.index);
+    else clickCell(e.lngLat);
+  });
   // rectangle drawing
   let start = null;
   G.map.on("mousedown", (e) => { if (!G.drawing) return; e.preventDefault(); start = e.lngLat; });
@@ -363,6 +376,13 @@ let layersSeq = 0;
 const savedPlaces = () => lsGet("atlas.globePlaces", []);
 const sameBox = (a, b) => a.every((coordinate, i) => coordinate === b[i]);
 const coversPlace = ([w, s, e, n], [west, south, east, north]) => w <= west && s <= south && e >= east && n >= north;
+function saveGlobePlace(variable, dataRegion, bbox) {
+  const saved = savedPlaces();
+  const existing = saved.find((place) => sameBox(place.bbox, bbox));
+  const region = existing ? existing.region : `saved-${bbox.join(",")}`;
+  const place = { region, dataRegion, variable, bbox, name: bbox.join(", "), custom: true };
+  lsSet("atlas.globePlaces", [...saved.filter((l) => !sameBox(l.bbox, bbox)), place]);
+}
 function placesForDataset(layers, variable) {
   const visible = layers.filter((l) => AREAS.visible(l.region));
   const owned = AREAS.mine();
@@ -412,6 +432,7 @@ async function loadLayers(cached) {
     if (id.startsWith("saved-")) lsSet("atlas.globePlaces", savedPlaces().filter((l) => l.region !== id));
     else AREAS.hide(id);
     loadLayers();
+    if (similar.opened) renderSimilarAreas();
     if (typeof syncControls === "function" && CAT) syncControls();
   });
   $$("#gRegions [data-r]:not(#gWorld)").forEach((b) => b.onclick = () => selectGlobePlace(b.dataset.r));
@@ -435,7 +456,7 @@ function selectGlobePlace(place) {
   } else if (region) {
     const [w, s, e, n] = region.bbox;
     G.map.fitBounds([[w, Math.max(s, -70)], [e, Math.min(n, 75)]], { padding: 60, duration: 1800 });
-    if (region.dataRegion === null) setSelection(region.bbox, true);
+    if (region.custom) setSelection(region.bbox, true);
   }
   applyGlobePlace();
 }
@@ -455,6 +476,110 @@ function applyGlobePlace() {
   note.hidden = G.layers.length > 0 || Boolean(G.monthly);
   syncGlobeDisplay();
   return drawData();
+}
+
+// ---------------------------------------------------------------- similar areas
+const similar = { opened: false, sequence: 0, status: "", result: null, active: -1, markers: [], grid: null };
+function similarReference() {
+  const a = G.lastAnalysis && G.lastAnalysis.raw;
+  return a && a.variable === G.var && available(a.variable, "world") && Number.isFinite(a.result.slope) ? a : null;
+}
+function updateSimilarMap() {
+  const source = G.map && G.map.getSource("similar");
+  if (!source) return;
+  const matches = similar.opened && similar.result ? similar.result.matches : [];
+  source.setData({ type: "FeatureCollection", features: matches.map(({ bbox }, index) => ({
+    ...rectPoly(bbox), properties: { index, active: index === similar.active },
+  })) });
+  similar.markers.forEach((marker, index) => marker.getElement().setAttribute("aria-pressed", index === similar.active));
+}
+function resetSimilarAreas() {
+  similar.sequence++;
+  Object.assign(similar, { opened: false, status: "", result: null, active: -1 });
+  renderSimilarAreas();
+}
+function matchCenter([w, s, e, n]) { return [(w + e) / 2, (s + n) / 2]; }
+function matchCoordinates(bbox) {
+  const [lon, lat] = matchCenter(bbox);
+  const degrees = (value) => I18N.number(Math.abs(value), { maximumFractionDigits: 1 }) + "°";
+  return `${degrees(lat)} ${lat < 0 ? "S" : "N"}, ${degrees(lon)} ${lon < 0 ? "W" : "E"}`;
+}
+function focusSimilarArea(index) {
+  const match = similar.result && similar.result.matches[index];
+  if (!match) return;
+  similar.active = index;
+  $$("#gSimilarList [data-match]").forEach((button) => button.setAttribute("aria-pressed", +button.dataset.match === index));
+  updateSimilarMap();
+  const [w, s, e, n] = match.bbox;
+  // The viewport uses Mercator coordinates at close zoom, while the match uses the full grid bounds.
+  const south = Math.max(-MERC_LIM, Math.min(MERC_LIM - 0.1, s));
+  const north = Math.min(MERC_LIM, Math.max(-MERC_LIM + 0.1, n));
+  G.map.fitBounds([[w, south], [e, north]], { padding: 60, maxZoom: 5, duration: 900 });
+  if (PHONE()) $("#globeMap").scrollIntoView({ block: "start", behavior: "smooth" });
+}
+function renderSimilarAreas() {
+  const a = similarReference();
+  const opened = Boolean(a && similar.opened), result = opened ? similar.result : null;
+  $("#gSimilar").hidden = !a;
+  $("#gSimilarOptions").hidden = !opened;
+  $("#gSimilarToggle").setAttribute("aria-expanded", opened);
+  $("#gSimilarGo").disabled = similar.status === "running";
+  $("#gSimilarUnit").textContent = a ? GV().trend_units : "";
+  $("#gSimilarStatus").textContent = result && result.matches.length ? t("similar.found", { count: result.matches.length }) :
+    similar.status ? t(`similar.${similar.status}`) : "";
+  const unit = a ? GV().trend_units : "";
+  const trend = (value) => `${value > 0 ? "+" : ""}${fmt(value)} ${unit}`;
+  $("#gSimilarReference").hidden = !result;
+  $("#gSimilarReference").textContent = result ? t("similar.reference", { trend: trend(result.reference), cells: result.cells }) : "";
+  const matches = result ? result.matches : [];
+  const stored = savedPlaces().map((place) => place.bbox);
+  const owned = AREAS.mine();
+  if (CAT) stored.push(...CAT.regions.filter((region) => owned.includes(region.id) && AREAS.visible(region.id)).map((region) => region.bbox));
+  $("#gSimilarList").innerHTML = matches.map(({ bbox, trend: value, difference }, i) => {
+    const saved = stored.some((box) => sameBox(box, bbox));
+    const details = t("similar.trendDifference", { trend: trend(value), difference: fmt(difference) });
+    return `<li><button type="button" class="gmatch-area" data-match="${i}" aria-pressed="${i === similar.active}">` +
+      `<span class="gmatch-num">${i + 1}</span><span>${matchCoordinates(bbox)}<small>${esc(details)}</small></span></button>` +
+      `<button type="button" class="btn ghost small" data-save-match="${i}" ${saved ? "disabled" : ""}>${t(saved ? "similar.saved" : "similar.save")}</button></li>`;
+  }).join("");
+  similar.markers.forEach((marker) => marker.remove());
+  similar.markers = matches.map(({ bbox }, i) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "gmatch-pin";
+    button.textContent = i + 1;
+    button.setAttribute("aria-label", t("similar.markerLabel", { rank: i + 1, coordinates: matchCoordinates(bbox) }));
+    button.onclick = (event) => { event.stopPropagation(); focusSimilarArea(i); };
+    return new maplibregl.Marker({ element: button, opacityWhenCovered: "0" }).setLngLat(matchCenter(bbox)).addTo(G.map);
+  });
+  updateSimilarMap();
+}
+async function searchSimilarAreas() {
+  const a = similarReference();
+  if (!a) return;
+  const sequence = ++similar.sequence;
+  const tolerance = $("#gSimilarTolerance").valueAsNumber, limit = $("#gSimilarLimit").valueAsNumber;
+  Object.assign(similar, { status: "running", result: null, active: -1 });
+  renderSimilarAreas();
+  const query = new URLSearchParams({ var: a.variable, region: "world", start: a.start, end: a.end, months: a.months.join(",") });
+  const key = query.toString();
+  if (!similar.grid || similar.grid.key !== key) similar.grid = { key, request: api("map", query) };
+  const grid = similar.grid;
+  try {
+    const data = await grid.request;
+    if (sequence !== similar.sequence) return;
+    similar.result = findSimilarWindows(data, a.bbox, tolerance, limit);
+    similar.status = similar.result ? (similar.result.matches.length ? "" : "noMatches") : "noReference";
+    if (similar.result && similar.result.matches.length) {
+      G.spin = false;
+      G.map.easeTo({ zoom: globeZoom(), pitch: 0, bearing: 0, duration: 700 });
+    }
+  } catch {
+    if (similar.grid === grid) similar.grid = null;
+    if (sequence !== similar.sequence) return;
+    similar.status = "loadError";
+  }
+  renderSimilarAreas();
 }
 const imgCache = new Map();
 async function fetchFrame(l, mode, year) {
@@ -601,12 +726,15 @@ function clickCell(ll) {
 }
 
 // ---------------------------------------------------------------- selection, compute, result
-function setSelection(b, final) {
+function setSelection(b, final, preserveAnalysis = false) {
   G.sel = b;
   G.map.getSource("sel").setData({ type: "FeatureCollection", features: b ? [rectPoly(b)] : [] });
+  if (!preserveAnalysis && (!b || final)) {
+    G.lastAnalysis = null;
+    resetSimilarAreas();
+  }
   if (!final) return;
   const [w, s, e, n] = b;
-  G.lastAnalysis = null;
   $("#gResult").hidden = false;
   const coordinate = (value) => I18N.number(value, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   $("#gSelInfo").textContent = t("globe.selectionCoordinates", { south: coordinate(s), north: coordinate(n), west: coordinate(w), east: coordinate(e), width: coordinate(e - w), height: coordinate(n - s) });
@@ -634,6 +762,8 @@ function legacyPowerBounds([w, s, e, n]) {
 async function runCompute() {
   const selection = G.sel, varId = $("#gModel").value, displayedVar = G.var;
   if (!selection || !varId) return;
+  G.lastAnalysis = null;
+  resetSimilarAreas();
   const model = CAT.variables.find((v) => v.id === varId);
   const needsLegacyPadding = model.source === "power" && !CAT.compute_limits.power.pads_small_areas &&
     !CAT.regions.some((r) => available(varId, r.id) && coversPlace(r.bbox, selection));
@@ -672,14 +802,11 @@ async function runCompute() {
     const [w, s, e, n] = j.bbox;
     const bbox = [Math.max(w, selection[0]), Math.max(s, selection[1]), Math.min(e, selection[2]), Math.min(n, selection[3])];
     const source = CAT.regions.find((region) => region.id === j.region);
-    const saved = savedPlaces();
-    const existing = saved.find((l) => sameBox(l.bbox, bbox));
+    const existing = savedPlaces().some((l) => sameBox(l.bbox, bbox));
     if (!existing && source && source.custom && sameBox(source.bbox, bbox)) {
       AREAS.add(j.region);
     } else {
-      const region = existing ? existing.region : `saved-${bbox.join(",")}`;
-      const place = { region, dataRegion: j.region, variable: varId, bbox, name: bbox.join(", "), custom: true };
-      lsSet("atlas.globePlaces", [...saved.filter((l) => !sameBox(l.bbox, bbox)), place]);
+      saveGlobePlace(varId, j.region, bbox);
     }
     if (G.sel === selection && G.var === displayedVar && varId !== G.var) {
       $("#gVar").value = varId;
@@ -697,6 +824,7 @@ async function runCompute() {
 }
 function showResult(a, region) {
   G.lastAnalysis = { raw: a._raw || a, region };
+  renderSimilarAreas();
   const r = a.result, ver = a.verdict, v = CAT.variables.find((x) => x.id === a.variable);
   $("#gOut").innerHTML = `<div class="verdict ${ver.code}"><h2>${ver.title}</h2></div>
     <div class="big">${r.slope > 0 ? "+" : ""}${fmt(r.slope)} <small>${a.trend_units}</small></div>
@@ -723,6 +851,7 @@ function buildGlobeControls() {
   $("#gVar").value = G.var;
   $("#gVar").onchange = (e) => {
     G.var = e.target.value;
+    resetSimilarAreas();
     stopPlay();
     G.places = [];
     $$("#gRegions [data-r]:not(#gWorld)").forEach((b) => b.remove());
@@ -760,6 +889,24 @@ function buildGlobeControls() {
     if (G.drawing && PHONE()) $("#globeMap").scrollIntoView({ behavior: "smooth", block: "start" });
   };
   $("#gGo").onclick = runCompute;
+  $("#gSimilarToggle").onclick = () => {
+    if (similar.opened) { resetSimilarAreas(); return; }
+    similar.opened = true;
+    renderSimilarAreas();
+    if ($("#gSimilarForm").checkValidity()) searchSimilarAreas();
+  };
+  $("#gSimilarForm").onsubmit = (event) => { event.preventDefault(); searchSimilarAreas(); };
+  $("#gSimilarList").onclick = (event) => {
+    const target = event.target.closest("button");
+    if (!target) return;
+    if (target.hasAttribute("data-match")) { focusSimilarArea(+target.dataset.match); return; }
+    const a = similarReference(), match = similar.result && similar.result.matches[+target.dataset.saveMatch];
+    if (!a || !match) return;
+    saveGlobePlace(a.variable, "world", match.bbox);
+    target.textContent = t("similar.saved");
+    target.disabled = true;
+    loadLayers();
+  };
   $("#gClose").onclick = () => { $("#gResult").hidden = true; setSelection(null, false); };
   if (!G.controlsReady) {
     G.controlsReady = true;
@@ -868,7 +1015,7 @@ window.localiseGlobe = async () => {
     await loadLayers(G.allPlacesVar === G.var && G.allPlaces ? I18N.response("layers", G.allPlaces.map((layer) => layer._raw || layer)) : undefined);
   }
   if (G.sel && !$("#gGo").disabled) {
-    setSelection(G.sel, true);
+    setSelection(G.sel, true, true);
     if (model) $("#gModel").value = model;
     if (last) showResult(I18N.response("analysis", last.raw), last.region);
   }

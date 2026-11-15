@@ -728,5 +728,23 @@
       "pl": "Polski"
     },
     "loadError": "No se pudo cargar el idioma. Inténtalo de nuevo."
+  },
+  "similar": {
+    "title": "Buscar áreas similares",
+    "limit": "Máximo de resultados",
+    "tolerance": "Diferencia máxima de tendencia",
+    "search": "Buscar",
+    "method": "Compara tendencias ponderadas por latitud para el mismo periodo y tamaño de ventana. Cada ventana requiere al menos un 70% de área válida y la misma dirección de tendencia.",
+    "resultsLabel": "Áreas similares",
+    "running": "Buscando en la cuadrícula global…",
+    "found": "Coincidencias encontradas ({count})",
+    "noMatches": "No hay coincidencias con esta diferencia de tendencia. Prueba con una diferencia mayor.",
+    "noReference": "La zona seleccionada tiene pocos datos en la cuadrícula global.",
+    "loadError": "No se pudo buscar en la cuadrícula global. Inténtalo de nuevo.",
+    "reference": "Ventana seleccionada ({cells} celdas) · {trend}",
+    "trendDifference": "{trend} · diferencia {difference}",
+    "markerLabel": "Coincidencia {rank} cerca de {coordinates}",
+    "save": "Guardar en lugares",
+    "saved": "Guardada"
   }
 }

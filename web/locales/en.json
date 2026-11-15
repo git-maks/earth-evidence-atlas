@@ -728,5 +728,23 @@
       "pl": "Polski"
     },
     "loadError": "Could not load the language. Please try again."
+  },
+  "similar": {
+    "title": "Find similar areas",
+    "limit": "Maximum results",
+    "tolerance": "Maximum trend difference",
+    "search": "Search",
+    "method": "Compares latitude-weighted grid trends over the same period and window size. Windows need at least 70% valid area and the same trend direction.",
+    "resultsLabel": "Similar areas",
+    "running": "Searching the global grid…",
+    "found": "Matches found ({count})",
+    "noMatches": "No matches within this trend difference. Try a larger difference.",
+    "noReference": "The selected area has too little data in the global grid.",
+    "loadError": "Could not search the global grid. Try again.",
+    "reference": "Selected grid window ({cells} cells) · {trend}",
+    "trendDifference": "{trend} · difference {difference}",
+    "markerLabel": "Match {rank} near {coordinates}",
+    "save": "Save to Places",
+    "saved": "Saved"
   }
 }
