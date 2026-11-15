@@ -52,7 +52,7 @@ Add a line when you start a larger task and remove it when you are done.
 
 | Who (person / agent) | Area / files | Since |
 |---|---|---|
-| Maja / Codex | Standalone pitch deck and evidence snapshot (`presentation/`); capture / preview on test port 8773 | 2026-11-15 |
+| Maja / Codex | Standalone pitch deck and evidence snapshot (independent `earthatlas.github.io/` repo, ignored here); capture / preview on test port 8773 | 2026-11-15 |
 
 ## Git
 

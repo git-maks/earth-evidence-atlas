@@ -8,3 +8,6 @@ tmp/
 data/
 .pytest_cache/
 *.tmp.nc
+
+# Independent organization website repository (not a submodule).
+/earthatlas.github.io/

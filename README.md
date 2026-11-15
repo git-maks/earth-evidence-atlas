@@ -4,6 +4,19 @@ Wyzwanie: **Be An Earth System Trend Detective!** Koncepcja: [formalne/05_plan_p
 
 Stan na **14.11.2026, ok. 17:30**: działający lokalnie prototyp end-to-end. Obejmuje prawdziwe dane NASA dla 7 zmiennych i 4 regionów oraz **interaktywny glob 3D**, na którym można zaznaczyć dowolny obszar i zlecić obliczenia na żądanie. Do tego silnik statystyczny z testami, API, widok „Trend detective” (mapa, wykres, macierz okresów, eksport) i laboratorium fałszywych alarmów. **Brak deploymentu** (tylko `127.0.0.1`).
 
+## Prezentacja – osobne repozytorium
+
+Prezentację przeniesiono do **`earthatlas.github.io/`**, samodzielnego repo Git ignorowanego przez ten projekt. Otwórz lokalny `earthatlas.github.io/index.html`. Folder zawiera wszystkie zasoby, migawkę wyników, aktualny siedmiostronicowy PDF oraz własne README. Nie jest submodułem i nie trafia do commitów aplikacji.
+
+Docelowe repo organizacji: **`EarthAtlas/earthatlas.github.io`**; adres po publikacji: **https://earthatlas.github.io/**. GitHub wymaga małych liter w nazwie repo strony organizacji. Workflow w osobnym repo buduje statyczny katalog `_site/` i publikuje przez GitHub Actions. Zwykły build nie potrzebuje checkoutu aplikacji, API ani dostępu do NASA. Utworzenie repo na GitHubie i włączenie Pages opisuje README prezentacji; lokalne przygotowanie nie oznacza publikacji.
+
+Kod aplikacji powinien mieć osobne repo, np. `EarthAtlas/earth-evidence-atlas`. GitHub Pages obsługuje prezentację; backend FastAPI potrzebuje własnego hostingu. Po sklonowaniu samej aplikacji prezentację klonuje się osobno do ignorowanego folderu.
+
+```bash
+python3 earthatlas.github.io/publish.py
+# podgląd artefaktu: python3 -m http.server 8773 --directory earthatlas.github.io/_site
+```
+
 ## Globe explorer (zakładka startowa)
 
 - Glob 3D (MapLibre GL 5, projekcja globe). Pod spodem zdjęcia **NASA GIBS**: Blue Marble albo zdjęcia historyczne dla wybranego roku i miesiąca, czyli true colour MODIS (dzień), NDVI i LST miesięczne, temperatura MERRA-2, opad IMERG. Data podąża za suwakiem roku. Granice: Natural Earth.
@@ -149,7 +162,7 @@ Koszt: mniejsza moc. Przy φ = 0,6, 24 latach i trendzie 0,4 σ/dekadę wykrywal
 
 Dryf Terra/Aqua (LST, °C/dekadę) nowymi testami: NW Indie Terra 2003–2021 −0,29 (p = 0,23), 2003–2024 −0,70 (p = 0,048); Aqua −0,38 (p = 0,16) i −0,52 (p = 0,019). Europa Środkowa Terra +1,10 (p = 0,08) i +0,90 (p = 0,07); Aqua +1,10 (p = 0,08) i +1,08 (p = 0,022). Amazonia we wszystkich czterech wariantach p ≤ 0,006. Wniosek: odporna jest tylko Amazonia. W NW Indiach i w Europie Środkowej (LST) kierunek się zgadza, ale istotność zależy od okresu i satelity.
 
-**Do zrobienia przez właściciela prezentacji (`presentation/`, Maja / Codex):** slajd z przykładem T2M ma stałe zdanie „Mann–Kendall agrees.” oraz liczby ze starej metody (CI [0,352; 0,667], 81 istotnych okien, laboratorium 83/14). Trzeba odświeżyć `evidence.json` z API po restarcie serwera i przebudować deck. Nie zmieniałem plików w `presentation/`.
+**Wykonane 15.11 przez właściciela prezentacji:** slajdy przebudowano z nowego `evidence.json`: CI T2M [0,254; 0,766], 45 istotnych okien tego samego znaku i laboratorium 83/5. Usunięto stałe „Mann–Kendall agrees.”. Aktualny deck i PDF są teraz w osobnym, ignorowanym repo `earthatlas.github.io/`.
 
 **Literatura:** Santer i in. (2000) JGR 105, 7337–7356 · Marriott i Pope (1954) Biometrika 41, 390–402 · Hirsch, Slack i Smith (1982) WRR 18, 107–121 · Hirsch i Slack (1984) WRR 20, 727–732 · Hamed i Rao (1998) J. Hydrol. 204, 182–196 · Berger (1982) Technometrics 24, 295–300 · Sen (1968) JASA 63, 1379–1389 · Benjamini i Hochberg (1995) JRSS-B 57, 289–300 · Wilks (2016) BAMS 97, 2263–2273. Kontekst: Noguchi, Gel i Duguay (2011) J. Hydrol. 410, 150–161 (bootstrap dla testów trendu; rozważany wariant, w naszych symulacjach nie poprawiał kalibracji względem metody analitycznej) · Collaud Coen i in. (2020) AMT 13, 6945–6964 (wpływ prewhiteningu i ziarnistości czasu na test MK).
 
