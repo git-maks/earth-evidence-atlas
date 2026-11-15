@@ -61,6 +61,7 @@
     <span class="glabel" id="gPlacesLabel"><span data-i18n="globe.places">Places</span></span>
     <div id="gRegions" class="row gchips" role="group" aria-labelledby="gPlacesLabel">
       <button id="gWorld" class="chip" data-r="world" data-tip="Zoom out to the whole globe" aria-pressed="false" disabled data-i18n-attrs="data-tip:globe.worldHint"><svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-globe"/></svg><span data-i18n="catalog.regions.world.shortName">World</span></button>
+      <span id="gPendingPlace" class="chip" role="status" data-i18n="globe.savingPlace" hidden>Adding area…</span>
     </div>
     <p id="gPlaceNote" class="ginfo" role="status" hidden></p>
     <label id="gOthersRow" class="row ginline small" data-tip="Areas other visitors have analysed" hidden data-i18n-attrs="data-tip:common.areasFromOthersHint"><span class="switch"><input type="checkbox" id="gShowOthers"><span></span></span><span data-i18n="common.areasFromOthers">Areas from others</span></label>
@@ -112,7 +113,7 @@
           <span>–</span>
           <select id="end" aria-label="End year" data-i18n-attrs="aria-label:common.endYear"></select>
         </div>
-        <div class="period-range" id="periodRange" role="group" aria-label="Analysis period timeline" data-i18n-attrs="aria-label:detective.periodTimeline">
+        <div class="period-range" id="periodRange" style="--panel: var(--accent)" role="group" aria-label="Analysis period timeline" data-i18n-attrs="aria-label:detective.periodTimeline">
           <div class="period-track" aria-hidden="true"></div>
           <input type="range" id="startSlider" aria-label="Start of period" data-i18n-attrs="aria-label:detective.periodStart">
           <input type="range" id="endSlider" aria-label="End of period" data-i18n-attrs="aria-label:detective.periodEnd">
@@ -203,11 +204,20 @@
     </div>
     <div class="card">
       <h3><span data-i18n="lab.frequencyTitle">How often are we fooled?</span></h3>
-      <p><span data-i18n="lab.frequencyDescription">200 trendless series. An honest test is fooled about 5% of the time.</span></p>
+      <p data-i18n="lab.frequencyDescription"></p>
       <button id="simMany" class="btn"><svg class="ic"><use href="/static/icons.svg#i-play"/></svg><span data-i18n="lab.runMany">Run 200</span></button>
-      <div id="simMulti" class="chart small"></div>
-      <p id="simMultiOut" class="hint"></p>
+      <div id="simMulti" class="chart" hidden></div>
+      <div id="simMultiStats" class="sim" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr))" hidden></div>
+      <p id="simMultiOut" class="hint" role="status"></p>
     </div>
+  </section>
+  <section class="card" style="margin-top: 14px" aria-labelledby="simStepTitle">
+    <h3 id="simStepTitle" data-i18n="lab.stepTitle">Can a sudden shift look like a trend?</h3>
+    <p data-i18n="lab.stepDescription"></p>
+    <button id="simStepCompare" class="btn ghost" aria-pressed="false" aria-controls="simStepChart simStepOut" data-i18n="lab.stepCompare" disabled>Compare before and after</button>
+    <div id="simStepChart" class="chart"></div>
+    <div id="simStepOut" class="sim" role="status"></div>
+    <p id="simStepNote" class="hint" data-i18n="lab.stepLesson" hidden></p>
   </section>
 </main>
 

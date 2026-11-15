@@ -314,7 +314,7 @@ function wireControls() {
     $$(".tab").forEach((x) => x.classList.toggle("active", x === t));
     $$(".panel").forEach((p) => p.classList.toggle("active", p.id === t.dataset.tab));
     document.body.classList.toggle("on-globe", t.dataset.tab === "globe");
-    if (t.dataset.tab === "lab") { simOne(); }
+    if (t.dataset.tab === "lab") { simOne(); loadStepExample(); }
     if (t.dataset.tab === "atlas") { map.invalidateSize(); drawRegion(); drawSelection(); }
     window.dispatchEvent(new Event("resize"));
     requestAnimationFrame(() => $$(`#${t.dataset.tab} .chart`).forEach((el) => { if (el.data) Plotly.Plots.resize(el); }));
@@ -454,7 +454,7 @@ function renderAnswer(a) {
   $("#answerBody").innerHTML = `
     <p class="answer-head">${A.headline}</p>
     <ul class="answer-lines">${A.lines.map((l) => `<li>${l}</li>`).join("")}</ul>
-    ${A.caveat ? `<p class="answer-caveat">${ic("info")}<span>${A.caveat}</span></p>` : ""}
+    ${A.caveat ? `<p class="answer-caveat">${ic("info")}<span>${A.caveat}${A.source_url ? ` <a href="${esc(A.source_url)}" target="_blank" rel="noopener">${t("detective.precipitationSource")}</a>` : ""}</span></p>` : ""}
     <details class="answer-how"><summary>${t("detective.howWeKnow")}</summary><ul>${A.how.map((l) => `<li>${l}</li>`).join("")}</ul>
       <p class="hint">${A.note}</p></details>`;
 }
@@ -467,7 +467,7 @@ function renderCard(a) {
   const rob = ver.robustness ? `<div><span>${t("detective.otherPeriodsAgree")}</span>${ver.robustness.same_sign} / ${ver.robustness.windows}</div>` : "";
   const season = { [ALL]: t("calendar.allYear"), "12,1,2": t("calendar.seasons.djf.label"), "3,4,5": t("calendar.seasons.mam.label"), "6,7,8": t("calendar.seasons.jja.label"), "9,10,11": t("calendar.seasons.son.label") }[state.months] || t("calendar.selectedMonths");
   $("#card").innerHTML = `
-    <div class="verdict ${ver.code}"><h2>${ver.title}</h2><p>${ver.text}</p></div>
+    <div class="verdict ${ver.code}"><h2>${a.answer.source_url && ver.code === "trend_detected" ? t("detective.significantInMerra") : ver.title}</h2><p>${ver.text}</p></div>
     <div class="big">${r.slope > 0 ? "+" : ""}${fmt(r.slope)} <small>${a.trend_units}</small></div>
     <div class="hint">${th("detective.confidenceRange", { low: fmt(r.ci_low), high: fmt(r.ci_high), start: a.start, end: a.end, season })}</div>
     <div class="stats">
@@ -578,13 +578,19 @@ async function refresh(regionChanged) {
 }
 
 // ---------------------------------------------------------------- false-alarm lab
-let simSeed = 7, lastSimulation = null, lastSimulationBatch = null;
+let simSeed = 7, simSeq = 0, lastSimulation = null, lastSimulationBatch = null, stepExample = null;
 async function simOne() {
+  const seq = ++simSeq;
   const yrs = +$("#simYears").value, phi = +$("#simPhi").value;
   $("#simYearsV").textContent = yrs; $("#simPhiV").textContent = phi;
-  const s = await api("simulate", new URLSearchParams({ seed: simSeed, years: yrs, phi }));
-  lastSimulation = s;
-  renderSimulation(s);
+  try {
+    const s = await api("simulate", new URLSearchParams({ seed: simSeed, years: yrs, phi }));
+    if (seq !== simSeq) return;
+    lastSimulation = s;
+    renderSimulation(s);
+  } catch (e) {
+    if (seq === simSeq) $("#simOut").textContent = t("lab.loadError");
+  }
 }
 function renderSimulation(s) {
   plot("simChart", [
@@ -598,22 +604,71 @@ function renderSimulation(s) {
 }
 async function simMany() {
   const yrs = +$("#simYears").value, phi = +$("#simPhi").value;
+  $("#simMany").disabled = true;
   $("#simMultiOut").textContent = t("common.running");
-  const N = 200;
-  const r = await api("simulate_many", new URLSearchParams({ runs: N, years: yrs, phi }));
-  lastSimulationBatch = { r, yrs, phi, N };
-  renderSimulationBatch(lastSimulationBatch);
+  try {
+    lastSimulationBatch = await api("simulate_many", new URLSearchParams({ runs: 200, years: yrs, phi }));
+    renderSimulationBatch(lastSimulationBatch);
+  } catch (e) { $("#simMultiOut").textContent = t("lab.loadError"); }
+  finally { $("#simMany").disabled = false; }
 }
-function renderSimulationBatch({ r, yrs, phi, N }) {
-  const naive = r.naive_significant, corr = r.corrected_significant;
-  const pct = [naive / N * 100, corr / N * 100, 5];
+function renderSimulationBatch(r) {
+  const counts = [r.naive_significant, r.corrected_significant];
+  const labels = [t("lab.naiveTest"), t("lab.correctedTest")];
+  const intervals = [r.naive_interval, r.corrected_interval].map((limits) => limits.map((p) => 100 * p));
+  const pct = counts.map((count) => 100 * count / r.runs);
+  const percent = (value) => I18N.number(value, { maximumFractionDigits: 1 }) + "%";
+  const ranges = intervals.map(([low, high]) => `${percent(low)}–${percent(high)}`);
+  $("#simMulti").hidden = $("#simMultiStats").hidden = false;
+  const ink = getComputedStyle(document.body).color;
   plot("simMulti", [{
-    type: "bar", x: [t("lab.naiveTest"), t("lab.correctedTest"), t("lab.honestTarget")], y: pct, marker: { color: ["#d6604d", "#0b5cad", "#9aa7b4"] },
-    text: [`${fmt(pct[0], 2)}% (${naive}/${N})`, `${fmt(pct[1], 2)}% (${corr}/${N})`, "5%"], textposition: "outside", cliponaxis: false,
-    customdata: [t("lab.fooledCount", { count: naive, total: N }), t("lab.fooledCount", { count: corr, total: N }), t("lab.honestTest")],
-  }], layoutBase({ yaxis: { title: { text: t("lab.fooledAxis"), font: { size: 12 } }, ticksuffix: "%", range: [0, Math.max(30, Math.max(...pct) * 1.25)] },
-    margin: { t: 18, b: 30 }, hovermode: "closest", showlegend: false }));
-  $("#simMultiOut").textContent = t("lab.settingsSummary", { years: yrs, memory: I18N.number(phi) });
+    type: "bar", x: labels, y: pct, marker: { color: ["#d6604d", dark() ? "#5ea8ff" : "#0b5cad"] },
+    error_y: { type: "data", symmetric: false, color: ink, array: intervals.map(([, high], i) => high - pct[i]),
+      arrayminus: intervals.map(([low], i) => pct[i] - low), visible: true },
+    customdata: counts.map((count, i) => `${th("lab.fooledCount", { count, total: r.runs })}<br>${th("lab.batchInterval", { range: ranges[i] })}`),
+  }], layoutBase({ yaxis: { title: { text: t("lab.fooledAxis"), font: { size: 12 } }, ticksuffix: "%",
+    range: [0, Math.min(100, Math.max(15, ...intervals.map(([, high]) => high + 8)))] },
+    shapes: [{ type: "line", xref: "paper", x0: 0, x1: 1, y0: 5, y1: 5, line: { color: ink, dash: "dash", width: 1.5 } }],
+    annotations: [{ xref: "paper", x: 1, y: 5, xanchor: "right", yanchor: "bottom", text: t("lab.batchReference"), showarrow: false }],
+    margin: { t: 16, b: 35 }, hovermode: "closest", showlegend: false }));
+  $("#simMultiStats").innerHTML = labels.map((label, i) => `<div><span>${label}</span><b>${percent(pct[i])}</b>` +
+    `${th("lab.fooledCount", { count: counts[i], total: r.runs })}<br>${th("lab.batchInterval", { range: ranges[i] })}</div>`).join("");
+  $("#simMultiOut").textContent = t("lab.batchSummary", { runs: r.runs, years: r.years, memory: I18N.number(r.phi) });
+}
+async function loadStepExample() {
+  if (stepExample) return;
+  $("#simStepOut").textContent = t("common.running");
+  try {
+    stepExample = await api("simulate", new URLSearchParams({ scenario: "step", seed: 11, years: 10, phi: 0.25, sigma: 0.35 }));
+    $("#simStepCompare").disabled = false;
+    renderStepExample();
+  } catch (e) { $("#simStepOut").textContent = t("lab.loadError"); }
+}
+function renderStepExample() {
+  const s = stepExample, split = pressed($("#simStepCompare"));
+  const labels = [t("lab.stepWhole"), t("lab.stepBefore"), t("lab.stepAfter")];
+  const date = (month) => month + "-15";
+  const change = date(s.change_date);
+  const traces = [
+    { x: s.dates.map(date), y: s.values, name: t("lab.syntheticValues"), type: "scatter", mode: "lines", line: { color: "#8095ad", width: 1.2 } },
+    { x: s.dates.map(date), y: s.fit, name: labels[0], type: "scatter", mode: "lines", opacity: split ? 0.55 : 1,
+      line: { color: "#d6604d", width: 2.5, dash: split ? "dot" : "solid" } },
+  ];
+  if (split) s.segments.forEach((seg, i) => traces.push({
+    x: seg.dates.map(date), y: seg.fit, name: labels[i + 1], type: "scatter", mode: "lines",
+    line: { color: i === 0 ? (dark() ? "#5ea8ff" : "#0b5cad") : (dark() ? "#4ac26b" : "#1a7f37"), width: 3 },
+  }));
+  plot("simStepChart", traces, layoutBase({
+    yaxis: { title: { text: t("lab.syntheticUnits"), font: { size: 12 } } },
+    shapes: split ? [{ type: "line", x0: change, x1: change, yref: "paper", y0: 0, y1: 1, line: { color: "#8aa4bf", dash: "dash", width: 1.5 } }] : [],
+    annotations: split ? [{ x: change, yref: "paper", y: 1, xanchor: "left", text: t("lab.stepBreakpoint"), showarrow: false }] : [],
+    margin: { t: 24 },
+  }));
+  $("#simStepNote").hidden = !split;
+  const stat = (label, fit, p) => `<div><span>${label}</span><b>${fmt(fit.slope)} ${t("common.perDecade")}</b>${pStr(p)}<br>` +
+    `${th("lab.stepInterval", { low: fmt(fit.ci_low), high: fmt(fit.ci_high) })}</div>`;
+  $("#simStepOut").innerHTML = stat(labels[0], s, s.corrected_p) + (split ? s.segments.map((seg, i) =>
+    stat(labels[i + 1], seg, seg.p)).join("") : "");
 }
 
 // ---------------------------------------------------------------- about
@@ -644,6 +699,7 @@ function renderAbout() {
   $("#simNew").onclick = () => { simSeed = Math.floor(Math.random() * 1e6); simOne(); };
   $("#simYears").oninput = simOne; $("#simPhi").oninput = simOne;
   $("#simMany").onclick = simMany;
+  $("#simStepCompare").onclick = (e) => { setPressed(e.currentTarget, !pressed(e.currentTarget)); renderStepExample(); };
   if (window.initGlobeTab) window.initGlobeTab();
   window.addEventListener("languagechange", () => {
     hideTip();
@@ -670,6 +726,7 @@ function renderAbout() {
     if (window.localiseGlobe) window.localiseGlobe();
     if (lastSimulation) renderSimulation(lastSimulation);
     if (lastSimulationBatch) renderSimulationBatch(lastSimulationBatch);
+    if (stepExample) renderStepExample();
     window.dispatchEvent(new Event("resize"));
   });
   await refresh(true);

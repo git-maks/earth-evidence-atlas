@@ -232,7 +232,8 @@
       "merra": "Air temperature (month)",
       "imerg": "Rain (day)"
     },
-    "attribution": "Imagery: {imagery} · borders: {borders} · stars: {stars}"
+    "attribution": "Imagery: {imagery} · borders: {borders} · stars: {stars}",
+    "savingPlace": "Adding area…"
   },
   "detective": {
     "controlsLabel": "Choose what to investigate",
@@ -280,7 +281,9 @@
     "robustnessHint": "Each square is a start/end year. Click to use it.",
     "evidence": "Evidence",
     "typicalYear": "Typical year",
-    "basemapAttribution": "Basemap: {source} Blue Marble"
+    "basemapAttribution": "Basemap: {source} Blue Marble",
+    "significantInMerra": "Significant in MERRA-2",
+    "precipitationSource": "Read the MERRA-2 assessment."
   },
   "charts": {
     "month": "Month",
@@ -299,12 +302,12 @@
     "generationDescription": "The lab generates random monthly values with no underlying trend to show how month-to-month persistence can produce false alarms.",
     "generationTooltipHtml": "<b>How these data are generated</b><br>The lab generates random monthly values with no underlying trend to show how month-to-month persistence can produce false alarms.",
     "noiseTitle": "Can noise look like a trend?",
-    "noiseDescriptionHtml": "This series has <b>no trend</b>, but each month remembers the last one, like real weather. A naive test is often fooled; the corrected one is not.",
+    "noiseDescriptionHtml": "This series has <b>no underlying trend</b>. Nearby months can have similar values, which can lead either test to flag a trend.",
     "years": "Years",
     "memory": "Memory",
     "newSeries": "New series",
     "frequencyTitle": "How often are we fooled?",
-    "frequencyDescription": "200 trendless series. An honest test is fooled about 5% of the time.",
+    "frequencyDescription": "Both tests use the same 200 series with zero trend. The dashed 5% line shows the expected rate for a well-calibrated test.",
     "runMany": "Run 200",
     "simulatedSeries": "Simulated (no trend)",
     "fittedLine": "Fitted line",
@@ -317,10 +320,25 @@
     "correctedTest": "Corrected test",
     "effectiveNHint": "Effective n ≈ {effective} of {total} months",
     "honestTarget": "Honest target",
-    "fooledCount": "Fooled {count} of {total} times",
+    "fooledCount": "{count} false alarms out of {total}",
     "honestTest": "An honest 5% test",
-    "fooledAxis": "% fooled",
-    "settingsSummary": "{years} years, memory {memory}."
+    "fooledAxis": "False alarms",
+    "settingsSummary": "{years} years, memory {memory}.",
+    "batchInterval": "95% interval: {range}",
+    "batchReference": "5% reference",
+    "batchSummary": "{runs} synthetic series · {years} years each · memory {memory}. Whiskers show 95% Wilson intervals.",
+    "loadError": "Could not load the simulation. Try again.",
+    "stepTitle": "Can a sudden shift look like a trend?",
+    "stepDescription": "Fit one line to this synthetic series. Then compare the trends on either side of the change.",
+    "stepCompare": "Compare before and after",
+    "stepWhole": "Whole series",
+    "stepBefore": "Before the shift",
+    "stepAfter": "After the shift",
+    "stepBreakpoint": "Level shift",
+    "stepLesson": "Both halves have a constant underlying level. The jump makes the full series look like a gradual rise. In real records, check when instruments or processing changed.",
+    "stepInterval": "95% interval: {low} to {high}",
+    "syntheticValues": "Synthetic values",
+    "syntheticUnits": "Simulated units"
   },
   "methods": {
     "toolTitle": "What this tool does",
@@ -496,7 +514,11 @@
         "down": "{variable} in {place} decreased: {slope} {unit} ({when}).",
         "uncertain": "{variable} in {place} changed by {slope} {unit} ({when}), but the likely range ({low} to {high}) includes zero. That is not proof of no change, only that this period cannot show one."
       }
-    }
+    },
+    "merraLess": "MERRA-2 suggests less rainfall. Needs confirmation.",
+    "merraMore": "MERRA-2 suggests more rainfall. Needs confirmation.",
+    "merraEstimate": "Estimated MERRA-2 rainfall trend: {slope} mm/day per decade ({start}–{end}, {season}).",
+    "merraCaution": "Published assessments document breaks in corrected MERRA-2 rainfall in South America. Check a second dataset for the same area, season and period."
   },
   "errors": {
     "analysisFailed": "Could not analyse: {message}",

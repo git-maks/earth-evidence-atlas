@@ -338,6 +338,7 @@ function setDrawing(on) {
 
 // ---------------------------------------------------------------- data layers
 let layersSeq = 0;
+const savedPlaces = () => lsGet("atlas.globePlaces", []);
 async function loadLayers(cached) {
   if (!G.map || !G.map.getSource("regions")) return;
   const seq = ++layersSeq;
@@ -356,22 +357,27 @@ async function loadLayers(cached) {
   G.allPlaces = all;
   G.allPlacesVar = v.id;
   G.places = all.filter((l) => AREAS.visible(l.region));
+  G.places.push(...savedPlaces().filter((l) => l.variable === v.id && all.some((source) => source.region === l.dataRegion)));
   const regional = G.places.filter((l) => l.region !== "world");
   if (G.place !== "world" && !regional.some((l) => l.region === G.place) && (G.place !== "all" || !regional.length)) G.place = "world";
   const others = all.filter((l) => l.custom && !AREAS.mine().includes(l.region) && !AREAS.hidden().includes(l.region));
   $("#gOthersRow").hidden = !others.length && !AREAS.others();
   $("#gShowOthers").checked = AREAS.others();
   const short = (l) => t(`catalog.regions.${l.region}.shortName`);
-  $$("#gRegions .chip:not(#gWorld)").forEach((b) => b.remove());
+  $$("#gRegions [data-r]:not(#gWorld)").forEach((b) => b.remove());
   $("#gRegions").insertAdjacentHTML("beforeend",
     (regional.length ? `<button class="chip" data-r="all" data-tip="${esc(t("globe.allPlacesHint"))}">${t("globe.allPlaces")}</button>` : "") +
-    regional.map((l) => `<button class="chip" data-r="${l.region}" ${l.custom ? `data-tip="${l.name}"` : ""}>${l.custom ? ic("pin") : ""}${l.custom ? (AREAS.mine().includes(l.region) ? t("globe.myArea") : t("globe.area")) : short(l)}` +
+    regional.map((l) => `<button class="chip" data-r="${l.region}" ${l.custom ? `data-tip="${esc(l.name)}"` : ""}>${l.custom ? ic("pin") : ""}${l.custom ? (l.dataRegion || AREAS.mine().includes(l.region) ? t("globe.myArea") : t("globe.area")) : short(l)}` +
       (l.custom ? `<span class="chipx" role="button" tabindex="0" aria-label="${esc(t("common.hideArea"))}" data-hide="${l.region}">${ic("close")}</span>` : "") + `</button>`).join(""));
   $$("#gRegions .chipx").forEach((x) => x.onclick = (ev) => {
-    ev.stopPropagation(); hideTip(); AREAS.hide(x.dataset.hide); loadLayers();
+    ev.stopPropagation(); hideTip();
+    const id = x.dataset.hide;
+    if (id.startsWith("saved-")) lsSet("atlas.globePlaces", savedPlaces().filter((l) => l.region !== id));
+    else AREAS.hide(id);
+    loadLayers();
     if (typeof syncControls === "function" && CAT) syncControls();
   });
-  $$("#gRegions .chip:not(#gWorld)").forEach((b) => b.onclick = () => selectGlobePlace(b.dataset.r));
+  $$("#gRegions [data-r]:not(#gWorld)").forEach((b) => b.onclick = () => selectGlobePlace(b.dataset.r));
   const [y0, y1] = v.years;
   if (!G.year || G.year < y0 || G.year > y1) G.year = y1;
   $("#gYear").min = y0; $("#gYear").max = y1; $("#gYear").value = G.year; $("#gYearV").textContent = G.year;
@@ -405,7 +411,7 @@ function applyGlobePlace() {
   const inside = (a, b) => a.bbox[0] >= b.bbox[0] && a.bbox[1] >= b.bbox[1] && a.bbox[2] <= b.bbox[2] && a.bbox[3] <= b.bbox[3];
   G.layers = shown.filter((l) => !shown.some((o) => o !== l && inside(l, o) && !inside(o, l)));
   G.map.getSource("regions").setData({ type: "FeatureCollection", features: shown.filter((l) => l.region !== "world").map((l) => rectPoly(l.bbox)) });
-  $$("#gRegions .chip").forEach((b) => setPressed(b, b.dataset.r === place));
+  $$("#gRegions [data-r]").forEach((b) => setPressed(b, b.dataset.r === place));
   const note = $("#gPlaceNote");
   note.textContent = t("globe.noDatasetData");
   note.hidden = G.layers.length > 0 || Boolean(G.monthly);
@@ -416,7 +422,7 @@ const imgCache = new Map();
 async function fetchFrame(l, mode, year) {
   const key = `${mode}|${G.var}|${l.region}|${G.months}|${mode === "year" ? year : ""}`;
   if (!G.frameCache.has(key)) {
-    const q = new URLSearchParams({ var: G.var, region: l.region, months: G.months, ...(mode === "year" ? { year } : {}) });
+    const q = new URLSearchParams({ var: G.var, region: l.dataRegion || l.region, months: G.months, ...(mode === "year" ? { year } : {}) });
     const request = api(mode === "year" ? "frame" : "map", q).catch(() => {
       if (G.frameCache.get(key) === request) G.frameCache.delete(key);
       return null;
@@ -576,11 +582,12 @@ function setSelection(b, final) {
   Plotly.purge("gChart");
 }
 async function runCompute() {
-  if (!G.sel) return;
-  const varId = $("#gModel").value, v = CAT.variables.find((x) => x.id === varId);
+  const selection = G.sel, varId = $("#gModel").value, displayedVar = G.var;
+  if (!selection || !varId) return;
   $("#gGo").disabled = true; $("#gOut").innerHTML = "";
+  $("#gPendingPlace").hidden = false;
   try {
-    const r = await fetch("/api/compute", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ var: varId, bbox: G.sel }) });
+    const r = await fetch("/api/compute", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ var: varId, bbox: selection }) });
     const j = await r.json();
     if (!r.ok) throw new Error(I18N.text(j.detail || r.statusText));
     if (j.status !== "ready") {
@@ -589,23 +596,41 @@ async function runCompute() {
       while (true) {
         await new Promise((res) => setTimeout(res, 1500));
         const s = await api(`jobs/${j.job}`, "");
-        $("#gProgBar").style.width = Math.round((s.progress || 0) * 100) + "%";
-        $("#gProgMsg").textContent = t("common.progressMessage", { message: s.message, seconds: Math.round(s.elapsed_s) });
+        if (G.sel === selection) {
+          $("#gProgBar").style.width = Math.round((s.progress || 0) * 100) + "%";
+          $("#gProgMsg").textContent = t("common.progressMessage", { message: s.message, seconds: Math.round(s.elapsed_s) });
+        }
         if (s.status === "done") break;
         if (s.status === "error") throw new Error(s.message);
       }
       $("#gProg").hidden = true;
       CAT = await api("catalog", "");
-      if (varId === G.var) { G.frameCache.clear(); await loadLayers(); }
+    } else if (!available(varId, j.region)) {
+      CAT = await api("catalog", "");
     }
-    AREAS.add(j.region);
-    if (varId === G.var) loadLayers();
-    const a = await api("analysis", new URLSearchParams({ var: varId, region: j.region, bbox: j.bbox.join(",") }));
-    showResult(a, j.region);
+    const [w, s, e, n] = j.bbox;
+    const bbox = [Math.max(w, selection[0]), Math.max(s, selection[1]), Math.min(e, selection[2]), Math.min(n, selection[3])];
+    const source = CAT.regions.find((region) => region.id === j.region);
+    if (source && source.custom && source.bbox.every((value, i) => value === bbox[i])) {
+      AREAS.add(j.region);
+    } else {
+      const region = `saved-${varId}-${bbox.join(",")}`;
+      const place = { region, dataRegion: j.region, variable: varId, bbox, name: bbox.join(", "), custom: true };
+      lsSet("atlas.globePlaces", [...savedPlaces().filter((l) => l.region !== region), place]);
+    }
+    if (G.sel === selection && G.var === displayedVar && varId !== G.var) {
+      $("#gVar").value = varId;
+      $("#gVar").dispatchEvent(new Event("change"));
+    } else if (varId === G.var) loadLayers();
+    const a = await api("analysis", new URLSearchParams({ var: varId, region: j.region, bbox: bbox.join(",") }));
+    if (G.sel === selection) showResult(a, j.region);
   } catch (e) {
     $("#gProg").hidden = true;
-    $("#gOut").innerHTML = `<p class="err">${esc(e.message)}</p>`;
-  } finally { $("#gGo").disabled = false; }
+    if (G.sel === selection) $("#gOut").innerHTML = `<p class="err">${esc(e.message)}</p>`;
+  } finally {
+    $("#gPendingPlace").hidden = true;
+    $("#gGo").disabled = false;
+  }
 }
 function showResult(a, region) {
   G.lastAnalysis = { raw: a._raw || a, region };
@@ -637,7 +662,7 @@ function buildGlobeControls() {
     G.var = e.target.value;
     stopPlay();
     G.places = [];
-    $$("#gRegions .chip:not(#gWorld)").forEach((b) => b.remove());
+    $$("#gRegions [data-r]:not(#gWorld)").forEach((b) => b.remove());
     if (G.map.getSource("regions")) {
       applyGlobePlace();
       $("#gPlaceNote").textContent = t("globe.loadingCoverage");

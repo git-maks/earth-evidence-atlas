@@ -15,10 +15,12 @@ import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
+from typing import Literal
 
 import numpy as np
 import pandas as pd
 import xarray as xr
+from scipy import stats as st
 from fastapi import Body, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response
@@ -217,7 +219,22 @@ def _answer(a, months_t, bbox_t, min_len):
             if e0 - s0 >= 7:
                 compare = _analysis(other, region, s0, e0, months_t, bbox_t, min_len)
                 cvar = o.public()
-        return answers.build(VARIABLES[var].public(), get_region(region).name, a, tmap, compare, cvar)
+        answer = answers.build(VARIABLES[var].public(), get_region(region).name, a, tmap, compare, cvar)
+        if var == "precip":
+            w, s, e, n = a["bbox"]
+            aw, south, ae, north = REGIONS["amazon_arc"].bbox
+            if w < ae and aw < e and s < north and south < n:
+                answer["source_url"] = "https://doi.org/10.1175/JCLI-D-16-0570.1"
+                answer["caveat"] = ("Published assessments document breaks in corrected MERRA-2 rainfall in South America. "
+                                    "Check a second dataset for the same area, season and period.")
+                if answer["code"] in ("trend_detected", "depends_on_period"):
+                    trend = a["result"]["slope"]
+                    answer["lines"][0] = (f"Estimated MERRA-2 rainfall trend: {answers.num(trend)} "
+                                          f"mm/day per decade ({a['start']}–{a['end']}, {answers.season_text(a['months'])}).")
+                    if answer["code"] == "trend_detected":
+                        answer["headline"] = ("MERRA-2 suggests less rainfall. Needs confirmation." if trend < 0 else
+                                              "MERRA-2 suggests more rainfall. Needs confirmation.")
+        return answer
     except Exception as exc:  # an answer must never break the analysis itself
         return dict(question=VARIABLES[a["variable"]].question, headline="", code="error", lines=[],
                     caveat=None, how=[], note=f"Answer unavailable: {exc}")
@@ -303,23 +320,38 @@ def export_json(var: str, region: str, start: int | None = None, end: int | None
 
 @app.get("/api/simulate")
 def simulate(seed: int = 7, years: int = Query(12, ge=5, le=60), phi: float = Query(0.6, ge=0, le=0.95),
-             sigma: float = Query(0.5, gt=0, le=5)):
-    """SIMULATION – not satellite observations. Trendless AR(1) noise, to show false alarms."""
+             sigma: float = Query(0.5, gt=0, le=5), scenario: Literal["noise", "step"] = "noise"):
+    """Synthetic AR(1) noise, optionally with one change in its mean halfway through."""
     rng = np.random.default_rng(seed)
     n = years * 12
     x = np.zeros(n)
     e = rng.normal(0, sigma, n)
     for i in range(1, n):
         x[i] = phi * x[i - 1] + e[i]
+    halfway = n // 2
+    if scenario == "step":
+        x[halfway:] += 5 * sigma
     times = pd.date_range("2001-01-01", periods=n, freq="MS").values
     t = S.decimal_years(times)
     o = S.ols_trend(t, x)
-    from scipy import stats as st
     naive_p = float(2 * st.t.sf(abs(o["slope"][0] / o["se"][0]), n - 2))
-    return _clean(dict(label="SIMULATION – not satellite observations", seed=seed, years=years, phi=phi,
-                       sigma=sigma, true_trend=0.0, dates=[str(d)[:7] for d in times], values=x,
-                       slope=o["slope"][0] * 10, naive_p=naive_p, corrected_p=o["p"][0],
-                       n_eff=o["n_eff"][0], fit=o["intercept"][0] + o["slope"][0] * t))
+    result = dict(label="SIMULATION – not satellite observations", seed=seed, years=years, phi=phi,
+                  sigma=sigma, true_trend=0.0, dates=[str(d)[:7] for d in times], values=x,
+                  slope=o["slope"][0] * 10, naive_p=naive_p, corrected_p=o["p"][0],
+                  n_eff=o["n_eff"][0], fit=o["intercept"][0] + o["slope"][0] * t)
+    if scenario == "step":
+        result["change_date"] = result["dates"][halfway]
+        result["ci_low"], result["ci_high"] = 10 * o["ci_low"][0], 10 * o["ci_high"][0]
+        result["segments"] = []
+        for section in (slice(0, halfway), slice(halfway, n)):
+            seg_t = t[section]
+            fit = S.ols_trend(seg_t, x[section])
+            result["segments"].append(dict(
+                dates=result["dates"][section], fit=fit["intercept"][0] + fit["slope"][0] * seg_t,
+                slope=10 * fit["slope"][0], p=fit["p"][0],
+                ci_low=10 * fit["ci_low"][0], ci_high=10 * fit["ci_high"][0],
+            ))
+    return _clean(result)
 
 
 @app.get("/api/simulate_many")
@@ -328,7 +360,6 @@ def simulate_many(runs: int = Query(200, ge=10, le=5000), years: int = Query(12,
     """SIMULATION – how often trendless AR(1) series are called significant (naive vs corrected)."""
     if PUBLIC and runs > PUBLIC_LIMITS["max_sim_runs"]:
         raise HTTPException(400, f"at most {PUBLIC_LIMITS['max_sim_runs']} runs on the public demo")
-    from scipy import stats as st
     rng = np.random.default_rng(seed)
     n = years * 12
     e = rng.normal(0, 1, (n, runs))
@@ -338,8 +369,12 @@ def simulate_many(runs: int = Query(200, ge=10, le=5000), years: int = Query(12,
     t = S.decimal_years(pd.date_range("2001-01-01", periods=n, freq="MS").values)
     o = S.ols_trend(t, x)
     naive_p = 2 * st.t.sf(np.abs(o["slope"] / o["se"]), n - 2)
+    naive = int((naive_p < 0.05).sum())
+    corrected = int((o["p"] < 0.05).sum())
     return dict(label="SIMULATION – not satellite observations", runs=runs, years=years, phi=phi,
-                naive_significant=int((naive_p < 0.05).sum()), corrected_significant=int((o["p"] < 0.05).sum()))
+                naive_significant=naive, corrected_significant=corrected,
+                naive_interval=list(st.binomtest(naive, runs).proportion_ci(method="wilson")),
+                corrected_interval=list(st.binomtest(corrected, runs).proportion_ci(method="wilson")))
 
 # ------------------------------------------------------------------ globe support
 COMPUTE_LIMITS = {

@@ -232,7 +232,8 @@
       "merra": "Temperatura powietrza (miesiąc)",
       "imerg": "Opad (dzień)"
     },
-    "attribution": "Obrazy: {imagery} · granice: {borders} · gwiazdy: {stars}"
+    "attribution": "Obrazy: {imagery} · granice: {borders} · gwiazdy: {stars}",
+    "savingPlace": "Dodawanie obszaru…"
   },
   "detective": {
     "controlsLabel": "Wybierz, co chcesz zbadać",
@@ -280,7 +281,9 @@
     "robustnessHint": "Każdy kwadrat to para lat początkowego i końcowego. Kliknij, aby ją wybrać.",
     "evidence": "Wyniki i źródła",
     "typicalYear": "Typowy rok",
-    "basemapAttribution": "Mapa podkładowa: {source} Blue Marble"
+    "basemapAttribution": "Mapa podkładowa: {source} Blue Marble",
+    "significantInMerra": "Istotny trend w MERRA-2",
+    "precipitationSource": "Przeczytaj ocenę MERRA-2."
   },
   "charts": {
     "month": "Miesiąc",
@@ -299,12 +302,12 @@
     "generationDescription": "Laboratorium generuje losowe wartości miesięczne bez trendu, aby pokazać, jak zależności między kolejnymi miesiącami mogą wywoływać fałszywe alarmy.",
     "generationTooltipHtml": "<b>Jak powstają te dane</b><br>Laboratorium generuje losowe wartości miesięczne bez trendu, aby pokazać, jak zależności między kolejnymi miesiącami mogą wywoływać fałszywe alarmy.",
     "noiseTitle": "Czy szum może wyglądać jak trend?",
-    "noiseDescriptionHtml": "Ta seria <b>nie ma trendu</b>, ale każdy miesiąc pamięta poprzedni, tak jak w rzeczywistej pogodzie. Zwykły test często daje się zwieść; test z korektą uwzględnia tę zależność.",
+    "noiseDescriptionHtml": "Ta seria ma <b>zerowy trend</b>. Sąsiednie miesiące mogą mieć zbliżone wartości, przez co oba testy mogą wykryć pozorny trend.",
     "years": "Lata",
     "memory": "Pamięć",
     "newSeries": "Nowa seria",
     "frequencyTitle": "Jak często dajemy się zwieść?",
-    "frequencyDescription": "200 serii bez trendu. Poprawnie skalibrowany test daje fałszywy alarm w około 5% przypadków.",
+    "frequencyDescription": "Oba testy analizują te same 200 serii o zerowym trendzie. Przerywana linia 5% oznacza oczekiwany odsetek dla dobrze skalibrowanego testu.",
     "runMany": "Uruchom 200 symulacji",
     "simulatedSeries": "Symulacja (bez trendu)",
     "fittedLine": "Dopasowana prosta",
@@ -317,10 +320,25 @@
     "correctedTest": "Test z korektą",
     "effectiveNHint": "Efektywne n ≈ {effective} z {total} miesięcy",
     "honestTarget": "Oczekiwany odsetek",
-    "fooledCount": "Fałszywe alarmy: {count} z {total}",
+    "fooledCount": "{count} fałszywych alarmów na {total}",
     "honestTest": "Poprawnie skalibrowany test na poziomie 5%",
-    "fooledAxis": "% fałszywych alarmów",
-    "settingsSummary": "Liczba lat: {years}, pamięć: {memory}."
+    "fooledAxis": "Fałszywe alarmy",
+    "settingsSummary": "Liczba lat: {years}, pamięć: {memory}.",
+    "batchInterval": "Przedział 95%: {range}",
+    "batchReference": "Próg odniesienia 5%",
+    "batchSummary": "{runs} serii syntetycznych · {years} lat w każdej · pamięć {memory}. Wąsy pokazują przedziały Wilsona 95%.",
+    "loadError": "Nie udało się wczytać symulacji. Spróbuj ponownie.",
+    "stepTitle": "Czy nagły skok może wyglądać jak trend?",
+    "stepDescription": "Dopasuj jedną linię do tej serii syntetycznej. Następnie porównaj trendy przed zmianą i po niej.",
+    "stepCompare": "Porównaj przed zmianą i po niej",
+    "stepWhole": "Cała seria",
+    "stepBefore": "Przed skokiem",
+    "stepAfter": "Po skoku",
+    "stepBreakpoint": "Skok poziomu",
+    "stepLesson": "W obu częściach poziom bazowy jest stały. Skok sprawia, że cała seria wygląda na stopniowy wzrost. W rzeczywistych danych sprawdź daty zmian przyrządów lub sposobu przetwarzania.",
+    "stepInterval": "Przedział 95%: od {low} do {high}",
+    "syntheticValues": "Wartości syntetyczne",
+    "syntheticUnits": "Jednostki symulacji"
   },
   "methods": {
     "toolTitle": "Co robi to narzędzie",
@@ -496,7 +514,11 @@
         "down": "Spadek wartości {variable}: {place}, {slope} {unit} ({when}).",
         "uncertain": "Tempo zmiany wartości {variable}: {place}, {slope} {unit} ({when}), ale prawdopodobny przedział (od {low} do {high}) obejmuje zero. To nie dowodzi braku zmian, tylko tego, że ten okres nie pozwala ich wykazać."
       }
-    }
+    },
+    "merraLess": "MERRA-2 wskazuje spadek opadów. Wynik wymaga potwierdzenia.",
+    "merraMore": "MERRA-2 wskazuje wzrost opadów. Wynik wymaga potwierdzenia.",
+    "merraEstimate": "Oszacowany trend opadów w MERRA-2: {slope} mm/dzień na dekadę ({start}–{end}, {season}).",
+    "merraCaution": "W publikacjach opisano nieciągłości skorygowanych opadów MERRA-2 w Ameryce Południowej. Sprawdź drugi zbiór dla tego samego obszaru, sezonu i okresu."
   },
   "errors": {
     "analysisFailed": "Nie udało się przeprowadzić analizy: {message}",

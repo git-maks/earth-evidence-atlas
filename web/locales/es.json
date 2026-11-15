@@ -232,7 +232,8 @@
       "merra": "Temperatura del aire (mes)",
       "imerg": "Lluvia (día)"
     },
-    "attribution": "Imágenes: {imagery} · fronteras: {borders} · estrellas: {stars}"
+    "attribution": "Imágenes: {imagery} · fronteras: {borders} · estrellas: {stars}",
+    "savingPlace": "Añadiendo área…"
   },
   "detective": {
     "controlsLabel": "Elige qué investigar",
@@ -280,7 +281,9 @@
     "robustnessHint": "Cada casilla representa un par de años inicial y final. Haz clic para seleccionarlo.",
     "evidence": "Evidencia",
     "typicalYear": "Año típico",
-    "basemapAttribution": "Mapa base: {source} Blue Marble"
+    "basemapAttribution": "Mapa base: {source} Blue Marble",
+    "significantInMerra": "Significativa en MERRA-2",
+    "precipitationSource": "Lee la evaluación de MERRA-2."
   },
   "charts": {
     "month": "Mes",
@@ -299,12 +302,12 @@
     "generationDescription": "El laboratorio genera valores mensuales aleatorios sin una tendencia subyacente para mostrar cómo la persistencia de un mes a otro puede producir falsas alarmas.",
     "generationTooltipHtml": "<b>Cómo se generan estos datos</b><br>El laboratorio genera valores mensuales aleatorios sin una tendencia subyacente para mostrar cómo la persistencia de un mes a otro puede producir falsas alarmas.",
     "noiseTitle": "¿Puede el ruido parecer una tendencia?",
-    "noiseDescriptionHtml": "Esta serie <b>no tiene tendencia</b>, pero cada mes conserva parte del anterior, como ocurre con el tiempo real. Una prueba sin corrección suele dar falsas alarmas; la corregida las evita.",
+    "noiseDescriptionHtml": "Esta serie tiene <b>una tendencia real nula</b>. Los meses cercanos pueden tener valores parecidos, por lo que ambas pruebas pueden detectar una tendencia aparente.",
     "years": "Años",
     "memory": "Persistencia",
     "newSeries": "Nueva serie",
     "frequencyTitle": "¿Con qué frecuencia nos engaña el ruido?",
-    "frequencyDescription": "200 series sin tendencia. Una prueba bien calibrada da falsas alarmas aproximadamente el 5% de las veces.",
+    "frequencyDescription": "Ambas pruebas usan las mismas 200 series sin tendencia. La línea discontinua del 5 % muestra la tasa esperada de una prueba bien calibrada.",
     "runMany": "Simular 200 series",
     "simulatedSeries": "Simulada (sin tendencia)",
     "fittedLine": "Recta ajustada",
@@ -317,10 +320,25 @@
     "correctedTest": "Prueba corregida",
     "effectiveNHint": "n efectivo ≈ {effective} de {total} meses",
     "honestTarget": "Objetivo de una prueba bien calibrada",
-    "fooledCount": "Falsa alarma en {count} de {total} ocasiones",
+    "fooledCount": "{count} falsas alarmas de {total}",
     "honestTest": "Una prueba bien calibrada al 5%",
-    "fooledAxis": "% de falsas alarmas",
-    "settingsSummary": "{years} años, persistencia {memory}."
+    "fooledAxis": "Falsas alarmas",
+    "settingsSummary": "{years} años, persistencia {memory}.",
+    "batchInterval": "Intervalo del 95 %: {range}",
+    "batchReference": "Referencia del 5 %",
+    "batchSummary": "{runs} series sintéticas · {years} años por serie · memoria {memory}. Las barras de error muestran intervalos de Wilson del 95 %.",
+    "loadError": "No se pudo cargar la simulación. Inténtalo de nuevo.",
+    "stepTitle": "¿Puede un cambio brusco parecer una tendencia?",
+    "stepDescription": "Ajusta una recta a esta serie sintética. Después compara las tendencias antes y después del cambio.",
+    "stepCompare": "Comparar antes y después",
+    "stepWhole": "Serie completa",
+    "stepBefore": "Antes del cambio",
+    "stepAfter": "Después del cambio",
+    "stepBreakpoint": "Cambio de nivel",
+    "stepLesson": "Las dos mitades tienen un nivel de referencia constante. El salto hace que la serie completa parezca subir gradualmente. En datos reales, comprueba cuándo cambiaron los instrumentos o el procesamiento.",
+    "stepInterval": "Intervalo del 95 %: de {low} a {high}",
+    "syntheticValues": "Valores sintéticos",
+    "syntheticUnits": "Unidades simuladas"
   },
   "methods": {
     "toolTitle": "Qué hace esta herramienta",
@@ -496,7 +514,11 @@
         "down": "{variable} disminuyó en {place}: {slope} {unit} ({when}).",
         "uncertain": "El cambio de {variable} en {place} fue de {slope} {unit} ({when}), pero el intervalo plausible (de {low} a {high}) incluye el cero. Eso no demuestra que no haya cambios, solo que este período no permite detectarlos."
       }
-    }
+    },
+    "merraLess": "MERRA-2 indica menos precipitación. Hace falta confirmarlo.",
+    "merraMore": "MERRA-2 indica más precipitación. Hace falta confirmarlo.",
+    "merraEstimate": "Tendencia estimada de precipitación en MERRA-2: {slope} mm/día por década ({start}–{end}, {season}).",
+    "merraCaution": "Las evaluaciones publicadas documentan discontinuidades en la precipitación corregida de MERRA-2 en Sudamérica. Comprueba otro conjunto de datos para la misma zona, estación y periodo."
   },
   "errors": {
     "analysisFailed": "No se pudo realizar el análisis: {message}",
