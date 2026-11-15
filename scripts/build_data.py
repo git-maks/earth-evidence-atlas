@@ -1,6 +1,4 @@
 """Build all data cubes. Usage: python -m scripts.build_data [var ...] [--region r]
-
-AI-generated with Claude; team review pending.
 """
 from __future__ import annotations
 

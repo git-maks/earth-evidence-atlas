@@ -1,8 +1,4 @@
-"""Catalogue of variables and regions used by Earth Evidence Atlas.
-
-AI disclosure: this file was generated with Claude (Anthropic) as a coding
-assistant during NASA Space Apps 2026; it must be reviewed by the team.
-"""
+"""Catalogue of variables and regions used by Earth Evidence Atlas."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field, asdict

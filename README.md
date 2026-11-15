@@ -17,7 +17,7 @@ Stan na **14.11.2026, ok. 17:30**: działający lokalnie prototyp end-to-end. Ob
   - Limity: MODIS do 8° na bok i 40 deg² (ok. 30–60 s dla 2°×2°); POWER do 30° na bok (kilka sekund); GISTEMP obejmuje cały świat, więc nie trzeba nic pobierać.
 - „Open full analysis →” przenosi zaznaczenie do zakładki Trend detective.
 
-> **Ujawnienie AI (wymagane przez Project Submission Guide):** cały kod w `atlas/`, `web/`, `scripts/` i `tests/` wygenerował asystent AI Claude (Anthropic) na prośbę zespołu. Pliki mają to oznaczone w nagłówkach, kostki danych w atrybutach NetCDF (`generator`). Liczby w aplikacji pochodzą wyłącznie z obliczeń na cytowanych danych NASA. Zespół musi przejrzeć kod i opisać użycie AI w zgłoszeniu.
+> **Zasady AI:** według zasad organizatorów nie ma żadnych ograniczeń w używaniu AI i nie trzeba informować, kiedy ani gdzie AI zostało użyte; pełna dowolność. Liczby w aplikacji pochodzą wyłącznie z obliczeń na cytowanych danych NASA (to nasza zasada jakości, nie wymóg hackathonu).
 
 ## Uruchomienie
 
@@ -101,9 +101,9 @@ Wartości w °C/dekadę. Wniosek: ochłodzenie w NW Indiach jest **nieistotne do
 
 ## Czego jeszcze potrzebujemy (propozycja kolejności)
 
-1. **Przegląd kodu przez zespół** i decyzja co do ujawnienia AI (patrz [formalne/02_zasady_hackathonu.md](formalne/02_zasady_hackathonu.md#6-użycie-narzędzi-aisi)).
+1. **Przegląd kodu przez zespół.**
 2. **Live demo (konieczne do zgłoszenia):** publiczny URL bez logowania, najlepiej przed 15.11 rano. To jeden proces uvicorn + statyczne pliki + ok. 60 MB kostek; `data/raw` nie jest potrzebne. Do ustalenia: gdzie hostujemy (VM, kontener, tunel z tego serwera) i czy publiczne demo ma pozwalać na obliczenia na żądanie. Rekomenduję limit kolejki i rozmiaru; na razie zadania nie mają limitu liczby ani czasu.
-3. **Materiały zgłoszenia:** film ≤ 30 s (glob → zaznaczenie Amazonii → wynik → macierz) albo ≤ 7 slajdów po angielsku, opis projektu, lista źródeł i licencji, oznaczenie AI.
+3. **Materiały zgłoszenia:** film ≤ 30 s (glob → zaznaczenie Amazonii → wynik → macierz) albo ≤ 7 slajdów po angielsku, opis projektu, lista źródeł i licencji.
 4. **Earthdata Login** (`~/.netrc`), potem adapter IMERG monthly. Zastąpi wątpliwy opad MERRA-2 w Amazonii i da zmienną zgodną z planem P0.
 5. QA dla MODIS (`pixel_reliability` / `QC_Day`).
 6. P1: GRACE (magazyn wody) dla NW Indii, czyli dokładnie kontrast „zieleń vs woda”. Ewentualnie zlewnie HydroBASINS zamiast prostokątów.
@@ -139,3 +139,23 @@ Wartości w °C/dekadę. Wniosek: ochłodzenie w NW Indiach jest **nieistotne do
 - Pytanie o drugiego satelitę (Aqua) porównuje wynik z Terrą dla tego samego obszaru i okresu.
 - Pytanie „Where is it warming fastest?” wskazuje komórkę z najszybszym istotnym ociepleniem.
 - **Bez modelu językowego:** odpowiedzi to stałe szablony w `atlas/answers.py` wypełniane liczbami z analizy. Odpowiedź trafia też do eksportu JSON (`answer`) i ma testy w `tests/test_answers.py`. Nie podaje przyczyn zmian.
+
+## Publiczne demo (Tailscale Funnel)
+
+- Adres: **https://earth-atlas.tail969737.ts.net**. Funnel na osobnym węźle `earth-atlas` (osobny `tailscaled` w `~/.local/state/tailscale-earth/`) przekazuje ruch tylko do `127.0.0.1:8780`. Węzeł `kmiwz`, SSH, port 8765 i reszta tailnetu nie są wystawione.
+- Na 8780 działa instancja w trybie publicznym (`ATLAS_PUBLIC=1`):
+  - bez `/docs`, `/redoc` i `/openapi.json`,
+  - limity liczenia nowych obszarów: 3 zadania naraz, 1 na odwiedzającego, 8 na godzinę,
+  - sprzątanie obszarów użytkowników (7 dni, maks. 60).
+- Po restarcie serwera trzeba ręcznie uruchomić oba procesy (konfiguracja Funnel zostaje zapisana w stanie węzła):
+
+```bash
+cd /storage/home/moai/nasaapps && ATLAS_PUBLIC=1 ATLAS_PRUNE_DAYS=7 ATLAS_MAX_CUSTOM=60 setsid nohup .venv/bin/uvicorn atlas.api:app --host 127.0.0.1 --port 8780 --proxy-headers > data/public.log 2>&1 < /dev/null &
+```
+
+```bash
+D=~/.local/state/tailscale-earth; setsid nohup ~/.local/bin/tailscaled --tun=userspace-networking --port=0 --statedir=$D --socket=$D/tailscaled.sock > $D/tailscaled.log 2>&1 < /dev/null &
+```
+
+- Wyłączenie demo: `~/.local/bin/tailscale --socket=$HOME/.local/state/tailscale-earth/tailscaled.sock funnel --https=443 off`.
+- Zmiany w kodzie Pythona dochodzą do demo dopiero po restarcie procesu na 8780.

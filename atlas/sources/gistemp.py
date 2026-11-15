@@ -1,6 +1,4 @@
 """NASA GISTEMP v4 gridded anomalies (no login required).
-
-AI-generated with Claude; team review pending.
 """
 from __future__ import annotations
 

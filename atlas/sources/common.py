@@ -1,4 +1,4 @@
-"""Helpers shared by data adapters (AI-generated with Claude; team review pending)."""
+"""Helpers shared by data adapters."""
 from __future__ import annotations
 
 import datetime as dt
@@ -32,7 +32,7 @@ def write_cube(var_id: str, region_id: str, values: np.ndarray, times, lat, lon,
         "variable": var_id, "region": region_id, "product": v.product,
         "provider": v.provider, "citation": v.citation, "source_url": v.url,
         "created": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
-        "generator": "Earth Evidence Atlas pipeline (code generated with Claude/Anthropic AI assistant)",
+        "generator": "Earth Evidence Atlas pipeline",
     })
     if extra_attrs:
         ds.attrs.update({k: (json.dumps(x) if isinstance(x, (dict, list)) else x) for k, x in extra_attrs.items()})

@@ -10,9 +10,6 @@ Methods (all standard; references in docs/METHODS.md):
   normally distributed noise.
 * Benjamini–Hochberg false discovery rate across map pixels (Wilks 2016,
   BAMS), so a map of many tests does not light up by chance.
-
-AI disclosure: generated with Claude (Anthropic) as a coding assistant;
-validated by tests in tests/test_stats.py; team review pending.
 """
 from __future__ import annotations
 

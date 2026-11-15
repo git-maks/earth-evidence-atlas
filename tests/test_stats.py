@@ -1,4 +1,4 @@
-"""Validation of the statistics engine on synthetic data (AI-generated with Claude)."""
+"""Validation of the statistics engine on synthetic data."""
 import numpy as np
 import pandas as pd
 from scipy import stats as st
@@ -88,8 +88,7 @@ def test_window_matrix_and_verdict():
 
 
 def test_prune_custom_regions(tmp_path, monkeypatch):
-    """Old or surplus user-made areas are removed with their files; nothing else is touched.
-    (AI disclosure: test written with Claude.)"""
+    """Old or surplus user-made areas are removed with their files; nothing else is touched."""
     import json
     import time
     from atlas import config

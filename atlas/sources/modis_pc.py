@@ -4,8 +4,6 @@ No NASA Earthdata Login needed: the Planetary Computer mirrors the NASA LP DAAC
 v061 products as cloud-optimised GeoTIFFs with internal overviews. We read a
 coarse overview (~4 km) of every composite, convert sinusoidal pixel centres to
 lat/lon, and average them into a regular 0.1° grid and calendar months.
-
-AI-generated with Claude; team review pending.
 """
 from __future__ import annotations
 

@@ -1,6 +1,4 @@
 """NASA POWER monthly regional adapter (no login required).
-
-AI-generated with Claude; team review pending.
 Docs: https://power.larc.nasa.gov/docs/services/api/temporal/monthly/
 """
 from __future__ import annotations

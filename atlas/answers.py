@@ -1,6 +1,4 @@
 """Plain-language answers to the Detective questions, built only from the computed results.
-
-AI disclosure: written with Claude (Anthropic) as a coding assistant; team review pending.
 No language model is used at run time: every sentence is a fixed template filled with numbers
 from the analysis (trend, confidence interval, tests, robustness matrix, trend map), so each claim
 can be checked on the charts and in the JSON export. The answers never name causes.

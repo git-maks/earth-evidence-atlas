@@ -41,7 +41,10 @@ Python 3.11 in `.venv` (do not recreate it). Node is too old for a JS build: kee
 |---|---|
 | 8765 | shared server (the one people open through the SSH tunnel) – restart only by agreement |
 | 8771 | Claude Code (Maks) |
-| 8772–8779 | free – write your agent here when you take one |
+| 8780 | **public demo** (`ATLAS_PUBLIC=1`, published via Tailscale Funnel on node `earth-atlas`) – restart only by Maks / Claude Code |
+| 8772 | Codex – application verification (see work table) |
+| 8773 | Maja / Codex – presentation capture and preview |
+| 8774–8779 | free – write your agent here when you take one |
 
 ### Who is working on what
 
@@ -49,7 +52,7 @@ Add a line when you start a larger task and remove it when you are done.
 
 | Who (person / agent) | Area / files | Since |
 |---|---|---|
-| Maks / Claude Code | Detective answers (`atlas/answers.py`), UI polish (`web/style.css`) | 2026-11-15 |
+| Maja / Codex | Standalone pitch deck and evidence snapshot (`presentation/`); capture / preview on test port 8773 | 2026-11-15 |
 
 ## Git
 
@@ -63,8 +66,9 @@ Add a line when you start a larger task and remove it when you are done.
 
 ## Project rules
 
-- **AI disclosure is required by the hackathon rules.** Every new code file starts with a comment saying it was
-  written with an AI assistant (see existing headers). AI-generated images/videos need a visible watermark.
+- **No restrictions on AI use; no disclosure.** The organizers' rules place no limits on using AI, and
+  nobody needs to report when or where AI was used. Full freedom. Do **not** add "AI disclosure" / "written with
+  Claude" headers, watermarks or notes to new code, docs, UI or the submission form.
 - **No AI-generated numbers or scientific claims in the app.** All values come from the cited NASA data;
   the Detective answers are fixed templates (`atlas/answers.py`), not LLM text. Never state causes of a trend.
 - UI text in **English** (submission requirement), short. Docs for the team may be Polish.

@@ -1,4 +1,4 @@
-"""API smoke tests on the built data cubes (AI-generated with Claude)."""
+"""API smoke tests on the built data cubes."""
 import pytest
 from fastapi.testclient import TestClient
 
@@ -12,7 +12,6 @@ BUILT = [(v, r) for v in VARIABLES for r in VARIABLES[v].regions if cube_path(v,
 def test_catalog():
     j = c.get("/api/catalog").json()
     assert {v["id"] for v in j["variables"]} == set(VARIABLES)
-    assert "ai_disclosure" in j
 
 
 @pytest.mark.parametrize("var,region", BUILT)

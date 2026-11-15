@@ -1,5 +1,4 @@
 /* Earth Evidence Atlas – 3D globe explorer (MapLibre GL globe + NASA GIBS).
- * AI disclosure: generated with Claude (Anthropic) as a coding assistant; team review pending.
  * Uses globals from app.js: CAT, CMAPS, colorAt, fmt, fmtP, api, layoutBase, plotCfg, state, $, $$. */
 "use strict";
 

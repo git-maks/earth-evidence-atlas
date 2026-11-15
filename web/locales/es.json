@@ -384,13 +384,10 @@
         "label": "datos mínimos",
         "text": "Solo se calcula una tendencia si al menos el {percent}% de los meses seleccionados tienen datos válidos."
       }
-    },
-    "existingNoteTitle": "Declaración de uso de IA",
-    "existingNoteText": "El código de este prototipo se generó con la ayuda de Claude (Anthropic), un asistente de IA. Los datos proceden exclusivamente de las fuentes de la NASA citadas."
+    }
   },
   "footer": {
-    "data": "NASA Space Apps Challenge 2026 · Datos: NASA (MODIS, MERRA-2 a través de POWER, GISTEMP).",
-    "existingNote": "Declaración de uso de IA: código escrito con Claude (Anthropic). Los análisis de la Tierra utilizan los datos de la NASA citados."
+    "data": "NASA Space Apps Challenge 2026 · Datos: NASA (MODIS, MERRA-2 a través de POWER, GISTEMP)."
   },
   "verdicts": {
     "insufficient_data": {

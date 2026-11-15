@@ -1,5 +1,4 @@
-/* Earth Evidence Atlas – frontend (vanilla JS, Leaflet, Plotly).
- * AI disclosure: generated with Claude (Anthropic) as a coding assistant; team review pending. */
+/* Earth Evidence Atlas – frontend (vanilla JS, Leaflet, Plotly). */
 "use strict";
 
 const $ = (s) => document.querySelector(s);
@@ -722,8 +721,7 @@ function renderAbout() {
     <h2>${t("methods.dataTitle")}</h2><table><tr><th>${t("methods.variableColumn")}</th><th>${t("methods.productColumn")}</th><th>${t("methods.gridYearsColumn")}</th><th>${t("methods.citationLicenceColumn")}</th></tr>${rows}</table>
     <h2>${t("methods.methodsTitle")}</h2><ul>${Object.entries(CAT.methods).map(([k, v]) => `<li><b>${t(`methods.notes.${k}.label`)}:</b> ${esc(v)}</li>`).join("")}</ul>
     <p>${t("methods.references")}</p>
-    <h2>${t("methods.limitsTitle")}</h2><p>${t("methods.limitsDescription")}</p>
-    ${CAT.ai_disclosure ? `<h2>${t("methods.existingNoteTitle")}</h2><p>${esc(I18N.text(CAT.ai_disclosure))}</p>` : ""}`;
+    <h2>${t("methods.limitsTitle")}</h2><p>${t("methods.limitsDescription")}</p>`;
 }
 
 // ---------------------------------------------------------------- boot

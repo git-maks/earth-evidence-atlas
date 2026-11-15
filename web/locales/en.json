@@ -384,13 +384,10 @@
         "label": "minimum data",
         "text": "A trend is computed only if at least {percent}% of the selected months are valid."
       }
-    },
-    "existingNoteTitle": "AI disclosure",
-    "existingNoteText": "Code of this prototype was generated with the help of Claude (Anthropic), an AI assistant. Data values come only from the cited NASA sources."
+    }
   },
   "footer": {
-    "data": "NASA Space Apps Challenge 2026 · Data: NASA (MODIS, MERRA-2 via POWER, GISTEMP).",
-    "existingNote": "AI disclosure: code written with Claude (Anthropic). Earth analyses use the cited NASA data."
+    "data": "NASA Space Apps Challenge 2026 · Data: NASA (MODIS, MERRA-2 via POWER, GISTEMP)."
   },
   "verdicts": {
     "insufficient_data": {

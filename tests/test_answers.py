@@ -1,4 +1,4 @@
-"""Answers are fixed templates filled from the analysis numbers (AI disclosure: tests written with Claude)."""
+"""Answers are fixed templates filled from the analysis numbers."""
 from atlas import answers
 from atlas.config import VARIABLES
 
