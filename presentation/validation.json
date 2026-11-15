@@ -1,0 +1,21 @@
+{
+  "slides": 7,
+  "pdf_pages": 7,
+  "offline_browser_check": "passed, no remote asset requests",
+  "layout_check": "all seven slides passed: no text overflow or footer overlap",
+  "interactive_checks": [
+    "slide navigation",
+    "three case tabs",
+    "complete challenge coverage",
+    "data and resource references",
+    "Polish presenter notes",
+    "evidence download equality",
+    "mobile reading mode"
+  ],
+  "project_tests": "43 passed; one existing Starlette/httpx deprecation warning",
+  "artifacts_sha256": {
+    "earth-evidence-atlas.html": "9c538efb4b85440410a4a136aa0a8db209f3280d41b7ecc626e6980ed641112a",
+    "earth-evidence-atlas.pdf": "da98af30879d0957f39f08f806d5b3bf47801d2cd5bc816d7036f63f0fcdd365",
+    "evidence.json": "b04c8b48b551d9f7391220020913dfebf6911be61e6788bf2d502d50a5b31d77"
+  }
+}
