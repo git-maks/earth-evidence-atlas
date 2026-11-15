@@ -75,5 +75,7 @@
     "earth-evidence-atlas-canva-fixed.pdf": "190f639c24e2c717ce89febf1fdc6fccbf3faec73f038c9a6907c33f0073f294",
     "earth-evidence-atlas-canva-editable.pdf": "190f639c24e2c717ce89febf1fdc6fccbf3faec73f038c9a6907c33f0073f294",
     "earth-evidence-atlas-canva-editable.pptx": "76d2340ac86ada1869bdd8aba2412246d0821f85730ce37971200d641f19132e"
-  }
+  },
+  "status": "historical exports; do not use as the current presentation",
+  "scope": "These checks apply only to the older Canva export files identified by the hashes below, not to the refreshed HTML and submission PDF."
 }

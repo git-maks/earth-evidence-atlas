@@ -1,26 +1,32 @@
 {
   "slides": 7,
   "pdf_pages": 7,
-  "offline_browser_check": "passed, no remote asset requests",
-  "layout_check": "all seven slides passed: no text overflow or footer overlap",
-  "interactive_checks": [
-    "slide navigation",
-    "three case tabs",
-    "complete challenge coverage",
-    "data and resource references",
-    "Polish presenter notes",
+  "captured_at": "2026-11-15T11:16:15+01:00",
+  "offline_browser_check": "passed; no remote requests",
+  "layout_check": "all seven slides clear the footer",
+  "checks": [
+    "figures match frozen evidence",
+    "source hashes match",
+    "eight analytical series",
+    "current API values and corrected uncertainty",
+    "three lab cases",
+    "detail panels and notes",
     "evidence download equality",
-    "mobile reading mode",
-    "team photo upload",
-    "editable team names and roles",
-    "saved HTML retains embedded photos and captions",
-    "team slide mobile reading at 390 px"
+    "team names and responsibilities",
+    "photo upload and saved HTML",
+    "390 px reading view",
+    "seven-page PDF with updated text"
   ],
-  "project_tests": "48 passed; two dependency deprecation warnings (Starlette/httpx and Pydantic config)",
+  "browser_errors": [],
   "artifacts_sha256": {
-    "earth-evidence-atlas.html": "830b295e0cff4ffbcc3fb3277c53fa4127d0ddda000c4adf37a92a33f1036d91",
-    "earth-evidence-atlas.pdf": "8942a2c8f1e4c345952079fff4687af56ec3c03404cee392246dadeb2b74a44f",
-    "evidence.json": "b04c8b48b551d9f7391220020913dfebf6911be61e6788bf2d502d50a5b31d77"
+    "earth-evidence-atlas.html": "0297417112efe322a7229c5cac38c973dda202929c435508c1238422c60a1dac",
+    "earth-evidence-atlas.pdf": "672efc4d9131dad3f14b62f6ff66f223735c48f295602e456ada7329ea9a0f9d",
+    "evidence.json": "31ba84c5b9ae653a0b4717bf15fc1a8d0e79529efd38151955eb6dc94770c08b"
   },
-  "slides_1_to_6_unchanged": "passed: template and generated slide HTML are byte-identical; rendered PDF pages 1–6 are pixel-identical at 1440 px"
+  "canva_exports": "previous revision; see README before reuse",
+  "project_tests": {
+    "passed": 68,
+    "warnings": 2,
+    "command": "PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -q -p no:cacheprovider"
+  }
 }

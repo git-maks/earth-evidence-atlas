@@ -1,0 +1,41 @@
+{
+  "checked_at": "2026-11-15T10:12:18.256224+00:00",
+  "url": "https://earth-atlas.tail969737.ts.net/?lang=en",
+  "checks": {
+    "/": {
+      "status": 200
+    },
+    "/api/catalog": {
+      "status": 200,
+      "variables": [
+        "ndvi",
+        "lst_day",
+        "lst_day_aqua",
+        "t2m",
+        "precip",
+        "precip_gpcp",
+        "soil_root",
+        "gistemp"
+      ],
+      "methods": {
+        "deseasonalisation": "Each calendar month's mean over the selected period is subtracted (anomalies).",
+        "trend": "Ordinary least squares slope of the anomalies, reported per decade.",
+        "uncertainty": "Two memory corrections: month to month (AR(1) for the actual sampling, bias-corrected; Santer et al. 2000) and year to year (the same test on yearly means). The p-value is the larger of the two and the 95% interval covers both, so a trend counts only if both agree.",
+        "cross_check": "Seasonal Mann–Kendall with the Hirsch & Slack (1984) correction for dependent months, and Mann–Kendall on yearly means with the Hamed & Rao (1998) correction; the larger p is shown. Seasonal Sen slope.",
+        "calibration": "Checked on synthetic series without a trend: with month-to-month memory up to 0.9, seasons and gaps, at most about 6% are called significant (the target is 5%). Slow decade-long swings remain hard: 5–12% instead of 12–39% before this correction.",
+        "map_multiple_testing": "Benjamini–Hochberg false discovery rate across map cells, q = 0.05 (Wilks 2016).",
+        "period_choice": "The map correction covers grid cells, not the choice of period, season or variable: the more combinations you try, the more likely one looks significant by chance. The squares in “Does it hold?” overlap, so they are not independent repeats.",
+        "regional_mean": "cos(latitude)-weighted mean of cell anomalies; months with < 50% area coverage are dropped.",
+        "minimum_data": "A trend is computed only if at least 70% of the selected months are valid."
+      }
+    },
+    "/api/resilience?region=central_europe": {
+      "error": "HTTP Error 404: Not Found"
+    }
+  },
+  "public_resilience_ui": {
+    "four_cards_loaded": true,
+    "browser_errors": [],
+    "text": "Environmental Resilience Brief\nPlace\nCentral Europe (Poland and neighbours)\nNorth-west India (Punjab, Haryana, Rajasthan)\nSouthern Amazon 'arc of deforestation' (Rondônia, Mato Grosso)\nStart year\n2001\n2002\n2003\n2004\n2005\n2006\n2007\n2008\n2009\n2010\n2011\n2012\n2013\n2014\n2015\n2016\n2017\n2018\n2019\n2020\nEnd year\n2005\n2006\n2007\n2008\n2009\n2010\n2011\n2012\n2013\n2014\n2015\n2016\n2017\n2018\n2019\n2020\n2021\n2022\n2023\n2024\nSeason\nall year\nDJF\nMAM\nJJA\nSON\nCopy link\nJSON\nCSV\nPrint / PDF\n\nWindows overlap. Long-window counts include only significant trends in the same direction.\n\nAir temperature\n\nNASA POWER monthly T2M (MERRA-2)\n\n0.5° × 0.625° (≈ 50 km)\n\n+0.839058 °C per decade\n\nDirection holds, significance varies\n\n95% interval\n[0.237678, 1.443336]\np-value\n0.011\nValid months\n100%\nWindows with the same sign\n55 / 55\nSignificant long windows\n9 / 28\nGISTEMP · Consistent trends\nSource details\nOpen in Detective\nLand surface temperature\n\nMOD11A2 v061 (Terra, 8-day, 1 km)\n\n1 km product, quality-screened and averaged to 0.1° grid (≈ 8–11 km)\n\n+0.909957 °C per decade\n\nDirection holds, significance varies\n\n95% interval\n[0.136601, 1.686519]\np-value\n0.024\nValid months\n99.7%\nWindows with the same sign\n55 / 55\nSignifican"
+  }
+}
