@@ -172,3 +172,12 @@ def test_inflation_filter_and_recursion_paths_agree():
     many = S._slope_variance_inflation(k, W, rho)
     one = np.array([S._slope_variance_inflation(k, W[:, [c]], rho[[c]])[0] for c in range(70)])
     assert np.allclose(many, one, rtol=1e-12)
+
+
+def test_modis_quality_rules():
+    """MOD13A1 pixel reliability and MOD11A2 QC_Day bit rules (product user guides)."""
+    from atlas.sources.modis_pc import _lst_ok, _ndvi_ok
+    assert _ndvi_ok(np.array([0, 1, 2, 3, 255], np.uint8)).tolist() == [True, True, False, False, False]
+    # 0 good; 17/65/81: other quality with LST error <= 2 K; 129/145: error <= 3 K; 2/3: not produced
+    codes = np.array([0, 17, 65, 81, 129, 145, 2, 3], np.uint8)
+    assert _lst_ok(codes).tolist() == [True, True, True, True, False, False, False, False]

@@ -89,15 +89,15 @@ VARIABLES: dict[str, Variable] = {
             product="MOD13A1 v061 (Terra, 16-day, 500 m)",
             provider="NASA LP DAAC; COG mirror on Microsoft Planetary Computer",
             kind="satellite observation",
-            resolution="500 m product, averaged to 0.1° grid (≈ 8–11 km)",
+            resolution="500 m product, quality-screened and averaged to 0.1° grid (≈ 8–11 km)",
             years=(2001, 2024),
             regions=PRESET,
             citation="Didan, K. (2021). MODIS/Terra Vegetation Indices 16-Day L3 Global 500m SIN Grid V061. NASA EOSDIS LP DAAC. doi:10.5067/MODIS/MOD13A1.061",
             url="https://doi.org/10.5067/MODIS/MOD13A1.061",
             license="NASA EOSDIS data: no restrictions on reuse (NASA Earth Science Data Policy)",
             caveats=(
-                "Monthly value = mean of 16-day composites starting in that month, read from 8× COG overviews (≈ 4 km) before averaging to 0.1°.",
-                "The per-pixel quality layer is not applied in this prototype; values outside the valid range are removed.",
+                "Monthly value = mean of 16-day composites starting in that month, read at the native 500 m resolution and averaged to 0.1°.",
+                "Quality-screened: pixels the MODIS quality layer marks as cloudy, snow/ice or missing are removed first; a cell needs at least 20% good pixels in a composite.",
                 "Terra's orbit drifted after 2022; the default period stops at 2024.",
                 "A change in NDVI can come from land-use change (clearing, irrigation), not only from climate.",
             ),
@@ -114,7 +114,7 @@ VARIABLES: dict[str, Variable] = {
             product="MOD11A2 v061 (Terra, 8-day, 1 km)",
             provider="NASA LP DAAC; COG mirror on Microsoft Planetary Computer",
             kind="satellite observation",
-            resolution="1 km product, averaged to 0.1° grid (≈ 8–11 km)",
+            resolution="1 km product, quality-screened and averaged to 0.1° grid (≈ 8–11 km)",
             years=(2001, 2024),
             regions=PRESET,
             citation="Wan, Z., Hook, S., Hulley, G. (2021). MODIS/Terra Land Surface Temperature/Emissivity 8-Day L3 Global 1km SIN Grid V061. NASA EOSDIS LP DAAC. doi:10.5067/MODIS/MOD11A2.061",
@@ -122,7 +122,7 @@ VARIABLES: dict[str, Variable] = {
             license="NASA EOSDIS data: no restrictions on reuse (NASA Earth Science Data Policy)",
             caveats=(
                 "Only clear-sky observations exist: cloudy months contribute fewer values (see coverage).",
-                "Monthly value = mean of 8-day composites starting in that month, read from 4× COG overviews (≈ 4 km).",
+                "Monthly value = mean of 8-day composites at the native 1 km resolution; pixels the quality layer marks as not produced or with LST error above 2 K are removed first.",
                 "Terra's overpass time drifted after 2022; the default period stops at 2024.",
             ),
         ),
@@ -137,7 +137,7 @@ VARIABLES: dict[str, Variable] = {
             product="MYD11A2 v061 (Aqua, 8-day, 1 km)",
             provider="NASA LP DAAC; COG mirror on Microsoft Planetary Computer",
             kind="satellite observation",
-            resolution="1 km product, averaged to 0.1° grid (≈ 8–11 km)",
+            resolution="1 km product, quality-screened and averaged to 0.1° grid (≈ 8–11 km)",
             years=(2003, 2024),
             regions=PRESET,
             citation="Wan, Z., Hook, S., Hulley, G. (2021). MODIS/Aqua Land Surface Temperature/Emissivity 8-Day L3 Global 1km SIN Grid V061. NASA EOSDIS LP DAAC. doi:10.5067/MODIS/MYD11A2.061",
@@ -147,6 +147,7 @@ VARIABLES: dict[str, Variable] = {
                 "Aqua starts in mid-2002; the cube starts in 2003 (first complete year).",
                 "Afternoon surface temperature differs from morning (Terra) values; compare trends, not levels.",
                 "Aqua's orbit also began drifting after 2022.",
+                "Quality-screened like the Terra product: pixels not produced or with LST error above 2 K are removed.",
             ),
         ),
         Variable(
@@ -187,7 +188,31 @@ VARIABLES: dict[str, Variable] = {
             license="NASA POWER data: free to use, acknowledgement requested",
             caveats=(
                 "Precipitation varies a lot year to year: long periods are needed before a trend is detectable.",
-                "Planned upgrade: GPM IMERG monthly (needs NASA Earthdata Login).",
+                "Independent check: GPCP v2.3 (satellites and rain gauges) for the same area and period is shown with every result.",
+            ),
+            colormap="BrBG",
+        ),
+        Variable(
+            id="precip_gpcp",
+            name="Precipitation (GPCP, satellites and gauges)",
+            question="Does an independent rain record agree?",
+            definition="Monthly rain and snow from the Global Precipitation Climatology Project, which merges microwave and infrared satellite estimates with rain-gauge analyses (GPCC). It does not come from the MERRA-2 model.",
+            units="mm/day",
+            trend_units="mm/day per decade",
+            source="gpcp",
+            product="GPCP v2.3 monthly (satellite–gauge analysis)",
+            provider="NASA GSFC and University of Maryland (GPCP); distributed by NOAA PSL / NCEI",
+            kind="satellite–gauge analysis",
+            resolution="2.5° × 2.5° (≈ 275 km)",
+            years=(1988, 2025),
+            regions=("world",) + PRESET,
+            citation="Adler, R.F. et al. (2018). The Global Precipitation Climatology Project (GPCP) Monthly Analysis (New Version 2.3) and a Review of 2017 Global Precipitation. Atmosphere 9, 138. doi:10.3390/atmos9040138. Data: doi:10.7289/V56971M6",
+            url="https://doi.org/10.7289/V56971M6",
+            license="NOAA NCEI Climate Data Record: no usage restrictions",
+            caveats=(
+                "Coarse 2.5° grid: a small area uses only a few cells, or the nearest one.",
+                "Starts in 1988: earlier years rely on an infrared-only index and are less homogeneous.",
+                "Partly independent of MERRA-2: different satellites and gauge analysis, but over Africa MERRA-2 land rain is rescaled to the GPCP climatology (Reichle et al. 2017).",
             ),
             colormap="BrBG",
         ),
@@ -239,6 +264,16 @@ VARIABLES: dict[str, Variable] = {
     ]
 }
 
+
+# Independent datasets used to check a result for the same area and period (different instrument,
+# method or data source). Station- or gauge-based products check the reanalysis and vice versa.
+CROSS_CHECKS: dict[str, str] = {
+    "t2m": "gistemp",
+    "gistemp": "t2m",
+    "precip": "precip_gpcp",
+    "precip_gpcp": "precip",
+    "lst_day": "lst_day_aqua",
+}
 
 CUSTOM_FILE = DATA_DIR / "custom_regions.json"
 

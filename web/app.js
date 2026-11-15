@@ -477,7 +477,7 @@ function answerLoading() {
   $("#answerQ").textContent = V().question;
 }
 function renderCard(a) {
-  const r = a.result, v = V(), ver = a.verdict;
+  const r = a.result, v = V(), ver = a.verdict, cc = a.cross_check;
   // direction stability and significance stability are separate facts (overlapping windows, not repeats)
   const rob = ver.robustness ? `<div><span>${t("detective.otherPeriodsAgree")}</span>${ver.robustness.same_sign} / ${ver.robustness.windows}</div>` +
     (ver.robustness.long_windows != null ? `<div data-tip="${esc(t("detective.otherPeriodsSignificantHint"))}"><span>${t("detective.otherPeriodsSignificant")}</span>${ver.robustness.long_significant} / ${ver.robustness.long_windows}</div>` : "") : "";
@@ -493,6 +493,7 @@ function renderCard(a) {
       <div data-tip="${esc(t("detective.effectiveNHint"))}"><span>${t("detective.effectiveN")}</span>${r.n} / ${Math.round(r.n_eff)}</div>
       <div data-tip="${t(a.cells === 1 ? "detective.gridCellsHintOne" : "detective.gridCellsHint", { count: a.cells })}"><span>${t("detective.validData")}</span>${Math.round(r.valid_fraction * 100)}%</div>
       ${rob}
+      ${cc ? `<div data-tip="${esc(`${t(`answers.crossCheck.datasets.${cc.variable}`)}, ${cc.start}–${cc.end}: ${fmt(cc.slope)} ${a.trend_units}. ${t(`answers.crossCheck.conclusions.${cc.agreement}`)}`)}"><span>${t("detective.independentCheck")}</span>${fmt(cc.slope)}</div>` : ""}
     </div>`;
 }
 function renderChart(a) {
@@ -723,7 +724,33 @@ function renderAbout() {
     <h2>${t("methods.dataTitle")}</h2><table><tr><th>${t("methods.variableColumn")}</th><th>${t("methods.productColumn")}</th><th>${t("methods.gridYearsColumn")}</th><th>${t("methods.citationLicenceColumn")}</th></tr>${rows}</table>
     <h2>${t("methods.methodsTitle")}</h2><ul>${Object.entries(CAT.methods).map(([k, v]) => `<li><b>${t(`methods.notes.${k}.label`)}:</b> ${esc(v)}</li>`).join("")}</ul>
     <p>${t("methods.references")}</p>
+    <h2>${t("methods.validationTitle")}</h2><div id="validationBody"><p class="hint">${t("methods.validationLoading")}</p></div>
     <h2>${t("methods.limitsTitle")}</h2><p>${t("methods.limitsDescription")}</p>`;
+  renderValidation();
+}
+// Live evidence that results hold up: independent datasets, MODIS quality screening, test calibration.
+let validationData = null;
+async function renderValidation() {
+  const box = $("#validationBody");
+  if (!box) return;
+  try { if (!validationData) validationData = await api("validation", ""); } catch (e) { box.innerHTML = ""; return; }
+  const V2 = validationData, pc = (x) => I18N.number(Math.round(x * 1000) / 10);
+  const vname = (id) => (CAT.variables.find((x) => x.id === id) || { name: id }).name;
+  const rname = (id) => t(`catalog.regions.${id}.shortName`);
+  const unit = (id) => esc((CAT.variables.find((x) => x.id === id) || { trend_units: "" }).trend_units);
+  const lab = (k) => esc(t(`methods.${k}`));
+  const rows = V2.cross_checks.map((c) => `<tr><td data-label="${lab("validationRegion")}">${esc(rname(c.region))}</td>
+    <td data-label="${lab("validationResult")}">${esc(vname(c.variable))}: <b>${fmt(c.slope)}</b> ${unit(c.variable)} (${pStr(c.p)})</td>
+    <td data-label="${lab("validationCheck")}">${esc(t(`answers.crossCheck.datasets.${c.other}`))}: <b>${fmt(c.other_slope)}</b> ${unit(c.other)} (${pStr(c.other_p)}), ${c.start}–${c.end}</td>
+    <td data-label="${lab("validationConclusion")}">${esc(t(`answers.crossCheck.conclusions.${c.agreement}`))}</td></tr>`).join("");
+  const q = V2.quality.filter((x) => x.kept_share != null).map((x) => `<li>${esc(t("methods.validationQuality", { product: vname(x.variable), region: rname(x.region), percent: pc(x.kept_share) }))}</li>`).join("");
+  const c = V2.calibration;
+  box.innerHTML = `<p>${esc(t("methods.validationIntro"))}</p>
+    <table><tr><th>${lab("validationRegion")}</th><th>${lab("validationResult")}</th><th>${lab("validationCheck")}</th><th>${lab("validationConclusion")}</th></tr>${rows}</table>
+    <p>${esc(t("methods.validationCalibration", { newMin: pc(c.trend_test.new_min), newMax: pc(c.trend_test.new_max), oldMax: pc(c.trend_test.old_max),
+      rankMin: pc(c.rank_test.new_min), rankMax: pc(c.rank_test.new_max), rankOld: pc(c.rank_test.old_max),
+      slowMin: pc(c.slow_swings.new[0]), slowMax: pc(c.slow_swings.new[1]), slowOldMin: pc(c.slow_swings.old[0]), slowOldMax: pc(c.slow_swings.old[1]) }))}</p>
+    ${q ? `<ul>${q}</ul>` : ""}`;
 }
 
 // ---------------------------------------------------------------- boot

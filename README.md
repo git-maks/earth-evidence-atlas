@@ -66,7 +66,7 @@ Instalacja od zera: `uv venv .venv --python 3.11 && uv pip install -r requiremen
 
 Regiony: `central_europe` (14–24°E, 49–55°N), `nw_india` (72–78°E, 26–31°N), `amazon_arc` (64–54°W, 13–7°S), `world`.
 
-**Odstępstwo od planu:** plan P0 zakładał MOD13C2, MOD11C3 i IMERG. Te produkty wymagają NASA Earthdata Login, a na serwerze nie ma `~/.netrc`. Dlatego użyłem tych samych misji (MODIS Terra v061) w wersjach 500 m / 1 km z publicznego mirrora COG, a opad wziąłem z MERRA-2 przez POWER. IMERG jest do zrobienia (niżej).
+**Odstępstwo od planu:** plan P0 zakładał MOD13C2, MOD11C3 i IMERG. Te produkty wymagają NASA Earthdata Login, a na serwerze nie ma `~/.netrc`. Dlatego użyłem tych samych misji (MODIS Terra v061) w wersjach 500 m / 1 km z publicznego mirrora COG, a opad wziąłem z MERRA-2 przez POWER. IMERG jest do zrobienia (niżej). **Od 15.11** opad MERRA-2 sprawdzamy niezależnym GPCP v2.3 (satelity + deszczomierze, bez logowania), patrz „Walidacja danych”.
 
 ## Wyniki do historii demo (policzone przez narzędzie, do sprawdzenia przez zespół)
 
@@ -89,11 +89,11 @@ Domyślny okres zmiennej, cały region, 95% CI, p z korektą autokorelacji:
 
 Wartości w °C/dekadę. Wniosek: ochłodzenie w NW Indiach jest **nieistotne do 2021 r.** u obu satelitów i staje się istotne dopiero po dodaniu lat 2022–2024. W tych latach dryfowały obie orbity, ale mogły to też być rzeczywiście chłodniejsze lata. W demo pokazywać to jako przykład **„direction holds, significance depends on period”**, a nie jako odkrycie. Europa i Amazonia są odporne: oba satelity i oba okna dają ten sam wynik.
 
-⚠️ **Do weryfikacji przed pokazaniem:** opad MERRA-2 w Amazonii wychodzi −0,57 mm/dzień/dekadę, czyli podejrzanie dużo (trendy opadu w reanalizach bywają artefaktami). Nie używać w demo bez porównania z IMERG/GPCP.
+✅ **Rozstrzygnięte 15.11 (sekcja „Walidacja danych”):** GPCP potwierdza kierunek, wielkość z MERRA-2 jest prawdopodobnie zawyżona. Wcześniej: opad MERRA-2 w Amazonii wychodzi −0,57 mm/dzień/dekadę, czyli podejrzanie dużo (trendy opadu w reanalizach bywają artefaktami). Nie używać w demo bez porównania z IMERG/GPCP.
 
 ## Znane ograniczenia (świadome uproszczenia prototypu)
 
-- MODIS jest czytany z overview COG (ok. 4 km) **bez warstwy QA** (`pixel_reliability` / `QC_Day`). Odrzucane są tylko wartości spoza zakresu. Następny krok to wczytanie QA na tym samym poziomie overview i maskowanie.
+- ~~MODIS bez warstwy QA~~ – **naprawione 15.11**: odczyt w natywnej rozdzielczości z maską jakości (sekcja „Walidacja danych”).
 - Wartość miesięczna MODIS to średnia kompozytów zaczynających się w danym miesiącu (granice miesięcy są przybliżone).
 - Testy trendu są skalibrowane (sekcja niżej), ale **powolnych naturalnych wahań trwających dekady nie da się w pełni odróżnić od trendu na podstawie jednego krótkiego zapisu**: w najtrudniejszym scenariuszu syntetycznym fałszywe alarmy spadły z 12–39% do 5–12%, a nie do 5%. Dla okresów krótszych niż 15 lat odpowiedź pokazuje osobne ostrzeżenie.
 - Klimatologia do anomalii liczona jest z wybranego okresu, a nie ze stałej bazy 2001–2020.
@@ -146,6 +146,44 @@ Dryf Terra/Aqua (LST, °C/dekadę) nowymi testami: NW Indie Terra 2003–2021 �
 **Do zrobienia przez właściciela prezentacji (`presentation/`, Maja / Codex):** slajd z przykładem T2M ma stałe zdanie „Mann–Kendall agrees.” oraz liczby ze starej metody (CI [0,352; 0,667], 81 istotnych okien, laboratorium 83/14). Trzeba odświeżyć `evidence.json` z API po restarcie serwera i przebudować deck. Nie zmieniałem plików w `presentation/`.
 
 **Literatura:** Santer i in. (2000) JGR 105, 7337–7356 · Marriott i Pope (1954) Biometrika 41, 390–402 · Hirsch, Slack i Smith (1982) WRR 18, 107–121 · Hirsch i Slack (1984) WRR 20, 727–732 · Hamed i Rao (1998) J. Hydrol. 204, 182–196 · Berger (1982) Technometrics 24, 295–300 · Sen (1968) JASA 63, 1379–1389 · Benjamini i Hochberg (1995) JRSS-B 57, 289–300 · Wilks (2016) BAMS 97, 2263–2273. Kontekst: Noguchi, Gel i Duguay (2011) J. Hydrol. 410, 150–161 (bootstrap dla testów trendu; rozważany wariant, w naszych symulacjach nie poprawiał kalibracji względem metody analitycznej) · Collaud Coen i in. (2020) AMT 13, 6945–6964 (wpływ prewhiteningu i ziarnistości czasu na test MK).
+
+## Walidacja danych (15.11)
+
+**1. Maska jakości MODIS.** Podglądy COG na Planetary Computer mają *uśrednione* warstwy jakości (sprawdziliśmy: w podglądzie 4× `QC_Day` ma 223 różne wartości zamiast 8 kodów). Dlatego czytamy każdy kompozyt w **natywnej rozdzielczości** (NDVI 500 m, LST 1 km), tylko w oknie regionu, razem z warstwą jakości, i odrzucamy złe piksele **przed** uśrednianiem do 0,1°. Komórka wchodzi do kompozytu tylko wtedy, gdy co najmniej 20% jej pikseli przechodzi test. Kod: [atlas/sources/modis_pc.py](atlas/sources/modis_pc.py).
+- NDVI (MOD13A1, *pixel reliability*): zostają 0 (dobre) i 1 (marginalne); odpadają 2 (śnieg/lód), 3 (chmury) i brak danych. Zostało 62–99% pikseli w poszczególnych latach (76–98% w całej kostce), najmniej w Amazonii i zimą w Europie.
+- LST (MOD11A2/MYD11A2, `QC_Day`): zostaje kod 00 albo 01 z błędem LST ≤ 2 K; odpadają piksele niewyliczone. Zostało 98,5–99,9% (produkt LST jest już z definicji „bezchmurny”). Jeden obszar użytkownika leży nad otwartym morzem i nie ma LST ani przed, ani po masce.
+- Reguły według podręczników MOD13 i MOD11 C6.1. Testy reguł bitowych są w [tests/test_stats.py](tests/test_stats.py).
+- Przebudowano 18 kostek MODIS (regiony wbudowane i obszary użytkowników). Stare kostki: `data/cubes_backup_noqa_20261115/`. Odczyt jest szybki (ok. 5 s na rok i region), więc obliczenia na żądanie też używają maski.
+
+**Przed i po masce** (cały okres, nowe testy statystyczne; trend na dekadę [95% CI], p, pokrycie komórek):
+
+| Zmienna, region, sezon | Bez maski | Z maską | Werdykt bez → z |
+| --- | --- | --- | --- |
+| NDVI, Europa Środkowa, rok | +0,034 [0,015; 0,054], p = 0,001 | **+0,020** [0,012; 0,029], p < 0,001 | trend → trend |
+| NDVI, Europa Środkowa, DJF | +0,071 [0,014; 0,122], pokrycie 95% | **+0,037** [0,015; 0,050], pokrycie 64% | trend → trend |
+| NDVI, Amazonia, DJF (pora deszczowa) | +0,028 [0,008; 0,044], p = 0,006 | **+0,001** [−0,007; 0,007], p = 0,94 | istotność zależy od okresu → **brak trendu** |
+| NDVI, Amazonia, JJA | −0,022 [−0,031; −0,013] | −0,022 [−0,031; −0,012] | trend → trend |
+| NDVI, NW Indie, rok | +0,036 [0,028; 0,043] | +0,037 [0,029; 0,044] | trend → trend |
+| LST Terra, Europa Środkowa, rok | +0,88 °C, p = 0,034 | +0,91 °C, p = 0,024 | bez zmian |
+| LST Terra, NW Indie, rok | −0,72 °C, p = 0,008 | −0,68 °C, p = 0,007 | bez zmian |
+| LST Terra, Amazonia, rok | +0,42 °C, p = 0,001 | +0,39 °C, p = 0,002 | bez zmian |
+
+Wniosek: śnieg i chmury **podwajały** trend NDVI w Europie Środkowej (głównie zimą, jak podejrzewaliśmy) i tworzyły pozorny trend w porze deszczowej w Amazonii. Trendy LST prawie się nie zmieniły. Pełna tabela (27 wierszy) powstaje skryptem porównującym kopię zapasową z nowymi kostkami.
+
+**2. Niezależny zapis opadów: GPCP v2.3.** Satelity mikrofalowe i podczerwone połączone z analizą deszczomierzy GPCC (NASA GSFC / University of Maryland; plik NOAA PSL, bez logowania, bez ograniczeń użycia). Siatka 2,5°, od **1988** (wcześniej tylko wskaźnik podczerwony OPI, mniej jednorodny). Adapter: [atlas/sources/gpcp.py](atlas/sources/gpcp.py). Kostki: świat + 3 regiony. Dla dowolnego obszaru używamy kostki światowej przyciętej do obszaru. GPCP jest *częściowo* niezależny od MERRA-2: nad Afryką MERRA-2 skaluje opad do klimatologii GPCP (Reichle i in. 2017), co zaznaczamy w zastrzeżeniach.
+
+**3. Sprawdzenie niezależnym zbiorem przy każdym wyniku** ([atlas/api.py](atlas/api.py) `_cross_check`). Pary: T2M (MERRA-2) ↔ GISTEMP (stacje), opad MERRA-2 ↔ GPCP, LST Terra → Aqua. Liczymy ten sam test na wspólnym okresie, a o różnicy wielkości decyduje **trend szeregu różnic** obu zapisów z tymi samymi korektami pamięci (test różnicy trendów, Santer i in. 2000). Kategorie: zgodne, ten sam kierunek i różna wielkość, istotny tylko jeden, żaden nie jest istotny, sprzeczne, niejasne. Wynik trafia do odpowiedzi, karty wyniku i nowej sekcji **Validation** w zakładce Methods (`/api/validation`).
+
+| Region | Wynik | Niezależne sprawdzenie | Wniosek |
+| --- | --- | --- | --- |
+| Europa Środkowa | T2M +0,51 °C/dek. | GISTEMP +0,51 | zgodne (p różnicy = 0,99) |
+| Amazonia | T2M +0,50 | GISTEMP +0,27 | ten sam kierunek, różna wielkość |
+| NW Indie | T2M −0,05 (n.i.) | GISTEMP +0,25 (istotny) | **sprzeczne** – reanaliza vs stacje |
+| Amazonia | opad MERRA-2 −0,71 mm/d/dek. | GPCP −0,32 | ten sam kierunek, oba istotne, różnica nieistotna (p = 0,06) |
+| NW Indie | opad MERRA-2 +0,20 | GPCP +0,09 (n.i.) | istotny tylko jeden, wielkości różne |
+| NW Indie | LST Terra −0,70 | Aqua −0,52 | zgodne |
+
+Dzięki temu przypadek „opad MERRA-2 w Amazonii do weryfikacji” jest rozstrzygnięty: kierunek potwierdza niezależny zapis, a wielkość z MERRA-2 jest prawdopodobnie zawyżona. Rozbieżność T2M w NW Indiach aplikacja pokazuje wprost, zamiast ją ukrywać.
 
 ## Czego jeszcze potrzebujemy (propozycja kolejności)
 

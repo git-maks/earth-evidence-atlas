@@ -288,7 +288,8 @@
     "significantInMerra": "Significativa en MERRA-2",
     "precipitationSource": "Lee la evaluación de MERRA-2.",
     "otherPeriodsSignificant": "Períodos largos significativos",
-    "otherPeriodsSignificantHint": "Períodos que abarcan al menos tres cuartas partes de este y que también son significativos"
+    "otherPeriodsSignificantHint": "Períodos que abarcan al menos tres cuartas partes de este y que también son significativos",
+    "independentCheck": "Comprobación independiente"
   },
   "charts": {
     "month": "Mes",
@@ -354,7 +355,7 @@
     "gridYearsColumn": "Cuadrícula / años",
     "citationLicenceColumn": "Referencia y licencia",
     "methodsTitle": "Métodos",
-    "references": "Referencias: Santer B.D. et al. (2000) J. Geophys. Res. 105, 7337–7356 · Hirsch R.M., Slack J.R., Smith R.A. (1982) Water Resour. Res. 18, 107–121 · Sen P.K. (1968) JASA 63, 1379–1389 · Benjamini Y., Hochberg Y. (1995) JRSS-B 57, 289–300 · Wilks D.S. (2016) BAMS 97, 2263–2273 · Hirsch R.M., Slack J.R. (1984) Water Resour. Res. 20, 727–732 · Hamed K.H., Rao A.R. (1998) J. Hydrol. 204, 182–196 · Marriott F.H.C., Pope J.A. (1954) Biometrika 41, 390–402 · Berger R.L. (1982) Technometrics 24, 295–300.",
+    "references": "Referencias: Santer B.D. et al. (2000) J. Geophys. Res. 105, 7337–7356 · Hirsch R.M., Slack J.R., Smith R.A. (1982) Water Resour. Res. 18, 107–121 · Sen P.K. (1968) JASA 63, 1379–1389 · Benjamini Y., Hochberg Y. (1995) JRSS-B 57, 289–300 · Wilks D.S. (2016) BAMS 97, 2263–2273 · Hirsch R.M., Slack J.R. (1984) Water Resour. Res. 20, 727–732 · Hamed K.H., Rao A.R. (1998) J. Hydrol. 204, 182–196 · Marriott F.H.C., Pope J.A. (1954) Biometrika 41, 390–402 · Berger R.L. (1982) Technometrics 24, 295–300 · Adler R.F. et al. (2018) Atmosphere 9, 138 (GPCP v2.3) · Reichle R.H. et al. (2017) J. Climate 30, 1643–1664 · Didan K. et al. (2019) MOD13 C6.1 User Guide · Wan Z. (2019) MOD11 C6.1 User Guide.",
     "limitsTitle": "Qué no te dirá la herramienta",
     "limitsDescription": "Una tendencia no demuestra una causa. La herramienta nunca afirma que «el clima no está cambiando» ni que «los seres humanos causaron esto»: indica qué se puede y qué no se puede concluir a partir de esta serie, lugar y período.",
     "notes": {
@@ -394,7 +395,16 @@
         "label": "elección del período",
         "text": "La corrección del mapa cubre las celdas de la cuadrícula, no la elección del período, la estación o la variable: cuantas más combinaciones pruebes, más probable es que alguna parezca significativa por azar. Los cuadros de “¿Se mantiene?” se solapan, así que no son repeticiones independientes."
       }
-    }
+    },
+    "validationTitle": "Validación",
+    "validationIntro": "Cada resultado se compara con un conjunto de datos independiente para la misma área y los mismos años (estaciones frente a reanálisis, satélites y pluviómetros frente a reanálisis, un segundo satélite). Las magnitudes se consideran distintas cuando la tendencia de la diferencia entre ambos registros es significativa. Resultados en vivo para las regiones de ejemplo:",
+    "validationRegion": "Región",
+    "validationResult": "Resultado",
+    "validationCheck": "Comprobación independiente",
+    "validationConclusion": "Conclusión",
+    "validationQuality": "Filtrado de calidad de MODIS, {product}, {region}: se conserva el {percent}% de los píxeles con valor.",
+    "validationCalibration": "Prueba de tendencia con series sintéticas sin tendencia: {newMin}–{newMax}% resultan significativas (objetivo 5%; antes, hasta {oldMax}%). Prueba de rangos: {rankMin}–{rankMax}% (antes, hasta {rankOld}%). Oscilaciones lentas de escala decenal: {slowMin}–{slowMax}% (antes, {slowOldMin}–{slowOldMax}%).",
+    "validationLoading": "Cargando resultados de validación…"
   },
   "footer": {
     "data": "NASA Space Apps Challenge 2026 · Datos: NASA (MODIS, MERRA-2 a través de POWER, GISTEMP)."
@@ -537,7 +547,33 @@
     "merraEstimate": "Tendencia estimada de precipitación en MERRA-2: {slope} mm/día por década ({start}–{end}, {season}).",
     "merraCaution": "Las evaluaciones publicadas documentan discontinuidades en la precipitación corregida de MERRA-2 en Sudamérica. Comprueba otro conjunto de datos para la misma zona, estación y periodo.",
     "significanceDependency": "La dirección se mantiene en {agreeing} de los otros {total} períodos con distintos años inicial y final, pero solo {significant} de los {long} períodos que abarcan al menos tres cuartas partes de este son significativos, así que el resultado depende de los años inicial y final exactos.",
-    "shortRecord": "Registro corto (menos de 15 años): oscilaciones naturales lentas que duran varios años pueden parecer una tendencia en un período tan corto."
+    "shortRecord": "Registro corto (menos de 15 años): oscilaciones naturales lentas que duran varios años pueden parecer una tendencia en un período tan corto.",
+    "crossCheck": {
+      "line": "Comprobación independiente con {dataset}, misma área, {start}–{end}: {otherSlope} {unit}; este conjunto de datos da {slope} para los mismos años. {conclusion}",
+      "datasets": {
+        "gistemp": "NASA GISTEMP (estaciones meteorológicas)",
+        "t2m": "temperatura del aire de MERRA-2 (reanálisis)",
+        "precip_gpcp": "GPCP (satélites y pluviómetros)",
+        "precip": "lluvia de MERRA-2 (reanálisis)",
+        "lst_day_aqua": "el satélite Aqua (paso de la tarde)"
+      },
+      "conclusions": {
+        "agree": "Ambos muestran una tendencia significativa en la misma dirección; la diferencia de magnitud no es significativa.",
+        "same_direction_different_size": "Ambos muestran una tendencia significativa en la misma dirección, pero las magnitudes difieren de forma significativa.",
+        "one_significant": "Misma dirección, pero solo uno de ellos es significativo.",
+        "neither_significant": "Misma dirección, pero ninguno es significativo.",
+        "disagree": "No coinciden en la dirección: interpreta el resultado con cautela.",
+        "unclear": "Direcciones distintas y ninguno es claramente significativo."
+      },
+      "sizesDiffer": "Además, los dos registros cambian en cantidades significativamente distintas."
+    },
+    "merraBothLess": "Menos lluvia tanto en MERRA-2 como en GPCP.",
+    "merraBothMore": "Más lluvia tanto en MERRA-2 como en GPCP.",
+    "merraDifferentLess": "Menos lluvia en MERRA-2 y en GPCP, en cantidades distintas.",
+    "merraDifferentMore": "Más lluvia en MERRA-2 y en GPCP, en cantidades distintas.",
+    "merraOneSignificant": "MERRA-2 y GPCP apuntan en la misma dirección, pero solo uno es significativo.",
+    "merraNeitherSignificant": "MERRA-2 y GPCP apuntan en la misma dirección, pero ninguno es significativo.",
+    "merraDisagree": "MERRA-2 y GPCP no coinciden. Interprétalo con cautela."
   },
   "errors": {
     "analysisFailed": "No se pudo realizar el análisis: {message}",
@@ -617,13 +653,13 @@
         "product": "MOD13A1 v061 (Terra, 16 días, 500 m)",
         "provider": "NASA LP DAAC; réplica COG en Microsoft Planetary Computer",
         "kind": "observación por satélite",
-        "resolution": "Producto de 500 m, promediado en una cuadrícula de 0,1° (≈ 8–11 km)",
+        "resolution": "Producto de 500 m, filtrado por calidad y promediado en una cuadrícula de 0,1° (≈ 8–11 km)",
         "license": "Datos de NASA EOSDIS: reutilización sin restricciones (Política de Datos de Ciencias de la Tierra de la NASA)",
         "citation": "Didan, K. (2021). MODIS/Terra Vegetation Indices 16-Day L3 Global 500m SIN Grid V061. NASA EOSDIS LP DAAC. doi:10.5067/MODIS/MOD13A1.061",
         "url": "https://doi.org/10.5067/MODIS/MOD13A1.061",
         "caveats": [
-          "Valor mensual = media de los compuestos de 16 días que comienzan en ese mes, leídos de las versiones de resolución reducida 8× de los COG (≈ 4 km) antes de promediarlos a 0,1°.",
-          "Este prototipo no aplica la capa de calidad por píxel; se eliminan los valores fuera del intervalo válido.",
+          "Valor mensual = media de los compuestos de 16 días que comienzan en ese mes, leídos a la resolución nativa de 500 m y promediados a 0,1°.",
+          "Filtrado por calidad: primero se eliminan los píxeles que la capa de calidad de MODIS marca como nubosos, con nieve o hielo, o sin datos; una celda necesita al menos un 20% de píxeles buenos en cada compuesto.",
           "La órbita de Terra comenzó a derivar después de 2022; el período predeterminado termina en 2024.",
           "Un cambio en el NDVI puede deberse a cambios en el uso del suelo (tala, riego), no solo al clima."
         ]
@@ -637,13 +673,13 @@
         "product": "MOD11A2 v061 (Terra, 8 días, 1 km)",
         "provider": "NASA LP DAAC; réplica COG en Microsoft Planetary Computer",
         "kind": "observación por satélite",
-        "resolution": "Producto de 1 km, promediado en una cuadrícula de 0,1° (≈ 8–11 km)",
+        "resolution": "Producto de 1 km, filtrado por calidad y promediado en una cuadrícula de 0,1° (≈ 8–11 km)",
         "license": "Datos de NASA EOSDIS: reutilización sin restricciones (Política de Datos de Ciencias de la Tierra de la NASA)",
         "citation": "Wan, Z., Hook, S., Hulley, G. (2021). MODIS/Terra Land Surface Temperature/Emissivity 8-Day L3 Global 1km SIN Grid V061. NASA EOSDIS LP DAAC. doi:10.5067/MODIS/MOD11A2.061",
         "url": "https://doi.org/10.5067/MODIS/MOD11A2.061",
         "caveats": [
           "Solo hay observaciones con cielo despejado: los meses nublados aportan menos valores (consulta la cobertura).",
-          "Valor mensual = media de los compuestos de 8 días que comienzan en ese mes, leídos de las versiones de resolución reducida 4× de los COG (≈ 4 km).",
+          "Valor mensual = media de los compuestos de 8 días a la resolución nativa de 1 km; primero se eliminan los píxeles que la capa de calidad marca como no producidos o con un error de LST superior a 2 K.",
           "La hora de paso de Terra comenzó a desplazarse después de 2022; el período predeterminado termina en 2024."
         ]
       },
@@ -656,14 +692,15 @@
         "product": "MYD11A2 v061 (Aqua, 8 días, 1 km)",
         "provider": "NASA LP DAAC; réplica COG en Microsoft Planetary Computer",
         "kind": "observación por satélite",
-        "resolution": "Producto de 1 km, promediado en una cuadrícula de 0,1° (≈ 8–11 km)",
+        "resolution": "Producto de 1 km, filtrado por calidad y promediado en una cuadrícula de 0,1° (≈ 8–11 km)",
         "license": "Datos de NASA EOSDIS: reutilización sin restricciones (Política de Datos de Ciencias de la Tierra de la NASA)",
         "citation": "Wan, Z., Hook, S., Hulley, G. (2021). MODIS/Aqua Land Surface Temperature/Emissivity 8-Day L3 Global 1km SIN Grid V061. NASA EOSDIS LP DAAC. doi:10.5067/MODIS/MYD11A2.061",
         "url": "https://doi.org/10.5067/MODIS/MYD11A2.061",
         "caveats": [
           "Aqua comienza a mediados de 2002; el cubo de datos empieza en 2003 (primer año completo).",
           "La temperatura de la superficie por la tarde difiere de los valores de la mañana (Terra); compara las tendencias, no los niveles.",
-          "La órbita de Aqua también comenzó a derivar después de 2022."
+          "La órbita de Aqua también comenzó a derivar después de 2022.",
+          "Filtrado por calidad igual que el producto de Terra: se eliminan los píxeles no producidos o con un error de LST superior a 2 K."
         ]
       },
       "t2m": {
@@ -698,7 +735,26 @@
         "url": "https://power.larc.nasa.gov/",
         "caveats": [
           "La precipitación varía mucho de un año a otro: se necesitan períodos largos para detectar una tendencia.",
-          "Mejora prevista: GPM IMERG mensual (requiere NASA Earthdata Login)."
+          "Comprobación independiente: con cada resultado se muestra GPCP v2.3 (satélites y pluviómetros) para la misma área y período."
+        ]
+      },
+      "precip_gpcp": {
+        "name": "Precipitación (GPCP, satélites y pluviómetros)",
+        "question": "¿Coincide un registro de lluvia independiente?",
+        "definition": "Lluvia y nieve mensuales del Global Precipitation Climatology Project, que combina estimaciones de satélites de microondas e infrarrojo con análisis de pluviómetros (GPCC). No procede del modelo MERRA-2.",
+        "units": "mm/día",
+        "trend_units": "mm/día por década",
+        "product": "GPCP v2.3 mensual (análisis de satélites y pluviómetros)",
+        "provider": "NASA GSFC y University of Maryland (GPCP); distribuido por NOAA PSL / NCEI",
+        "kind": "análisis de satélites y pluviómetros",
+        "resolution": "2,5° × 2,5° (≈ 275 km)",
+        "license": "Registro de datos climáticos de NOAA NCEI: sin restricciones de uso",
+        "citation": "Adler, R.F. et al. (2018). The Global Precipitation Climatology Project (GPCP) Monthly Analysis (New Version 2.3) and a Review of 2017 Global Precipitation. Atmosphere 9, 138. doi:10.3390/atmos9040138. Data: doi:10.7289/V56971M6",
+        "url": "https://doi.org/10.7289/V56971M6",
+        "caveats": [
+          "Cuadrícula gruesa de 2,5°: un área pequeña usa solo unas pocas celdas, o la más cercana.",
+          "Empieza en 1988: los años anteriores dependen de un índice solo infrarrojo y son menos homogéneos.",
+          "Parcialmente independiente de MERRA-2: otros satélites y otro análisis de pluviómetros, pero sobre África la lluvia terrestre de MERRA-2 se reescala a la climatología de GPCP (Reichle et al. 2017)."
         ]
       },
       "soil_root": {

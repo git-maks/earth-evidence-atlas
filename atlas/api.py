@@ -27,7 +27,7 @@ from fastapi.staticfiles import StaticFiles
 
 from . import answers
 from . import stats as S
-from .config import (REGIONS, ROOT, VARIABLES, add_custom_region, cube_path, custom_regions, get_region,
+from .config import (CROSS_CHECKS, REGIONS, ROOT, VARIABLES, add_custom_region, cube_path, custom_regions, get_region,
                      prune_custom_regions, touch_custom_region)
 from .sources.common import IO_LOCK
 
@@ -177,7 +177,8 @@ def catalog():
 
 
 @lru_cache(maxsize=256)
-def _analysis(var, region, start, end, months_t, bbox_t, min_len):
+def _analysis(var, region, start, end, months_t, bbox_t, min_len, checks=True):
+    """checks=False: no independent-dataset check and no answer (used for the check itself)."""
     months = list(months_t)
     da, start, end = subset(var, region, start, end, months, bbox_t)
     A = S.deseasonalise(da.values.reshape(da.sizes["time"], -1), S.month_of(da.time.values))
@@ -212,8 +213,67 @@ def _analysis(var, region, start, end, months_t, bbox_t, min_len):
         trend_units=VARIABLES[var].trend_units, units=VARIABLES[var].units,
         verdict=ver, matrix=mx, methods=METHOD_NOTE, provenance=provenance(var, region),
     )
-    out["answer"] = _answer(out, months_t, bbox_t, min_len)
+    if checks:
+        out["cross_check"] = _cross_check(out, months_t, bbox_t, min_len)
+        out["answer"] = _answer(out, months_t, bbox_t, min_len)
     return out
+
+
+def _agreement(a: dict, b: dict, p_diff: float | None) -> str:
+    """Compare two trend results for the same area and years. 'Significant' = p < 0.05 in the app's
+    two-scale test. Sizes count as different when the trend of the difference series is itself
+    significant (the trend-difference test of Santer et al. 2000, with the same memory corrections)."""
+    sa, sb = np.sign(a["slope"]), np.sign(b["slope"])
+    siga, sigb = a["p"] < 0.05, b["p"] < 0.05
+    if sa == sb and siga and sigb:
+        return "same_direction_different_size" if (p_diff is not None and p_diff < 0.05) else "agree"
+    if sa == sb:
+        return "one_significant" if (siga or sigb) else "neither_significant"
+    return "disagree" if (siga or sigb) else "unclear"
+
+
+def _cross_check(a: dict, months_t, bbox_t, min_len):
+    """The same analysis with an independent dataset (config.CROSS_CHECKS) for the same area and the
+    common period. Uses the region's cube, or the global cube of a gridded product cut to the area."""
+    var, region = a["variable"], a["region"]
+    other = CROSS_CHECKS.get(var)
+    if not other:
+        return None
+    o = VARIABLES[other]
+    if cube_path(other, region).exists():
+        oreg, obox = region, bbox_t
+    elif cube_path(other, "world").exists() and region != "world":
+        oreg, obox = "world", tuple(bbox_t or get_region(region).bbox)
+    else:
+        return None
+    s0, e0 = max(a["start"], o.years[0]), min(a["end"], o.years[1])
+    if e0 - s0 + 1 < 10:
+        return None
+    try:
+        b = _analysis(other, oreg, s0, e0, months_t, obox, min_len, checks=False)
+        here = a if (s0, e0) == (a["start"], a["end"]) else _analysis(var, region, s0, e0, months_t, bbox_t,
+                                                                      min_len, checks=False)
+    except HTTPException:
+        return None
+    ra, rb = here["result"], b["result"]
+    if any(r.get(k) is None or not np.isfinite(r[k]) for r in (ra, rb) for k in ("slope", "p", "ci_low", "ci_high")):
+        return None
+    # trend of the difference series (same months only): do the two records change by the same amount?
+    da_ = pd.Series(np.asarray(here["series"]["anomaly"], float), index=here["series"]["dates"])
+    db_ = pd.Series(np.asarray(b["series"]["anomaly"], float), index=b["series"]["dates"])
+    both = da_.index.intersection(db_.index)
+    diff = (da_[both] - db_[both]).values
+    p_diff = slope_diff = None
+    if np.isfinite(diff).sum() >= 60:
+        rd = S.analyse_series(np.array(both, dtype="datetime64[M]"), diff)
+        p_diff, slope_diff = rd["p"], rd["slope"]
+    return dict(variable=other, name=o.name, product=o.product, kind=o.kind, start=s0, end=e0,
+                slope=rb["slope"], ci_low=rb["ci_low"], ci_high=rb["ci_high"], p=rb["p"], verdict=b["verdict"]["code"],
+                main_slope=ra["slope"], main_ci_low=ra["ci_low"], main_ci_high=ra["ci_high"], main_p=ra["p"],
+                difference_slope=slope_diff, difference_p=p_diff,
+                agreement=_agreement(ra, rb, p_diff), sizes_differ=bool(p_diff is not None and p_diff < 0.05),
+                trend_units=o.trend_units,
+                cells=b["cells"], bbox=b["bbox"])
 
 
 def _answer(a, months_t, bbox_t, min_len):
@@ -228,7 +288,7 @@ def _answer(a, months_t, bbox_t, min_len):
             o = VARIABLES[other]
             s0, e0 = max(a["start"], o.years[0]), min(a["end"], o.years[1])
             if e0 - s0 >= 7:
-                compare = _analysis(other, region, s0, e0, months_t, bbox_t, min_len)
+                compare = _analysis(other, region, s0, e0, months_t, bbox_t, min_len, checks=False)
                 cvar = o.public()
         answer = answers.build(VARIABLES[var].public(), get_region(region).name, a, tmap, compare, cvar)
         if var == "precip":
@@ -242,8 +302,20 @@ def _answer(a, months_t, bbox_t, min_len):
                     trend = a["result"]["slope"]
                     answer["lines"][0] = (f"Estimated MERRA-2 rainfall trend: {answers.num(trend)} "
                                           f"mm/day per decade ({a['start']}–{a['end']}, {answers.season_text(a['months'])}).")
-                    if answer["code"] == "trend_detected":
-                        answer["headline"] = ("MERRA-2 suggests less rainfall. Needs confirmation." if trend < 0 else
+                    cc = a.get("cross_check")
+                    less = trend < 0
+                    if cc and cc["variable"] == "precip_gpcp":
+                        answer["headline"] = {
+                            "agree": "Less rainfall in both MERRA-2 and GPCP." if less else "More rainfall in both MERRA-2 and GPCP.",
+                            "same_direction_different_size": ("Less rainfall in MERRA-2 and GPCP, by different amounts."
+                                                              if less else "More rainfall in MERRA-2 and GPCP, by different amounts."),
+                            "one_significant": "MERRA-2 and GPCP point the same way, but only one is significant.",
+                            "neither_significant": "MERRA-2 and GPCP point the same way, but neither is significant.",
+                            "disagree": "MERRA-2 and GPCP disagree. Treat it with care.",
+                            "unclear": "MERRA-2 and GPCP disagree. Treat it with care.",
+                        }[cc["agreement"]]
+                    elif answer["code"] == "trend_detected":
+                        answer["headline"] = ("MERRA-2 suggests less rainfall. Needs confirmation." if less else
                                               "MERRA-2 suggests more rainfall. Needs confirmation.")
         return answer
     except Exception as exc:  # an answer must never break the analysis itself
@@ -291,6 +363,51 @@ def _map(var, region, start, end, months_t, q):
                      median_slope=float(np.nanmedian(slope)) if fin.any() else None),
         trend_units=VARIABLES[var].trend_units,
     )
+
+
+VALIDATION_PAIRS = (("t2m", "gistemp"), ("precip", "precip_gpcp"), ("lst_day", "lst_day_aqua"))
+
+
+@lru_cache(maxsize=1)
+def _validation():
+    """Live validation evidence for the built-in regions: each result against an independent dataset for
+    the same area and years, and how much of the MODIS record the quality screening kept."""
+    rows = []
+    for rid in ("central_europe", "nw_india", "amazon_arc"):
+        for var, other in VALIDATION_PAIRS:
+            if not (cube_path(var, rid).exists() and cube_path(other, rid).exists()):
+                continue
+            a = _analysis(var, rid, None, None, tuple(range(1, 13)), None, 15)
+            cc = a.get("cross_check")
+            if not cc or cc["variable"] != other:
+                continue
+            rows.append(dict(region=rid, variable=var, other=other, start=cc["start"], end=cc["end"],
+                             slope=cc["main_slope"], p=cc["main_p"], other_slope=cc["slope"], other_p=cc["p"],
+                             difference_p=cc["difference_p"], agreement=cc["agreement"],
+                             sizes_differ=cc["sizes_differ"], trend_units=cc["trend_units"]))
+    quality = []
+    for var in ("ndvi", "lst_day", "lst_day_aqua"):
+        for rid in ("central_europe", "nw_india", "amazon_arc"):
+            if cube_path(var, rid).exists():
+                attrs = load(var, rid).attrs
+                quality.append(dict(variable=var, region=rid, kept_share=attrs.get("qa_kept_share"),
+                                    rule=attrs.get("quality_mask"), pixels=attrs.get("qa_pixels_with_values")))
+    return dict(cross_checks=rows, quality=quality, calibration=CALIBRATION)
+
+
+# Monte Carlo study of the trend tests (README, "Metody statystyczne i kalibracja"; tests/test_stats.py)
+CALIBRATION = dict(
+    target=0.05, scenarios="AR(1) memory 0–0.9, 10/24/45 years, all months/Jun–Aug/Dec–Feb, 0 or 20% gaps, "
+                           "seasonally changing variance; 1000 trendless series each",
+    trend_test=dict(old_max=0.09, new_min=0.016, new_max=0.065),
+    rank_test=dict(old_max=0.67, new_min=0.005, new_max=0.066),
+    slow_swings=dict(old=[0.12, 0.39], new=[0.05, 0.12]),
+)
+
+
+@app.get("/api/validation")
+def validation():
+    return JSONResponse(_clean(_validation()))
 
 
 @app.get("/api/map")
@@ -388,9 +505,10 @@ def simulate_many(runs: int = Query(200, ge=10, le=5000), years: int = Query(12,
 
 # ------------------------------------------------------------------ globe support
 COMPUTE_LIMITS = {
-    "modis_pc": dict(max_side_deg=8.0, max_area_deg2=40.0, seconds_per_deg2=7.0),
+    "modis_pc": dict(max_side_deg=8.0, max_area_deg2=40.0, seconds_per_deg2=2.5),  # native pixels + quality layer
     "power": dict(max_side_deg=30.0, max_area_deg2=600.0, seconds_per_deg2=0.05, pads_small_areas=True),
     "gistemp": dict(max_side_deg=360.0, max_area_deg2=64800.0, seconds_per_deg2=0.0),
+    "gpcp": dict(max_side_deg=360.0, max_area_deg2=64800.0, seconds_per_deg2=0.0),
 }
 
 
@@ -447,9 +565,10 @@ _EXEC = ThreadPoolExecutor(max_workers=2)
 
 
 def _run_job(jid):
-    from .sources import gistemp, modis_pc, power
+    from .sources import gistemp, gpcp, modis_pc, power
     job = JOBS[jid]
-    fetch = {"power": power.fetch, "gistemp": gistemp.fetch, "modis_pc": modis_pc.fetch}[VARIABLES[job["var"]].source]
+    fetch = {"power": power.fetch, "gistemp": gistemp.fetch, "modis_pc": modis_pc.fetch,
+             "gpcp": gpcp.fetch}[VARIABLES[job["var"]].source]
     job["status"] = "running"
 
     def prog(frac, msg):

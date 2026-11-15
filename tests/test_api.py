@@ -76,5 +76,42 @@ def test_amazon_rainfall_distinguishes_significance_from_confirmation():
     result = c.get("/api/analysis", params=dict(var="precip", region="amazon_arc")).json()
     assert result["verdict"]["code"] == "trend_detected"
     assert result["result"]["slope"] < 0
-    assert result["answer"]["headline"] == "MERRA-2 suggests less rainfall. Needs confirmation."
+    # the headline now reports what the independent GPCP record (satellites + gauges) says for the same area
+    assert result["cross_check"]["variable"] == "precip_gpcp"
+    assert result["answer"]["headline"] in {"Less rainfall in both MERRA-2 and GPCP.",
+                                            "Less rainfall in MERRA-2 and GPCP, by different amounts.",
+                                            "MERRA-2 and GPCP point the same way, but only one is significant."}
     assert result["answer"]["source_url"] == "https://doi.org/10.1175/JCLI-D-16-0570.1"
+
+
+def test_independent_dataset_check_and_validation():
+    """Results come with an independent dataset for the same area and years (stations vs reanalysis,
+    satellites + gauges vs reanalysis); the Methods page gets live validation rows."""
+    if not (cube_path("t2m", "central_europe").exists() and cube_path("gistemp", "central_europe").exists()):
+        pytest.skip("cubes not built")
+    j = c.get("/api/analysis", params=dict(var="t2m", region="central_europe")).json()
+    cc = j["cross_check"]
+    assert cc["variable"] == "gistemp" and cc["start"] >= 1981
+    assert cc["agreement"] in {"agree", "same_direction_different_size", "one_significant", "neither_significant",
+                               "disagree", "unclear"}
+    assert any(line.startswith("Independent check with NASA GISTEMP") for line in j["answer"]["lines"])
+    v = c.get("/api/validation").json()
+    assert v["cross_checks"] and {"agreement", "difference_p"} <= set(v["cross_checks"][0])
+    assert v["calibration"]["target"] == 0.05
+
+
+def test_gpcp_precipitation_is_available_for_any_area():
+    if not cube_path("precip_gpcp", "world").exists():
+        pytest.skip("GPCP not built")
+    j = c.get("/api/analysis", params=dict(var="precip_gpcp", region="world", bbox="14,49,24,55")).json()
+    assert j["start"] == 1988 and j["result"]["slope"] is not None
+
+
+def test_agreement_categories():
+    from atlas.api import _agreement
+    r = lambda s, p: dict(slope=s, p=p)  # noqa: E731
+    assert _agreement(r(0.5, 0.01), r(0.4, 0.01), 0.6) == "agree"
+    assert _agreement(r(0.5, 0.01), r(0.2, 0.01), 0.01) == "same_direction_different_size"
+    assert _agreement(r(0.5, 0.01), r(0.2, 0.3), 0.2) == "one_significant"
+    assert _agreement(r(-0.1, 0.6), r(0.3, 0.001), 0.001) == "disagree"
+    assert _agreement(r(-0.1, 0.6), r(0.1, 0.7), 0.5) == "unclear"

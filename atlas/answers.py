@@ -22,6 +22,8 @@ PHRASES = {
     "t2m": dict(subject="The air", up="warmer", down="cooler", yes_if_up=True, relative=False, caveat=0),
     "precip": dict(subject="Rain and snow", up="more", down="less", yes_if_up=None, relative=True, caveat=0,
                    more_less=True),
+    "precip_gpcp": dict(subject="Rain and snow", up="more", down="less", yes_if_up=None, relative=True, caveat=0,
+                        more_less=True),
     "soil_root": dict(subject="Root-zone soil", up="wetter", down="drier", yes_if_up=None, relative=True, caveat=0),
     "gistemp": dict(subject="Surface temperature", up="warmer", down="cooler", yes_if_up=None, relative=False,
                     caveat=0, fastest=True),
@@ -171,6 +173,36 @@ def _confidence_sentence(a: dict) -> str | None:
     return ("How sure: " + "; ".join(bits) + ".") if bits else None
 
 
+CROSS_LABELS = {
+    "gistemp": "NASA GISTEMP (weather stations)",
+    "t2m": "MERRA-2 air temperature (reanalysis)",
+    "precip_gpcp": "GPCP (satellites and rain gauges)",
+    "precip": "MERRA-2 rainfall (reanalysis)",
+    "lst_day_aqua": "the Aqua satellite (afternoon pass)",
+}
+CROSS_CONCLUSIONS = {
+    "agree": "Both show a significant trend in the same direction; the difference in size is not significant.",
+    "same_direction_different_size": "Both show a significant trend in the same direction, but the sizes differ significantly.",
+    "one_significant": "Same direction, but only one of them is significant.",
+    "neither_significant": "Same direction, but neither is significant.",
+    "disagree": "They disagree on the direction – treat the result with care.",
+    "unclear": "Different directions, and neither is clearly significant.",
+}
+SIZES_DIFFER = "The two records also change by significantly different amounts."
+
+
+def cross_check_line(cc: dict | None) -> str | None:
+    """One sentence comparing the result with an independent dataset for the same area and years."""
+    if not cc:
+        return None
+    label = CROSS_LABELS.get(cc["variable"], cc["name"])
+    return (f"Independent check with {label}, same area, {cc['start']}–{cc['end']}: {num(cc['slope'])} "
+            f"{cc['trend_units']}; this dataset gives {num(cc['main_slope'])} for the same years. "
+            f"{CROSS_CONCLUSIONS[cc['agreement']]}"
+            + (f" {SIZES_DIFFER}" if cc.get("sizes_differ") and cc["agreement"] in ("one_significant", "neither_significant",
+                                                                                  "disagree", "unclear") else ""))
+
+
 SIGNIFICANT_CODES = ("trend_detected", "depends_on_period", "significance_depends_on_period")
 SHORT_RECORD = ("Short record (under 15 years): slow natural swings lasting several years can look like a trend "
                 "over a period this short.")
@@ -222,6 +254,9 @@ def build(var: dict, region_name: str, a: dict, trend_map: dict | None = None, c
                 lines.append(extra)
         if a["verdict"].get("short_record"):
             lines.append(SHORT_RECORD)
+    cc_line = cross_check_line(a.get("cross_check"))
+    if cc_line:
+        lines.append(cc_line)
     if compare and compare_var and compare.get("result", {}).get("slope") is not None:
         cr = compare["result"]
         same_dir = np.sign(cr["slope"]) == np.sign(slope)

@@ -8,9 +8,9 @@ import time
 import traceback
 
 from atlas.config import VARIABLES, cube_path
-from atlas.sources import gistemp, modis_pc, power
+from atlas.sources import gistemp, gpcp, modis_pc, power
 
-ADAPTERS = {"power": power.fetch, "gistemp": gistemp.fetch, "modis_pc": modis_pc.fetch}
+ADAPTERS = {"power": power.fetch, "gistemp": gistemp.fetch, "modis_pc": modis_pc.fetch, "gpcp": gpcp.fetch}
 
 
 def main():
