@@ -234,7 +234,9 @@
     },
     "attribution": "Imágenes: {imagery} · fronteras: {borders} · estrellas: {stars}",
     "savingPlace": "Añadiendo área…",
-    "noPlaceData": "El conjunto seleccionado aún no tiene datos para este lugar."
+    "noPlaceData": "El conjunto seleccionado aún no tiene datos para este lugar.",
+    "areaAnalysisUnavailable": "No se pudo analizar esta zona. Inténtalo de nuevo o selecciona otra zona.",
+    "areaDownloadUnavailable": "No se pudieron descargar los datos de la NASA para esta zona. Inténtalo de nuevo en un momento o selecciona otra zona."
   },
   "detective": {
     "controlsLabel": "Elige qué investigar",

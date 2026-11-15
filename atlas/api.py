@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import io
 import json
+import logging
 import math
 import threading
 import os
@@ -31,6 +32,8 @@ from . import stats as S
 from .config import (REGIONS, ROOT, VARIABLES, add_custom_region, cube_path, custom_regions, get_region,
                      prune_custom_regions, touch_custom_region)
 from .sources.common import IO_LOCK
+
+logger = logging.getLogger(__name__)
 
 # Public mode for the internet-facing demo (ATLAS_PUBLIC=1): no API docs pages, limits on compute jobs.
 PUBLIC = os.environ.get("ATLAS_PUBLIC") == "1"
@@ -104,11 +107,10 @@ def subset(var, region, start, end, months, bbox=None):
     da = ds["value"].sel(time=slice(f"{start}-01-01", f"{end}-12-31"))
     if bbox:
         w, s, e, n = bbox
-        da = da.sel(lat=slice(s, n), lon=slice(w, e))
-        if da.sizes["lat"] == 0 or da.sizes["lon"] == 0:  # tiny box: nearest cell
-            c = ds["value"].sel(lat=(s + n) / 2, lon=(w + e) / 2, method="nearest")
-            da = ds["value"].sel(time=slice(f"{start}-01-01", f"{end}-12-31"),
-                                 lat=[float(c.lat)], lon=[float(c.lon)])
+        selection = da.sel(lat=slice(s, n), lon=slice(w, e))
+        lat = selection.lat if selection.sizes["lat"] else da.lat.sel(lat=[(s + n) / 2], method="nearest")
+        lon = selection.lon if selection.sizes["lon"] else da.lon.sel(lon=[(w + e) / 2], method="nearest")
+        da = da.sel(lat=lat, lon=lon)
     mo = S.month_of(da.time.values) + 1
     da = da.isel(time=np.isin(mo, months))
     return da, start, end
@@ -379,7 +381,7 @@ def simulate_many(runs: int = Query(200, ge=10, le=5000), years: int = Query(12,
 # ------------------------------------------------------------------ globe support
 COMPUTE_LIMITS = {
     "modis_pc": dict(max_side_deg=8.0, max_area_deg2=40.0, seconds_per_deg2=7.0),
-    "power": dict(max_side_deg=30.0, max_area_deg2=600.0, seconds_per_deg2=0.05),
+    "power": dict(max_side_deg=30.0, max_area_deg2=600.0, seconds_per_deg2=0.05, pads_small_areas=True),
     "gistemp": dict(max_side_deg=360.0, max_area_deg2=64800.0, seconds_per_deg2=0.0),
 }
 
@@ -449,8 +451,10 @@ def _run_job(jid):
     try:
         fetch(job["var"], job["region"], log=lambda m: job.__setitem__("message", m.strip()), progress=prog)
         job.update(status="done", progress=1.0, message="ready", finished=time.time())
-    except Exception as e:  # report to the UI, keep the server alive
-        job.update(status="error", message=f"{type(e).__name__}: {e}"[:300], finished=time.time())
+    except Exception:
+        logger.exception("Data download failed for %s/%s", job["var"], job["region"])
+        job.update(status="error", message="Could not download data for this area. Try again or select another area.",
+                   finished=time.time())
 
 
 def _visitor(request: Request) -> str:
@@ -492,12 +496,11 @@ def compute(request: Request, var: str = Body(...), bbox: list[float] = Body(...
     if side > lim["max_side_deg"] or area > lim["max_area_deg2"]:
         raise HTTPException(400, f"area too large for {v.product}: max {lim['max_side_deg']}° per side and "
                                  f"{lim['max_area_deg2']} deg² (selected {e - w:.1f}° × {n - s:.1f}°)")
-    if v.source == "power" and side < 1.0:  # POWER regional needs a box of a few grid cells
-        cx, cy = (w + e) / 2, (s + n) / 2
-        w, e, s, n = cx - 1, cx + 1, max(cy - 1, -89), min(cy + 1, 89)
-        box = (w, s, e, n)
     _maybe_prune()
-    reg = add_custom_region(box)
+    # Register a box containing the selection even when its edges fall between two hundredths of a degree.
+    region_box = (math.floor(w * 100) / 100, math.floor(s * 100) / 100,
+                  math.ceil(e * 100) / 100, math.ceil(n * 100) / 100) if v.source == "power" else box
+    reg = add_custom_region(region_box)
     if cube_path(var, reg.id).exists():
         return dict(status="ready", region=reg.id, bbox=box, message="already computed")
     for jid, j in JOBS.items():

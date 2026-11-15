@@ -16,8 +16,17 @@ from .common import month_index, write_cube
 
 API = "https://power.larc.nasa.gov/api/temporal/monthly/regional"
 PARAM = {"t2m": "T2M", "precip": "PRECTOTCORR", "soil_root": "GWETROOT"}
+MIN_SPAN = 2.0
 MAX_SPAN = 10.0  # POWER regional requests are limited to a 10° box
 FILL = -999.0
+
+
+def _request_span(lo: float, hi: float, limit: float) -> tuple[float, float]:
+    if hi - lo >= MIN_SPAN:
+        return lo, hi
+    span = MIN_SPAN + 0.01  # leave room for coordinate rounding at the 2° boundary
+    start = max(-limit, min(limit - span, (lo + hi - span) / 2))
+    return start, start + span
 
 
 def _chunks(lo: float, hi: float):
@@ -33,10 +42,18 @@ def _get(client: httpx.Client, params: dict) -> dict:
             if r.status_code == 200:
                 return r.json()
             err = r.text[:300]
+            if r.status_code < 500 and r.status_code not in (408, 429):
+                break  # retrying the same rejected request cannot change its bounds
         except httpx.HTTPError as e:  # network hiccup
             err = repr(e)
-        time.sleep(5 * (attempt + 1))
+        if attempt < 4:
+            time.sleep(5 * (attempt + 1))
     raise RuntimeError(f"POWER request failed: {err}")
+
+
+def _selected_axis(coords: list[float], lo: float, hi: float) -> list[float]:
+    inside = [value for value in coords if lo <= value <= hi]
+    return inside or [min(coords, key=lambda value: abs(value - (lo + hi) / 2))]
 
 
 def fetch(var_id: str, region_id: str, log=print, progress=None):
@@ -44,7 +61,7 @@ def fetch(var_id: str, region_id: str, log=print, progress=None):
     w, s, e, n = reg.bbox
     y0, y1 = v.years
     points: dict[tuple[float, float], dict] = {}
-    boxes = [(a, b) for a in _chunks(s, n) for b in _chunks(w, e)]
+    boxes = [(a, b) for a in _chunks(*_request_span(s, n, 90)) for b in _chunks(*_request_span(w, e, 180))]
     done = 0
     with httpx.Client(headers={"User-Agent": "earth-evidence-atlas/0.1"}) as client:
         for (la0, la1), (lo0, lo1) in boxes:
@@ -59,14 +76,18 @@ def fetch(var_id: str, region_id: str, log=print, progress=None):
             done += 1
             if progress:
                 progress(done / len(boxes), f"POWER box {done}/{len(boxes)}")
-    lats = sorted({p[0] for p in points})
-    lons = sorted({p[1] for p in points})
+    if not points:
+        raise RuntimeError("POWER returned no grid cells for the requested area")
+    lats = _selected_axis(sorted({p[0] for p in points}), s, n)
+    lons = _selected_axis(sorted({p[1] for p in points}), w, e)
     times = month_index(y0, y1)
     keys = [f"{t.year}{t.month:02d}" for t in times]
     arr = np.full((len(times), len(lats), len(lons)), np.nan, "float32")
     li = {x: i for i, x in enumerate(lats)}
     lj = {x: j for j, x in enumerate(lons)}
     for (la, lo), series in points.items():
+        if la not in li or lo not in lj:
+            continue  # only the download is padded, not the analysis grid
         vals = np.array([series.get(k, FILL) for k in keys], "float32")
         vals[vals <= FILL + 1] = np.nan
         arr[:, li[la], lj[lo]] = vals

@@ -234,7 +234,9 @@
     },
     "attribution": "Imagery: {imagery} · borders: {borders} · stars: {stars}",
     "savingPlace": "Adding area…",
-    "noPlaceData": "No data for this place in the selected dataset yet."
+    "noPlaceData": "No data for this place in the selected dataset yet.",
+    "areaAnalysisUnavailable": "We couldn’t analyse this area. Try again or select another area.",
+    "areaDownloadUnavailable": "We couldn’t download NASA data for this area. Try again in a moment or select another area."
   },
   "detective": {
     "controlsLabel": "Choose what to investigate",

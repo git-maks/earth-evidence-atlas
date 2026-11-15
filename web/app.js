@@ -578,7 +578,7 @@ async function refresh(regionChanged) {
 }
 
 // ---------------------------------------------------------------- false-alarm lab
-let simSeed = 7, simSeq = 0, lastSimulation = null, lastSimulationBatch = null, spikeSeed = 12, spikeExample = null;
+let simSeed = 7, simSeq = 0, lastSimulation = null, lastSimulationBatch = null, spikeSeed = 15, spikeExample = null;
 async function simOne() {
   const seq = ++simSeq;
   const yrs = +$("#simYears").value, phi = +$("#simPhi").value;
@@ -651,7 +651,7 @@ async function loadSpikeExample() {
   newButton.disabled = compare.disabled = true;
   $("#simSpikeOut").textContent = t("common.running");
   try {
-    const s = await api("simulate", new URLSearchParams({ seed: spikeSeed, years: 10, phi: 0.25, sigma: 0.35 }));
+    const s = await api("simulate", new URLSearchParams({ seed: spikeSeed, years: 5, phi: 0.25, sigma: 0.35 }));
     spikeExample = addSpikes(s);
     renderSpikeExample();
   } catch (e) { $("#simSpikeOut").textContent = t("lab.loadError"); }

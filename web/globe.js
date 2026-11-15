@@ -597,27 +597,48 @@ function setSelection(b, final) {
   $("#gProg").hidden = true;
   Plotly.purge("gChart");
 }
+function legacyPowerBounds([w, s, e, n]) {
+  const span = 2.02; // allow the legacy server to round the registered bounds to hundredths
+  const expand = (lo, hi, limit) => {
+    if (hi - lo >= 2) return [lo, hi];
+    const start = Math.max(-limit, Math.min(limit - span, (lo + hi - span) / 2));
+    return [start, start + span];
+  };
+  const [west, east] = expand(w, e, 180), [south, north] = expand(s, n, 89);
+  return [west, south, east, north];
+}
 async function runCompute() {
   const selection = G.sel, varId = $("#gModel").value, displayedVar = G.var;
   if (!selection || !varId) return;
+  const model = CAT.variables.find((v) => v.id === varId);
+  const needsLegacyPadding = model.source === "power" && !CAT.compute_limits.power.pads_small_areas &&
+    !CAT.regions.some((r) => available(varId, r.id) && coversPlace(r.bbox, selection));
+  const requestBox = needsLegacyPadding ? legacyPowerBounds(selection) : selection;
   $("#gGo").disabled = true; $("#gOut").innerHTML = "";
   $("#gPendingPlace").hidden = false;
+  let message = t("globe.areaAnalysisUnavailable");
   try {
-    const r = await fetch("/api/compute", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ var: varId, bbox: selection }) });
+    const r = await fetch("/api/compute", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ var: varId, bbox: requestBox }) });
     const j = await r.json();
-    if (!r.ok) throw new Error(I18N.text(j.detail || r.statusText));
+    if (!r.ok) {
+      if ([400, 429].includes(r.status) && typeof j.detail === "string") message = I18N.text(j.detail);
+      throw new Error(message);
+    }
     if (j.status !== "ready") {
       $("#gProg").hidden = false;
       $("#gProgMsg").textContent = t("globe.downloading", { seconds: j.estimate_s || "?" });
       while (true) {
         await new Promise((res) => setTimeout(res, 1500));
         const s = await api(`jobs/${j.job}`, "");
+        if (s.status === "error") {
+          message = t("globe.areaDownloadUnavailable");
+          throw new Error(message);
+        }
         if (G.sel === selection) {
           $("#gProgBar").style.width = Math.round((s.progress || 0) * 100) + "%";
           $("#gProgMsg").textContent = t("common.progressMessage", { message: s.message, seconds: Math.round(s.elapsed_s) });
         }
         if (s.status === "done") break;
-        if (s.status === "error") throw new Error(s.message);
       }
       $("#gProg").hidden = true;
       CAT = await api("catalog", "");
@@ -642,9 +663,9 @@ async function runCompute() {
     } else if (varId === G.var) loadLayers();
     const a = await api("analysis", new URLSearchParams({ var: varId, region: j.region, bbox: bbox.join(",") }));
     if (G.sel === selection) showResult(a, j.region);
-  } catch (e) {
+  } catch {
     $("#gProg").hidden = true;
-    if (G.sel === selection) $("#gOut").innerHTML = `<p class="err">${esc(e.message)}</p>`;
+    if (G.sel === selection) $("#gOut").innerHTML = `<p class="ginfo" role="status">${esc(message)}</p>`;
   } finally {
     $("#gPendingPlace").hidden = true;
     $("#gGo").disabled = false;
