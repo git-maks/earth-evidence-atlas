@@ -8,7 +8,7 @@ const ALL = "1,2,3,4,5,6,7,8,9,10,11,12";
 const MIN_PERIOD_SPAN = 4; // five years including both endpoints
 
 const state = { var: "ndvi", region: "central_europe", start: null, end: null, months: ALL, bbox: null };
-let CAT = null, map = null, gridLayer = null, selLayer = null, regionLayer = null, lastMap = null;
+let CAT = null, map = null, baseLayer = null, gridLayer = null, selLayer = null, regionLayer = null, lastMap = null;
 
 // ---------------------------------------------------------------- colour maps (ColorBrewer)
 const CMAPS = {
@@ -24,9 +24,9 @@ function colorAt(stops, x) { // x in [0,1]
   return `rgb(${a.map((v, k) => Math.round(v + (b[k] - v) * t)).join(",")})`;
 }
 const fmt = (x, d = 3) => (x === null || x === undefined || !isFinite(x)) ? "–" :
-  (Math.abs(x) >= 100 ? x.toFixed(0) : Number(x.toPrecision(d)).toString());
-const fmtP = (p) => p === null || p === undefined ? "–" : p < 0.001 ? "< 0.001" : p.toFixed(3);
-const pStr = (p) => p === null || p === undefined ? "p –" : p < 0.001 ? "p < 0.001" : `p = ${p.toFixed(3)}`;
+  (Math.abs(x) >= 100 ? I18N.number(x, { maximumFractionDigits: 0 }) : I18N.number(Number(x.toPrecision(d)), { maximumSignificantDigits: d }));
+const fmtP = (p) => p === null || p === undefined ? "–" : p < 0.001 ? `< ${I18N.number(0.001)}` : I18N.number(p, { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+const pStr = (p) => p === null || p === undefined ? t("common.pValueUnavailable") : p < 0.001 ? t("common.pValueBelow", { value: I18N.number(0.001) }) : t("common.pValue", { value: fmtP(p) });
 const plotCfg = { displaylogo: false, responsive: true, displayModeBar: false };
 const dark = () => matchMedia("(prefers-color-scheme: dark)").matches;
 function layoutBase(extra) {
@@ -83,10 +83,10 @@ function wireTips(root = document) {
   });
   root.addEventListener("focusout", hideTip);
 }
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const monthLabel = (month, form = "short") => t(`calendar.months.${month}.${form}`);
 function fmtX(x) {
   const m = /^(\d{4})-(\d{2})/.exec(String(x));
-  return m ? `${MONTHS[+m[2] - 1]} ${m[1]}` : String(x);
+  return m ? `${monthLabel(+m[2])} ${m[1]}` : String(x);
 }
 function defaultTip(ev) {
   const pts = ev.points.filter((p) => p.data.hoverinfo !== "skip");
@@ -101,7 +101,26 @@ function defaultTip(ev) {
   return `<div class="thead">${fmtX(p0.x)}</div>${rows}`;
 }
 // Plotly with the app's own tooltip (Plotly's built-in hover labels are switched off)
+const plotLocales = new Set();
 function plot(id, traces, layout, tipFn = defaultTip) {
+  if (!plotLocales.has(I18N.language)) {
+    const parts = new Intl.NumberFormat(I18N.language).formatToParts(1234.5);
+    Plotly.register({ moduleType: "locale", name: I18N.language, dictionary: {}, format: {
+      months: Array.from({ length: 12 }, (_, i) => monthLabel(i + 1, "full")),
+      shortMonths: Array.from({ length: 12 }, (_, i) => monthLabel(i + 1)),
+      days: Array.from({ length: 7 }, (_, i) => t(`calendar.weekdays.${i}.full`)),
+      shortDays: Array.from({ length: 7 }, (_, i) => t(`calendar.weekdays.${i}.short`)),
+      periods: [t("calendar.periods.am"), t("calendar.periods.pm")],
+      dateTime: t("calendar.formats.dateTime"), date: t("calendar.formats.date"), time: t("calendar.formats.time"),
+      year: t("calendar.formats.year"), month: t("calendar.formats.month"),
+      dayMonth: t("calendar.formats.dayMonth"), dayMonthYear: t("calendar.formats.dayMonthYear"),
+      grouping: [3], currency: ["$", ""],
+      decimal: parts.find((part) => part.type === "decimal").value,
+      thousands: (parts.find((part) => part.type === "group") || { value: "" }).value,
+    } });
+    plotLocales.add(I18N.language);
+  }
+  plotCfg.locale = I18N.language;
   const el = typeof id === "string" ? document.getElementById(id) : id;
   traces.forEach((t) => { if (t.hoverinfo !== "skip") { t.hoverinfo = "none"; delete t.hovertemplate; } });
   const res = Plotly.react(el, traces, layout, plotCfg);
@@ -178,8 +197,8 @@ function query(withBbox) {
 }
 async function api(path, params) {
   const r = await fetch(`/api/${path}?${params}`);
-  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
-  return r.json();
+  if (!r.ok) throw new Error(I18N.text((await r.json().catch(() => ({}))).detail || r.statusText));
+  return I18N.response(path, await r.json());
 }
 
 // ---------------------------------------------------------------- controls
@@ -213,7 +232,7 @@ function syncControls() {
   if (!regs.includes(state.region)) regs.push(state.region);
   $("#region").innerHTML = regs.map((r) => {
     const R = CAT.regions.find((x) => x.id === r);
-    return `<option value="${r}" ${available(v.id, r) ? "" : "disabled"}>${R.name}${available(v.id, r) ? "" : " (no data)"}</option>`;
+    return `<option value="${r}" ${available(v.id, r) ? "" : "disabled"}>${R.name}${available(v.id, r) ? "" : t("common.noDataSuffix")}</option>`;
   }).join("");
   $("#region").value = state.region;
   $("#regionStory").textContent = CAT.regions.find((x) => x.id === state.region).story;
@@ -234,8 +253,8 @@ function syncControls() {
   $$(".seasons .chip").forEach((c) => c.classList.toggle("on", c.dataset.m === state.months));
   $("#resetSel").hidden = !state.bbox;
   $("#resetSel").classList.toggle("on", false);
-  $("#selInfo").textContent = state.bbox ? `Area ${state.bbox.map((x) => x.toFixed(1)).join(", ")} (W,S,E,N)` :
-    "Whole region. Click a cell or use Select area on the map.";
+  $("#selInfo").textContent = state.bbox ? t("detective.areaCoordinates", { coordinates: state.bbox.map((x) => I18N.number(x, { minimumFractionDigits: 1, maximumFractionDigits: 1 })).join("; ") }) :
+    t("detective.wholeRegionHint");
 }
 function updatePeriodYears(which, year) {
   const [first, last] = V().years;
@@ -288,8 +307,8 @@ function wireControls() {
   $("#copyLink").onclick = () => {
     const b = $("#copyLink");
     navigator.clipboard && navigator.clipboard.writeText(location.href);
-    b.innerHTML = `${ic("check")}<span>Copied</span>`;
-    setTimeout(() => { b.innerHTML = `${ic("link")}<span>Copy link</span>`; }, 1500);
+    b.innerHTML = `${ic("check")}<span>${t("common.copied")}</span>`;
+    setTimeout(() => { b.innerHTML = `${ic("link")}<span>${t("common.copyLink")}</span>`; }, 1500);
   };
   $$(".tab").forEach((t) => t.onclick = () => {
     $$(".tab").forEach((x) => x.classList.toggle("active", x === t));
@@ -304,12 +323,13 @@ function wireControls() {
 
 // ---------------------------------------------------------------- map
 function initMap() {
-  map = L.map("map", { preferCanvas: true, worldCopyJump: false, minZoom: 1 });
+  map = L.map("map", { preferCanvas: true, worldCopyJump: false, minZoom: 1, zoomControl: false });
+  L.control.zoom({ zoomInTitle: t("mapControls.zoomIn"), zoomOutTitle: t("mapControls.zoomOut") }).addTo(map);
   mapObserver.observe($("#map"));
   // NASA GIBS basemap (no API key): Blue Marble relief + reference coastlines/borders/labels on top of the data
   const GIBS = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/";
-  L.tileLayer(GIBS + "BlueMarble_ShadedRelief_Bathymetry/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg", {
-    attribution: 'Basemap: <a href="https://earthdata.nasa.gov/gibs" target="_blank" rel="noopener">NASA GIBS</a> Blue Marble',
+  baseLayer = L.tileLayer(GIBS + "BlueMarble_ShadedRelief_Bathymetry/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg", {
+    attribution: t("detective.basemapAttribution", { source: '<a href="https://earthdata.nasa.gov/gibs" target="_blank" rel="noopener">NASA GIBS</a>' }),
     maxNativeZoom: 8, maxZoom: 11,
   }).addTo(map);
   // tools on the map itself: select an area / back to the whole region, plus a banner while selecting
@@ -317,8 +337,8 @@ function initMap() {
     options: { position: "topright" },
     onAdd() {
       const d = L.DomUtil.create("div", "maptool");
-      d.innerHTML = `<button id="drawBtn" class="btn ghost" aria-pressed="false" data-tiphtml="<b>Select area</b><br>Drag a rectangle to analyse the selected part of the current region. Press Esc to cancel.">${ic("select")}<span>Select area</span></button>` +
-        `<button id="resetSel" class="ibtn" hidden aria-label="Whole region" data-tip="Back to the whole region">${ic("expand")}</button>`;
+      d.innerHTML = `<button id="drawBtn" class="btn ghost" aria-pressed="false" data-tiphtml="${esc(t("detective.selectAreaTooltipHtml"))}">${ic("select")}<span>${t("common.selectArea")}</span></button>` +
+        `<button id="resetSel" class="ibtn" hidden aria-label="${esc(t("detective.wholeRegion"))}" data-tip="${esc(t("detective.resetSelectionHint"))}">${ic("expand")}</button>`;
       L.DomEvent.disableClickPropagation(d); L.DomEvent.disableScrollPropagation(d);
       return d;
     },
@@ -326,7 +346,7 @@ function initMap() {
   new Tools().addTo(map);
   const banner = L.DomUtil.create("div", "drawbanner", map.getContainer());
   banner.hidden = true;
-  banner.innerHTML = `${ic("select")}<span>Drag on the map to select an area</span><button class="btn ghost small">Cancel</button>`;
+  banner.innerHTML = `${ic("select")}<span>${t("detective.dragToSelect")}</span><button class="btn ghost small">${t("common.cancel")}</button>`;
   L.DomEvent.disableClickPropagation(banner);
   let drawing = false, startLL = null, rect = null, justDrew = 0;
   const setDraw = (on) => {
@@ -362,8 +382,8 @@ function initMap() {
     if (!c) { hideTip(); $("#map").classList.remove("oncell"); return; }
     const { m, i, j } = c, s = m.slope[i][j], vf = m.valid_fraction[i][j], sig = m.sig_fdr[i][j];
     $("#map").classList.add("oncell");
-    showTip(s === null ? `Too few data (${Math.round(vf * 100)}% of months)` :
-      `<b>${s > 0 ? "+" : ""}${fmt(s)}</b> ${m.trend_units}<br><span class="muted">${pStr(m.p[i][j])} · ${sig ? "significant" : "not significant"} · ${Math.round(vf * 100)}% data</span>`,
+    showTip(s === null ? t("detective.tooFewData", { percent: Math.round(vf * 100) }) :
+      `<b>${s > 0 ? "+" : ""}${fmt(s)}</b> ${m.trend_units}<br><span class="muted">${pStr(m.p[i][j])} · ${sig ? t("common.significant") : t("common.notSignificant")} · ${t("common.dataPercent", { percent: Math.round(vf * 100) })}</span>`,
     e.originalEvent.clientX, e.originalEvent.clientY);
   });
   map.on("mouseout", hideTip);
@@ -406,18 +426,18 @@ function drawGrid(m) {
   if (regionLayer) regionLayer.bringToFront();
   drawLegend(m, stops, lim, cov);
   const S = m.summary;
-  $("#mapSummary").innerHTML = cov ? "Share of months with valid data." :
-    `${S.positive} up, ${S.negative} down · <b>${S.significant_fdr}</b> of ${S.cells_with_trend} cells significant ` +
-    `<span data-tip="False discovery rate control, q = ${m.fdr_q}. Tested one by one, ${S.significant_uncorrected} cells would look significant.">(FDR)</span>`;
+  $("#mapSummary").innerHTML = cov ? t("detective.coverageSummary") :
+    th("detective.mapSummary", { positive: S.positive, negative: S.negative, significant: S.significant_fdr, total: S.cells_with_trend }) +
+    ` <span data-tip="${esc(t("detective.fdrHint", { q: I18N.number(m.fdr_q), uncorrected: S.significant_uncorrected }))}">(FDR)</span>`;
 }
 function drawLegend(m, stops, lim, cov) {
   if (cov) {
-    $("#legend").innerHTML = `<span>0%</span><span class="bar" style="background:linear-gradient(90deg,${CMAPS.Greys.join(",")})"></span><span>100% data</span>`;
+    $("#legend").innerHTML = `<span>0%</span><span class="bar" style="background:linear-gradient(90deg,${CMAPS.Greys.join(",")})"></span><span>${t("common.dataPercent", { percent: 100 })}</span>`;
     return;
   }
   const grad = Array.from({ length: 11 }, (_, k) => colorAt(stops, k / 10)).join(",");
   $("#legend").innerHTML = `<span>${fmt(-lim, 2)}</span><span class="bar" style="background:linear-gradient(90deg,${grad})"></span>` +
-    `<span>+${fmt(lim, 2)} ${m.trend_units}</span><span class="nd"></span><span>no data</span>`;
+    `<span>+${fmt(lim, 2)} ${m.trend_units}</span><span class="nd"></span><span>${t("common.noData")}</span>`;
 }
 
 // ---------------------------------------------------------------- result card + charts
@@ -426,7 +446,7 @@ function renderAnswer(a) {
   $("#answer").classList.remove("loading");
   if (!A || A.code === "error") {
     $("#answerQ").textContent = V().question;
-    $("#answerBody").innerHTML = `<p class="hint">No answer for this selection${A && A.note ? ` (${A.note})` : ""}.</p>`;
+    $("#answerBody").innerHTML = `<p class="hint">${A && A.note ? th("detective.noAnswerWithNote", { note: A.note }) : t("detective.noAnswer")}</p>`;
     return;
   }
   $("#answer").dataset.code = A.code;
@@ -435,7 +455,7 @@ function renderAnswer(a) {
     <p class="answer-head">${A.headline}</p>
     <ul class="answer-lines">${A.lines.map((l) => `<li>${l}</li>`).join("")}</ul>
     ${A.caveat ? `<p class="answer-caveat">${ic("info")}<span>${A.caveat}</span></p>` : ""}
-    <details class="answer-how"><summary>How we know</summary><ul>${A.how.map((l) => `<li>${l}</li>`).join("")}</ul>
+    <details class="answer-how"><summary>${t("detective.howWeKnow")}</summary><ul>${A.how.map((l) => `<li>${l}</li>`).join("")}</ul>
       <p class="hint">${A.note}</p></details>`;
 }
 function answerLoading() {
@@ -444,18 +464,18 @@ function answerLoading() {
 }
 function renderCard(a) {
   const r = a.result, v = V(), ver = a.verdict;
-  const rob = ver.robustness ? `<div><span>Other periods agree</span>${ver.robustness.same_sign} / ${ver.robustness.windows}</div>` : "";
-  const season = { [ALL]: "all year", "12,1,2": "DJF", "3,4,5": "MAM", "6,7,8": "JJA", "9,10,11": "SON" }[state.months] || "selected months";
+  const rob = ver.robustness ? `<div><span>${t("detective.otherPeriodsAgree")}</span>${ver.robustness.same_sign} / ${ver.robustness.windows}</div>` : "";
+  const season = { [ALL]: t("calendar.allYear"), "12,1,2": t("calendar.seasons.djf.label"), "3,4,5": t("calendar.seasons.mam.label"), "6,7,8": t("calendar.seasons.jja.label"), "9,10,11": t("calendar.seasons.son.label") }[state.months] || t("calendar.selectedMonths");
   $("#card").innerHTML = `
     <div class="verdict ${ver.code}"><h2>${ver.title}</h2><p>${ver.text}</p></div>
     <div class="big">${r.slope > 0 ? "+" : ""}${fmt(r.slope)} <small>${a.trend_units}</small></div>
-    <div class="hint">95% range ${fmt(r.ci_low)} to ${fmt(r.ci_high)} · ${a.start}–${a.end} · ${season}</div>
+    <div class="hint">${th("detective.confidenceRange", { low: fmt(r.ci_low), high: fmt(r.ci_high), start: a.start, end: a.end, season })}</div>
     <div class="stats">
-      <div data-tip="Corrected for month-to-month memory"><span>p-value</span>${fmtP(r.p)}</div>
-      <div data-tip="Rank-based test, robust to outliers"><span>Mann–Kendall p</span>${fmtP(r.mk_p)}</div>
-      <div data-tip="Median of all pairwise slopes"><span>Sen slope</span>${fmt(r.sen_slope)}</div>
-      <div data-tip="Months used / effective independent months"><span>n / effective n</span>${r.n} / ${Math.round(r.n_eff)}</div>
-      <div data-tip="${a.cells} grid cells"><span>Valid data</span>${Math.round(r.valid_fraction * 100)}%</div>
+      <div data-tip="${esc(t("detective.pValueHint"))}"><span>${t("detective.pValue")}</span>${fmtP(r.p)}</div>
+      <div data-tip="${esc(t("detective.mannKendallHint"))}"><span>${t("detective.mannKendallP")}</span>${fmtP(r.mk_p)}</div>
+      <div data-tip="${esc(t("detective.senSlopeHint"))}"><span>${t("detective.senSlope")}</span>${fmt(r.sen_slope)}</div>
+      <div data-tip="${esc(t("detective.effectiveNHint"))}"><span>${t("detective.effectiveN")}</span>${r.n} / ${Math.round(r.n_eff)}</div>
+      <div data-tip="${t(a.cells === 1 ? "detective.gridCellsHintOne" : "detective.gridCellsHint", { count: a.cells })}"><span>${t("detective.validData")}</span>${Math.round(r.valid_fraction * 100)}%</div>
       ${rob}
     </div>`;
 }
@@ -466,20 +486,20 @@ function renderChart(a) {
   const lo = s.t.map((t, i) => s.fit[i] + (r.ci_low - r.slope) / 10 * (t - s.t_mean));
   const hi = s.t.map((t, i) => s.fit[i] + (r.ci_high - r.slope) / 10 * (t - s.t_mean));
   const traces = [
-    { x, y: s.anomaly, type: "scatter", mode: state.months === ALL ? "lines" : "markers", name: "Month",
+    { x, y: s.anomaly, type: "scatter", mode: state.months === ALL ? "lines" : "markers", name: t("charts.month"),
       line: { color: "#8aa4bf", width: 1 }, marker: { size: 4, color: "#8aa4bf" } },
   ];
-  if (s.running12) traces.push({ x, y: s.running12, type: "scatter", mode: "lines", name: "12-month mean", line: { color: dark() ? "#5ea8ff" : "#0b5cad", width: 2 } });
+  if (s.running12) traces.push({ x, y: s.running12, type: "scatter", mode: "lines", name: t("charts.runningMean"), line: { color: dark() ? "#5ea8ff" : "#0b5cad", width: 2 } });
   traces.push(
     { x, y: hi, type: "scatter", mode: "lines", line: { width: 0 }, showlegend: false, hoverinfo: "skip" },
-    { x, y: lo, type: "scatter", mode: "lines", fill: "tonexty", fillcolor: "rgba(214,96,77,.18)", line: { width: 0 }, name: "95% range", hoverinfo: "skip" },
-    { x, y: s.fit, type: "scatter", mode: "lines", name: "Trend", line: { color: "#d6604d", width: 2.5 } },
+    { x, y: lo, type: "scatter", mode: "lines", fill: "tonexty", fillcolor: "rgba(214,96,77,.18)", line: { width: 0 }, name: t("charts.confidenceRange"), hoverinfo: "skip" },
+    { x, y: s.fit, type: "scatter", mode: "lines", name: t("charts.trend"), line: { color: "#d6604d", width: 2.5 } },
   );
-  plot("chart", traces, layoutBase({ yaxis: { title: { text: `Anomaly (${v.units.replace(/ \(.*\)/, "")})`, font: { size: 12 } } } }));
+  plot("chart", traces, layoutBase({ yaxis: { title: { text: t("charts.anomalyAxis", { unit: v.units.replace(/ \(.*\)/, "") }), font: { size: 12 } } } }));
 }
 function renderMatrix(a) {
   const mx = a.matrix;
-  if (!mx) { Plotly.purge("matrix"); $("#matrixNote").textContent = "Pick at least 10 years to compare periods."; return; }
+  if (!mx) { Plotly.purge("matrix"); $("#matrixNote").textContent = t("charts.minimumMatrixPeriod"); return; }
   const z = mx.ends.map((e) => mx.starts.map((s) => { const c = mx.cells.find((c) => c.start === s && c.end === e); return c ? c.slope : null; }));
   const sig = mx.ends.map((e) => mx.starts.map((s) => { const c = mx.cells.find((c) => c.start === s && c.end === e); return c && c.p !== null ? (c.p < 0.05 ? "●" : "") : ""; }));
   const text = mx.ends.map((e) => mx.starts.map((s) => { const c = mx.cells.find((c) => c.start === s && c.end === e); return c && c.slope !== null ? `<div class="thead">${s}–${e}</div><b>${c.slope > 0 ? "+" : ""}${fmt(c.slope)}</b> ${a.trend_units}<br><span class="muted">${pStr(c.p)}</span>` : ""; }));
@@ -497,27 +517,27 @@ function renderMatrix(a) {
     textfont: { size: mx.starts.length > 14 ? 7 : 9, color: z.flat().map((v) => v !== null && Math.abs(v) / lim > 0.55 ? "#ffffff" : "#111111") },
   }, {
     type: "scatter", mode: "markers", x: [a.start], y: [a.end], marker: { symbol: "square-open", size: 14, color: dark() ? "#ffffff" : "#111", line: { width: 2 } }, hoverinfo: "skip", showlegend: false,
-  }], layoutBase({ hovermode: "closest", xaxis: { title: { text: "Start year" }, dtick: tk * mx.step, tickangle: 0 }, yaxis: { title: { text: "End year" }, dtick: tk * mx.step }, margin: { l: 50, r: 10, t: 6, b: 40 } }));
+  }], layoutBase({ hovermode: "closest", xaxis: { title: { text: t("common.startYear") }, dtick: tk * mx.step, tickangle: 0 }, yaxis: { title: { text: t("common.endYear") }, dtick: tk * mx.step }, margin: { l: 50, r: 10, t: 6, b: 40 } }));
   const el = $("#matrix");
   el.removeAllListeners && el.removeAllListeners("plotly_click");
   el.on("plotly_click", (ev) => {
     const pt = ev.points[0]; if (!pt || pt.data.type !== "heatmap") return;
     state.start = +pt.x; state.end = +pt.y; syncControls(); refresh(false);
   });
-  $("#matrixNote").textContent = `Dot = significant. Periods of ${mx.min_len}+ years${mx.step > 1 ? `, every ${mx.step} years` : ""}. Mixed colours = depends on the period.`;
+  $("#matrixNote").textContent = t(mx.step > 1 ? "charts.matrixNoteWithStep" : "charts.matrixNote", { minYears: mx.min_len, step: mx.step });
 }
 function renderSeason(a) {
-  const names = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
+  const names = Array.from({ length: 12 }, (_, i) => monthLabel(i + 1, "narrow"));
   const unit = V().units.replace(/ \(.*\)/, "");
   plot("season", [{ x: names.map((n, i) => `${i + 1}`), y: a.seasonal_cycle, type: "bar", marker: { color: "#8aa4bf" } }],
     layoutBase({ xaxis: { tickvals: names.map((n, i) => `${i + 1}`), ticktext: names }, yaxis: { title: { text: unit, font: { size: 11 } } }, margin: { l: 50, r: 6, t: 4, b: 24 }, hovermode: "closest" }),
-    (ev) => `<div class="thead">${MONTHS[+ev.points[0].x - 1]}</div><b>${fmt(ev.points[0].y)}</b> ${unit}`);
+    (ev) => `<div class="thead">${monthLabel(+ev.points[0].x)}</div><b>${fmt(ev.points[0].y)}</b> ${unit}`);
 }
 function renderSource(a) {
   const p = a.provenance;
   $("#source").innerHTML = `<p><b>${p.product}</b><br>${p.provider} · <span class="tag">${p.kind}</span> ${p.resolution}</p>
-    <p>${p.citation} <a href="${p.url}" target="_blank" rel="noopener">link</a></p>
-    <p class="hint">Licence: ${p.license}</p>
+    <p>${p.citation} <a href="${p.url}" target="_blank" rel="noopener">${t("common.link")}</a></p>
+    <p class="hint">${th("common.licence", { license: p.license })}</p>
     <ul>${p.caveats.map((c) => `<li>${c}</li>`).join("")}</ul>`;
 }
 
@@ -536,8 +556,8 @@ async function refreshAnalysis() {
   } catch (e) {
     if (my !== seq) return;
     $("#answer").classList.remove("loading");
-    $("#answerBody").innerHTML = `<p class="err">Could not analyse: ${e.message}</p>`;
-    $("#card").innerHTML = `<p class="err">Could not analyse: ${e.message}</p>`;
+    $("#answerBody").innerHTML = `<p class="err">${th("errors.analysisFailed", { message: e.message })}</p>`;
+    $("#card").innerHTML = `<p class="err">${th("errors.analysisFailed", { message: e.message })}</p>`;
   }
 }
 let mapSeq = 0;
@@ -548,7 +568,7 @@ async function refresh(regionChanged) {
   try {
     const m = await api("map", query(false));
     if (my === mapSeq) drawGrid(m);
-  } catch (e) { if (my === mapSeq) $("#mapSummary").innerHTML = `<span class="err">Map unavailable: ${e.message}</span>`; }
+  } catch (e) { if (my === mapSeq) $("#mapSummary").innerHTML = `<span class="err">${th("errors.mapUnavailable", { message: e.message })}</span>`; }
 }
 
 // ---------------------------------------------------------------- false-alarm lab
@@ -558,45 +578,45 @@ async function simOne() {
   $("#simYearsV").textContent = yrs; $("#simPhiV").textContent = phi;
   const s = await api("simulate", new URLSearchParams({ seed: simSeed, years: yrs, phi }));
   plot("simChart", [
-    { x: s.dates, y: s.values, type: "scatter", mode: "lines", name: "Simulated (no trend)", line: { color: "#8aa4bf" } },
-    { x: s.dates, y: s.fit, type: "scatter", mode: "lines", name: "Fitted line", line: { color: "#d6604d", width: 2.5 } },
-  ], layoutBase({ annotations: [{ text: "SIMULATION", xref: "paper", yref: "paper", x: 0.01, y: 0.98, showarrow: false, font: { size: 13, color: dark() ? "#d4a72c" : "#8a5a00" } }] }));
-  const yes = (p) => p < 0.05 ? `<span class="err">fooled</span>` : "not fooled";
-  $("#simOut").innerHTML = `<div><span>Fitted slope</span><b>${fmt(s.slope)} /decade</b>true value: 0</div>
-    <div><span>Naive test</span><b>${pStr(s.naive_p)}</b>${yes(s.naive_p)}</div>
-    <div data-tip="Effective n ≈ ${Math.round(s.n_eff)} of ${s.years * 12} months"><span>Corrected test</span><b>${pStr(s.corrected_p)}</b>${yes(s.corrected_p)}</div>`;
+    { x: s.dates, y: s.values, type: "scatter", mode: "lines", name: t("lab.simulatedSeries"), line: { color: "#8aa4bf" } },
+    { x: s.dates, y: s.fit, type: "scatter", mode: "lines", name: t("lab.fittedLine"), line: { color: "#d6604d", width: 2.5 } },
+  ], layoutBase({ annotations: [{ text: t("lab.simulationLabel"), xref: "paper", yref: "paper", x: 0.01, y: 0.98, showarrow: false, font: { size: 13, color: dark() ? "#d4a72c" : "#8a5a00" } }] }));
+  const yes = (p) => p < 0.05 ? `<span class="err">${t("lab.fooled")}</span>` : t("lab.notFooled");
+  $("#simOut").innerHTML = `<div><span>${t("lab.fittedSlope")}</span><b>${fmt(s.slope)} ${t("common.perDecade")}</b>${t("lab.trueValue")}</div>
+    <div><span>${t("lab.naiveTest")}</span><b>${pStr(s.naive_p)}</b>${yes(s.naive_p)}</div>
+    <div data-tip="${t("lab.effectiveNHint", { effective: Math.round(s.n_eff), total: s.years * 12 })}"><span>${t("lab.correctedTest")}</span><b>${pStr(s.corrected_p)}</b>${yes(s.corrected_p)}</div>`;
 }
 async function simMany() {
   const yrs = +$("#simYears").value, phi = +$("#simPhi").value;
-  $("#simMultiOut").textContent = "Running…";
+  $("#simMultiOut").textContent = t("common.running");
   const N = 200;
   const r = await api("simulate_many", new URLSearchParams({ runs: N, years: yrs, phi }));
   const naive = r.naive_significant, corr = r.corrected_significant;
   const pct = [naive / N * 100, corr / N * 100, 5];
   plot("simMulti", [{
-    type: "bar", x: ["Naive test", "Corrected test", "Honest target"], y: pct, marker: { color: ["#d6604d", "#0b5cad", "#9aa7b4"] },
+    type: "bar", x: [t("lab.naiveTest"), t("lab.correctedTest"), t("lab.honestTarget")], y: pct, marker: { color: ["#d6604d", "#0b5cad", "#9aa7b4"] },
     text: [`${fmt(pct[0], 2)}% (${naive}/${N})`, `${fmt(pct[1], 2)}% (${corr}/${N})`, "5%"], textposition: "outside", cliponaxis: false,
-    customdata: [`Fooled ${naive} of ${N} times`, `Fooled ${corr} of ${N} times`, "An honest 5% test"],
-  }], layoutBase({ yaxis: { title: { text: "% fooled", font: { size: 12 } }, ticksuffix: "%", range: [0, Math.max(30, Math.max(...pct) * 1.25)] },
+    customdata: [t("lab.fooledCount", { count: naive, total: N }), t("lab.fooledCount", { count: corr, total: N }), t("lab.honestTest")],
+  }], layoutBase({ yaxis: { title: { text: t("lab.fooledAxis"), font: { size: 12 } }, ticksuffix: "%", range: [0, Math.max(30, Math.max(...pct) * 1.25)] },
     margin: { t: 18, b: 30 }, hovermode: "closest", showlegend: false }));
-  $("#simMultiOut").textContent = `${yrs} years, memory ${phi}.`;
+  $("#simMultiOut").textContent = t("lab.settingsSummary", { years: yrs, memory: I18N.number(phi) });
 }
 
 // ---------------------------------------------------------------- about
 function renderAbout() {
-  const rows = CAT.variables.map((v) => `<tr><td><b>${v.name}</b><br><span class="tag">${v.kind}</span></td><td>${v.product}<br>${v.provider}</td><td>${v.resolution}<br>${v.years[0]}–${v.years[1]}</td><td>${v.citation} <a href="${v.url}" target="_blank" rel="noopener">link</a><br><i>${v.license}</i></td></tr>`).join("");
-  $("#aboutBody").innerHTML = `<h2>What this tool does</h2>
-    <p>Pick NASA Earth data and a place. See <b>what</b> changes, <b>where</b>, <b>how fast</b>, and whether it is <b>significant</b> – then check if it holds for other periods.</p>
-    <h2>Data</h2><table><tr><th>Variable</th><th>Product</th><th>Grid / years</th><th>Citation &amp; licence</th></tr>${rows}</table>
-    <h2>Methods</h2><ul>${Object.entries(CAT.methods).map(([k, v]) => `<li><b>${k.replace(/_/g, " ")}:</b> ${v}</li>`).join("")}</ul>
-    <p>References: Santer B.D. et al. (2000) J. Geophys. Res. 105, 7337–7356 · Hirsch R.M., Slack J.R., Smith R.A. (1982) Water Resour. Res. 18, 107–121 · Sen P.K. (1968) JASA 63, 1379–1389 · Benjamini Y., Hochberg Y. (1995) JRSS-B 57, 289–300 · Wilks D.S. (2016) BAMS 97, 2263–2273.</p>
-    <h2>What the tool will not tell you</h2>
-    <p>A trend is not a cause. The tool never says “the climate is not changing” or “humans caused this”: it reports what this series, place and period can and cannot show.</p>
+  const rows = CAT.variables.map((v) => `<tr><td><b>${v.name}</b><br><span class="tag">${v.kind}</span></td><td>${v.product}<br>${v.provider}</td><td>${v.resolution}<br>${v.years[0]}–${v.years[1]}</td><td>${v.citation} <a href="${v.url}" target="_blank" rel="noopener">${t("common.link")}</a><br><i>${v.license}</i></td></tr>`).join("");
+  $("#aboutBody").innerHTML = `<h2>${t("methods.toolTitle")}</h2>
+    <p>${th("methods.toolDescriptionHtml")}</p>
+    <h2>${t("methods.dataTitle")}</h2><table><tr><th>${t("methods.variableColumn")}</th><th>${t("methods.productColumn")}</th><th>${t("methods.gridYearsColumn")}</th><th>${t("methods.citationLicenceColumn")}</th></tr>${rows}</table>
+    <h2>${t("methods.methodsTitle")}</h2><ul>${Object.entries(CAT.methods).map(([k, v]) => `<li><b>${t(`methods.notes.${k}.label`)}:</b> ${esc(v)}</li>`).join("")}</ul>
+    <p>${t("methods.references")}</p>
+    <h2>${t("methods.limitsTitle")}</h2><p>${t("methods.limitsDescription")}</p>
     <h2>AI disclosure</h2><p>${CAT.ai_disclosure}</p>`;
 }
 
 // ---------------------------------------------------------------- boot
 (async function boot() {
+  await I18N.init();
   readHash();
   setHeaderHeight(); window.addEventListener("resize", setHeaderHeight);
   watchCharts(); wireTips(); initLogoSpark();
@@ -611,5 +631,30 @@ function renderAbout() {
   $("#simYears").oninput = simOne; $("#simPhi").oninput = simOne;
   $("#simMany").onclick = simMany;
   if (window.initGlobeTab) window.initGlobeTab();
+  window.addEventListener("languagechange", async () => {
+    hideTip();
+    CAT = I18N.response("catalog", CAT._raw || CAT);
+    buildVarCards(); syncControls(); renderAbout();
+    // Map controls are owned by Leaflet and are outside the static text bindings.
+    $(".leaflet-control-zoom-in").title = t("mapControls.zoomIn");
+    $(".leaflet-control-zoom-out").title = t("mapControls.zoomOut");
+    $(".leaflet-control-zoom-in").setAttribute("aria-label", t("mapControls.zoomIn"));
+    $(".leaflet-control-zoom-out").setAttribute("aria-label", t("mapControls.zoomOut"));
+    map.attributionControl.removeAttribution(baseLayer.options.attribution);
+    baseLayer.options.attribution = t("detective.basemapAttribution", { source: '<a href="https://earthdata.nasa.gov/gibs" target="_blank" rel="noopener">NASA GIBS</a>' });
+    map.attributionControl.addAttribution(baseLayer.options.attribution);
+    $("#drawBtn span").textContent = t("common.selectArea");
+    $("#drawBtn").dataset.tiphtml = t("detective.selectAreaTooltipHtml");
+    $("#resetSel").setAttribute("aria-label", t("detective.wholeRegion"));
+    $("#resetSel").dataset.tip = t("detective.resetSelectionHint");
+    $(".drawbanner span").textContent = t("detective.dragToSelect");
+    $(".drawbanner button").textContent = t("common.cancel");
+    setHeaderHeight();
+    refresh(false);
+    if (window.localiseGlobe) window.localiseGlobe();
+    if ($("#lab").classList.contains("active")) simOne();
+    if ($("#simMulti").data) simMany();
+    window.dispatchEvent(new Event("resize"));
+  });
   await refresh(true);
 })();

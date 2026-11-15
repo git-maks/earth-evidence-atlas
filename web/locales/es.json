@@ -136,6 +136,49 @@
       "south": "S",
       "east": "E",
       "west": "O"
+    },
+    "weekdays": {
+      "0": {
+        "full": "domingo",
+        "short": "dom"
+      },
+      "1": {
+        "full": "lunes",
+        "short": "lun"
+      },
+      "2": {
+        "full": "martes",
+        "short": "mar"
+      },
+      "3": {
+        "full": "miércoles",
+        "short": "mié"
+      },
+      "4": {
+        "full": "jueves",
+        "short": "jue"
+      },
+      "5": {
+        "full": "viernes",
+        "short": "vie"
+      },
+      "6": {
+        "full": "sábado",
+        "short": "sáb"
+      }
+    },
+    "periods": {
+      "am": "a. m.",
+      "pm": "p. m."
+    },
+    "formats": {
+      "dateTime": "%a %e %b %Y %X",
+      "date": "%d/%m/%Y",
+      "time": "%H:%M:%S",
+      "year": "%Y",
+      "month": "%b %Y",
+      "dayMonth": "%-d %b",
+      "dayMonthYear": "%-d %b %Y"
     }
   },
   "globe": {
@@ -469,7 +512,9 @@
     "emptyBbox": "área de delimitación vacía (todavía no se admiten áreas que crucen la línea internacional de cambio de fecha)",
     "areaTooLarge": "área demasiado grande para {product}: máximo {maxSide}° por lado y {maxArea} grados² (selección: {width}° × {height}°)",
     "unknownJob": "tarea desconocida",
-    "powerRequestFailed": "Falló la solicitud a POWER: {message}"
+    "powerRequestFailed": "Falló la solicitud a POWER: {message}",
+    "demoBusy": "El servidor está calculando otras áreas. Inténtalo de nuevo en un minuto.",
+    "demoHourlyLimit": "Se ha alcanzado el límite de áreas nuevas por hora. Las áreas ya calculadas siguen disponibles."
   },
   "jobs": {
     "ready": "listo",
@@ -649,5 +694,14 @@
         ]
       }
     }
+  },
+  "localisation": {
+    "language": "Idioma",
+    "languages": {
+      "en": "English",
+      "es": "Español",
+      "pl": "Polski"
+    },
+    "loadError": "No se pudo cargar el idioma. Inténtalo de nuevo."
   }
 }

@@ -136,6 +136,49 @@
       "south": "S",
       "east": "E",
       "west": "W"
+    },
+    "weekdays": {
+      "0": {
+        "full": "Sunday",
+        "short": "Sun"
+      },
+      "1": {
+        "full": "Monday",
+        "short": "Mon"
+      },
+      "2": {
+        "full": "Tuesday",
+        "short": "Tue"
+      },
+      "3": {
+        "full": "Wednesday",
+        "short": "Wed"
+      },
+      "4": {
+        "full": "Thursday",
+        "short": "Thu"
+      },
+      "5": {
+        "full": "Friday",
+        "short": "Fri"
+      },
+      "6": {
+        "full": "Saturday",
+        "short": "Sat"
+      }
+    },
+    "periods": {
+      "am": "AM",
+      "pm": "PM"
+    },
+    "formats": {
+      "dateTime": "%a %b %e %X %Y",
+      "date": "%d/%m/%Y",
+      "time": "%H:%M:%S",
+      "year": "%Y",
+      "month": "%b %Y",
+      "dayMonth": "%b %-d",
+      "dayMonthYear": "%b %-d, %Y"
     }
   },
   "globe": {
@@ -469,7 +512,9 @@
     "emptyBbox": "empty bbox (areas crossing the date line are not supported yet)",
     "areaTooLarge": "area too large for {product}: max {maxSide}° per side and {maxArea} deg² (selected {width}° × {height}°)",
     "unknownJob": "unknown job",
-    "powerRequestFailed": "POWER request failed: {message}"
+    "powerRequestFailed": "POWER request failed: {message}",
+    "demoBusy": "The demo server is busy computing other areas. Please try again in a minute.",
+    "demoHourlyLimit": "Limit of new areas per hour reached for this demo. Areas already computed still work."
   },
   "jobs": {
     "ready": "ready",
@@ -649,5 +694,14 @@
         ]
       }
     }
+  },
+  "localisation": {
+    "language": "Language",
+    "languages": {
+      "en": "English",
+      "es": "Español",
+      "pl": "Polski"
+    },
+    "loadError": "Could not load the language. Please try again."
   }
 }

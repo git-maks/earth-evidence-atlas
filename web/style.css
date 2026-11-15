@@ -325,3 +325,20 @@ html { overflow-y: scroll; }
 :root:not([data-theme="light"]) .switch.light input:checked + span { background: var(--accent); border-color: var(--accent); }
 .gpanel .switch input:checked + span { background: #236bbd; border-color: #236bbd; }
 .switch input:checked + span::after { background: #fff; }
+
+/* Language settings remain available below every view, including the globe. */
+:root { --language-height: 56px; }
+body { padding-bottom: var(--language-height); }
+.language-panel { position: fixed; z-index: 1100; inset: auto 0 0; min-height: var(--language-height);
+  display: flex; align-items: center; justify-content: center; gap: 12px; padding: 8px 16px;
+  background: var(--panel); color: var(--ink); border-top: 1px solid var(--line); }
+.language-panel label { font-size: 13px; font-weight: 600; }
+.language-panel select { width: auto; min-width: 140px; max-width: 50vw; }
+.language-panel select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#languageStatus { color: var(--bad); font-size: 12px; max-width: 300px; }
+#languageStatus:empty { display: none; }
+#globeMap, #gStars { height: calc(100vh - var(--hdr, 48px) - var(--language-height)); }
+@media (max-width: 600px) {
+  .language-panel { gap: 8px; padding: 8px 12px; }
+  #languageStatus { max-width: 140px; font-size: 11px; }
+}

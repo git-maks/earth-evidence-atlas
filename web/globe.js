@@ -4,19 +4,19 @@
 "use strict";
 
 const G = {
-  map: null, var: "gistemp", mode: "trend", year: null, months: ALL, imagery: "bluemarble", imgMonth: 7,
+  map: null, var: "gistemp", mode: t("methods.notes.trend.label"), year: null, months: ALL, imagery: "bluemarble", imgMonth: 7,
   place: "world", places: [], layers: [], monthly: null,
   grids: [], sel: null, playing: null, frameCache: new Map(), drawing: false, spin: true, opacity: 0.8,
 };
 const GLOBE_ZOOM = 1.5;
 const GIBS_BASE = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/";
 const IMAGERY = {
-  bluemarble: { name: "Blue Marble", layer: "BlueMarble_ShadedRelief_Bathymetry", ext: "jpeg", level: 8, time: null },
-  truecolor: { name: "True colour (day)", layer: "MODIS_Terra_CorrectedReflectance_TrueColor", ext: "jpg", level: 9, time: "day", from: 2000 },
-  ndvi: { name: "Vegetation (month)", layer: "MODIS_Terra_L3_NDVI_Monthly", legend: "MODIS_L3_NDVI", ext: "png", level: 7, time: "month", from: 2000 },
-  lst: { name: "Surface heat (month)", layer: "MODIS_Terra_L3_Land_Surface_Temp_Monthly_Day", legend: "MODIS_Land_Surface_Temp", ext: "png", level: 6, time: "month", from: 2000 },
-  merra: { name: "Air temperature (month)", layer: "MERRA2_2m_Air_Temperature_Monthly", ext: "png", level: 6, time: "month", from: 1980 },
-  imerg: { name: "Rain (day)", layer: "IMERG_Precipitation_Rate", ext: "png", level: 6, time: "day", from: 2000 },
+  bluemarble: { layer: "BlueMarble_ShadedRelief_Bathymetry", ext: "jpeg", level: 8, time: null },
+  truecolor: { layer: "MODIS_Terra_CorrectedReflectance_TrueColor", ext: "jpg", level: 9, time: "day", from: 2000 },
+  ndvi: { layer: "MODIS_Terra_L3_NDVI_Monthly", legend: "MODIS_L3_NDVI", ext: "png", level: 7, time: "month", from: 2000 },
+  lst: { layer: "MODIS_Terra_L3_Land_Surface_Temp_Monthly_Day", legend: "MODIS_Land_Surface_Temp", ext: "png", level: 6, time: "month", from: 2000 },
+  merra: { layer: "MERRA2_2m_Air_Temperature_Monthly", ext: "png", level: 6, time: "month", from: 1980 },
+  imerg: { layer: "IMERG_Precipitation_Rate", ext: "png", level: 6, time: "day", from: 2000 },
 };
 // World uses the latest published NASA visualization when the analysis cubes cover only places.
 const WORLD_MONTHLY = {
@@ -252,8 +252,7 @@ function initGlobe() {
       version: 8,
       projection: { type: "globe" },
       sources: {
-        base0: { type: "raster", tiles: gibsTiles("bluemarble"), tileSize: 256, maxzoom: 8,
-          attribution: 'Imagery: <a href="https://earthdata.nasa.gov/gibs" target="_blank" rel="noopener">NASA GIBS</a> · borders: Natural Earth · stars: Yale BSC' },
+        base0: { type: "raster", tiles: gibsTiles("bluemarble"), tileSize: 256, maxzoom: 8 },
         base1: { type: "raster", tiles: gibsTiles("bluemarble"), tileSize: 256, maxzoom: 8 },
         polar: { type: "raster", tiles: (setPolarImagery(gibsTiles("bluemarble")[0]), polarTiles("under")), tileSize: 256, maxzoom: 4 },
         polar2: { type: "raster", tiles: polarTiles("over"), tileSize: 256, maxzoom: 4 },
@@ -267,9 +266,19 @@ function initGlobe() {
       ],
       sky: { "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 0, 1, 5, 1, 7, 0] },
     },
-    center: [20, 25], zoom: GLOBE_ZOOM, maxZoom: 10, attributionControl: { compact: true },
+    center: [20, 25], zoom: GLOBE_ZOOM, maxZoom: 10,
+    locale: {
+      "Map.Title": t("mapControls.dragPan"),
+      "NavigationControl.ZoomIn": t("mapControls.zoomIn"),
+      "NavigationControl.ZoomOut": t("mapControls.zoomOut"),
+      "NavigationControl.ResetBearing": t("mapControls.resetBearing"),
+      "AttributionControl.ToggleAttribution": t("mapControls.attributionToggle"),
+    },
+    attributionControl: false,
   });
-  G.map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
+  G.navigation = new maplibregl.NavigationControl({ visualizePitch: true });
+  G.map.addControl(G.navigation, "top-right");
+  localiseGlobeCredits();
   baseKey = gibsTiles("bluemarble")[0];
   G.map.on("move", drawStars);
   G.map.on("resize", drawStars);
@@ -324,7 +333,7 @@ function setDrawing(on) {
   $("#gDraw").classList.toggle("on", on);
   G.map.getCanvas().style.cursor = on ? "crosshair" : "";
   on ? G.map.dragPan.disable() : G.map.dragPan.enable();
-  $("#gDraw").lastChild.textContent = on ? "Drag on the globe" : "Select area";
+  $("#gDraw").lastChild.textContent = on ? t("globe.dragToSelect") : t("common.selectArea");
 }
 
 // ---------------------------------------------------------------- data layers
@@ -338,7 +347,7 @@ async function loadLayers() {
     all = await api("layers", new URLSearchParams({ var: v.id }));
   } catch (e) {
     if (seq === layersSeq) {
-      $("#gPlaceNote").textContent = "Could not load data coverage for this dataset.";
+      $("#gPlaceNote").textContent = t("globe.coverageError");
       $("#gPlaceNote").hidden = false;
     }
     return;
@@ -350,12 +359,12 @@ async function loadLayers() {
   const others = all.filter((l) => l.custom && !AREAS.mine().includes(l.region) && !AREAS.hidden().includes(l.region));
   $("#gOthersRow").hidden = !others.length && !AREAS.others();
   $("#gShowOthers").checked = AREAS.others();
-  const short = (n) => n.replace(/ \(.*\)/, "").replace(/^Custom area /, "").replace(/^Southern Amazon.*/, "Amazon").replace(/^North-west India/, "NW India");
+  const short = (l) => t(`catalog.regions.${l.region}.shortName`);
   $$("#gRegions .chip:not(#gWorld)").forEach((b) => b.remove());
   $("#gRegions").insertAdjacentHTML("beforeend",
-    (regional.length ? `<button class="chip" data-r="all" data-tip="Show data across the available places">All places</button>` : "") +
-    regional.map((l) => `<button class="chip" data-r="${l.region}" ${l.custom ? `data-tip="${l.name}"` : ""}>${l.custom ? ic("pin") : ""}${l.custom ? (AREAS.mine().includes(l.region) ? "My area" : "Area") : short(l.name)}` +
-      (l.custom ? `<span class="chipx" role="button" tabindex="0" aria-label="Hide this area" data-hide="${l.region}">${ic("close")}</span>` : "") + `</button>`).join(""));
+    (regional.length ? `<button class="chip" data-r="all" data-tip="${esc(t("globe.allPlacesHint"))}">${t("globe.allPlaces")}</button>` : "") +
+    regional.map((l) => `<button class="chip" data-r="${l.region}" ${l.custom ? `data-tip="${l.name}"` : ""}>${l.custom ? ic("pin") : ""}${l.custom ? (AREAS.mine().includes(l.region) ? t("globe.myArea") : t("globe.area")) : short(l)}` +
+      (l.custom ? `<span class="chipx" role="button" tabindex="0" aria-label="${esc(t("common.hideArea"))}" data-hide="${l.region}">${ic("close")}</span>` : "") + `</button>`).join(""));
   $$("#gRegions .chipx").forEach((x) => x.onclick = (ev) => {
     ev.stopPropagation(); hideTip(); AREAS.hide(x.dataset.hide); loadLayers();
     if (typeof syncControls === "function" && CAT) syncControls();
@@ -396,7 +405,7 @@ function applyGlobePlace() {
   G.map.getSource("regions").setData({ type: "FeatureCollection", features: shown.filter((l) => l.region !== "world").map((l) => rectPoly(l.bbox)) });
   $$("#gRegions .chip").forEach((b) => setPressed(b, b.dataset.r === place));
   const note = $("#gPlaceNote");
-  note.textContent = "No data yet for this dataset.";
+  note.textContent = t("globe.noDatasetData");
   note.hidden = G.layers.length > 0 || Boolean(G.monthly);
   syncGlobeDisplay();
   return drawData();
@@ -451,7 +460,7 @@ async function drawData() {
   if (monthly) {
     keepGrids([]);
     if (!G.map.getSource(monthlyId)) {
-      note.textContent = "Loading global monthly layer…";
+      note.textContent = t("globe.loadingMonthlyLayer");
       note.hidden = false;
       const check = checkMonthlyTiles(template);
       const reachable = await check;
@@ -464,11 +473,11 @@ async function drawData() {
     }
     if (G.map.getSource(monthlyId)) {
       note.hidden = true;
-      $("#gLegend").innerHTML = `<div class="lrow"><b>Latest monthly layer</b> · NASA GIBS</div><div class="lrow">${GV().name}</div>` +
-        `<div class="lrow"><a href="https://gibs.earthdata.nasa.gov/legends/${monthly.legend || monthly.layer}_H.svg" target="_blank" rel="noopener">Colour key</a></div>`;
+      $("#gLegend").innerHTML = `<div class="lrow"><b>${t("globe.latestMonthlyLayer")}</b> · NASA GIBS</div><div class="lrow">${GV().name}</div>` +
+        `<div class="lrow"><a href="https://gibs.earthdata.nasa.gov/legends/${monthly.legend || monthly.layer}_H.svg" target="_blank" rel="noopener">${t("globe.colourKey")}</a></div>`;
       return;
     }
-    note.textContent = layers.length ? "NASA GIBS is unavailable. Showing regional data." : "NASA GIBS is unavailable.";
+    note.textContent = layers.length ? t("globe.gibsRegionalFallback") : t("globe.gibsUnavailable");
     G.map.setLayoutProperty("regions", "visibility", "visible");
   }
   keepGrids(layers);
@@ -482,7 +491,7 @@ async function drawData() {
   const grids = [];
   ok.forEach(([l, key, d]) => {
     const vals = mode === "year" ? d.values : d.slope;
-    const sig = mode === "trend" ? d.sig_fdr : null;
+    const sig = mode === t("methods.notes.trend.label") ? d.sig_fdr : null;
     const bounds = gridBounds(d.lat, d.lon, l.bbox);
     if (bounds[0] >= bounds[2] || bounds[1] >= bounds[3]) return;
     const ik = `${key}|${lim}|${fade}`;
@@ -512,8 +521,8 @@ async function drawData() {
   G.grids = grids;
   if (!grids.length) { $("#gLegend").innerHTML = ""; return; }
   const grad = Array.from({ length: 11 }, (_, k) => colorAt(stops, k / 10)).join(",");
-  const unit = mode === "year" ? `${v.units.replace(/ \(.*\)/, "")} vs average` : v.trend_units;
-  $("#gLegend").innerHTML = `<div class="lrow"><b>${mode === "year" ? `${year} vs. average` : `Trend ${v.years[0]}–${v.years[1]}`}</b> · ${v.name.replace(/ \(.*\)/, "")}</div>` +
+  const unit = mode === "year" ? t("globe.unitVsAverage", { unit: v.units.replace(/ \(.*\)/, "") }) : v.trend_units;
+  $("#gLegend").innerHTML = `<div class="lrow"><b>${mode === "year" ? t("globe.annualComparison", { year }) : t("globe.trendPeriod", { start: v.years[0], end: v.years[1] })}</b> · ${v.name.replace(/ \(.*\)/, "")}</div>` +
     `<div class="lrow"><span>${fmt(-lim, 2)}</span><span class="bar" style="background:linear-gradient(90deg,${grad})"></span><span>+${fmt(lim, 2)} ${unit}</span></div>`;
 }
 function gridAt(ll) {
@@ -531,9 +540,9 @@ function hover(e) {
   const h = gridAt(e.lngLat);
   if (!h) { hideTip(); return; }
   const v = GV(), x = h.g.vals[h.i][h.j];
-  const html = x === null ? "Too few data here" :
-    (!h.g.sig ? `<div class="thead">${h.g.year}</div><b>${x > 0 ? "+" : ""}${fmt(x)}</b> ${v.units.replace(/ \(.*\)/, "")} vs average` :
-      `<b>${x > 0 ? "+" : ""}${fmt(x)}</b> ${v.trend_units}<br><span class="muted">${pStr(h.g.p[h.i][h.j])} · ${h.g.sig[h.i][h.j] ? "significant" : "not significant"}</span>`);
+  const html = x === null ? t("globe.tooFewData") :
+    (!h.g.sig ? `<div class="thead">${h.g.year}</div><b>${x > 0 ? "+" : ""}${fmt(x)}</b> ${t("globe.unitVsAverage", { unit: v.units.replace(/ \(.*\)/, "") })}` :
+      `<b>${x > 0 ? "+" : ""}${fmt(x)}</b> ${v.trend_units}<br><span class="muted">${pStr(h.g.p[h.i][h.j])} · ${h.g.sig[h.i][h.j] ? t("common.significant") : t("common.notSignificant")}</span>`);
   const r = G.map.getContainer().getBoundingClientRect();
   showTip(html, r.left + e.point.x, r.top + e.point.y);
 }
@@ -551,14 +560,16 @@ function setSelection(b, final) {
   G.map.getSource("sel").setData({ type: "FeatureCollection", features: b ? [rectPoly(b)] : [] });
   if (!final) return;
   const [w, s, e, n] = b;
+  G.lastAnalysis = null;
   $("#gResult").hidden = false;
-  $("#gSelInfo").textContent = `${s.toFixed(1)}°…${n.toFixed(1)}° N, ${w.toFixed(1)}°…${e.toFixed(1)}° E · ${(e - w).toFixed(1)}° × ${(n - s).toFixed(1)}°`;
+  const coordinate = (value) => I18N.number(value, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  $("#gSelInfo").textContent = t("globe.selectionCoordinates", { south: coordinate(s), north: coordinate(n), west: coordinate(w), east: coordinate(e), width: coordinate(e - w), height: coordinate(n - s) });
   $("#gModel").innerHTML = CAT.variables.map((v) => {
     const L = CAT.compute_limits[v.source];
     const tooBig = (e - w) > L.max_side_deg || (n - s) > L.max_side_deg || (e - w) * (n - s) > L.max_area_deg2;
-    return `<option value="${v.id}" ${v.id === G.var ? "selected" : ""} ${tooBig ? "disabled" : ""}>${v.name.replace(/ \(.*\)/, "")}${tooBig ? " (too large)" : ""}</option>`;
+    return `<option value="${v.id}" ${v.id === G.var ? "selected" : ""} ${tooBig ? "disabled" : ""}>${v.name.replace(/ \(.*\)/, "")}${tooBig ? t("globe.tooLargeSuffix") : ""}</option>`;
   }).join("");
-  $("#gOut").innerHTML = "<p class='ginfo'>New areas are downloaded from NASA on the fly.</p>";
+  $("#gOut").innerHTML = `<p class="ginfo">${t("globe.downloadNotice")}</p>`;
   $("#gProg").hidden = true;
   Plotly.purge("gChart");
 }
@@ -569,15 +580,15 @@ async function runCompute() {
   try {
     const r = await fetch("/api/compute", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ var: varId, bbox: G.sel }) });
     const j = await r.json();
-    if (!r.ok) throw new Error(j.detail || r.statusText);
+    if (!r.ok) throw new Error(I18N.text(j.detail || r.statusText));
     if (j.status !== "ready") {
       $("#gProg").hidden = false;
-      $("#gProgMsg").textContent = `Downloading from NASA… ≈ ${j.estimate_s || "?"} s`;
+      $("#gProgMsg").textContent = t("globe.downloading", { seconds: j.estimate_s || "?" });
       while (true) {
         await new Promise((res) => setTimeout(res, 1500));
         const s = await api(`jobs/${j.job}`, "");
         $("#gProgBar").style.width = Math.round((s.progress || 0) * 100) + "%";
-        $("#gProgMsg").textContent = `${s.message} · ${Math.round(s.elapsed_s)} s`;
+        $("#gProgMsg").textContent = t("common.progressMessage", { message: s.message, seconds: Math.round(s.elapsed_s) });
         if (s.status === "done") break;
         if (s.status === "error") throw new Error(s.message);
       }
@@ -591,21 +602,22 @@ async function runCompute() {
     showResult(a, j.region);
   } catch (e) {
     $("#gProg").hidden = true;
-    $("#gOut").innerHTML = `<p class="err">${e.message}</p>`;
+    $("#gOut").innerHTML = `<p class="err">${esc(e.message)}</p>`;
   } finally { $("#gGo").disabled = false; }
 }
 function showResult(a, region) {
+  G.lastAnalysis = { raw: a._raw || a, region };
   const r = a.result, ver = a.verdict, v = CAT.variables.find((x) => x.id === a.variable);
   $("#gOut").innerHTML = `<div class="verdict ${ver.code}"><h2>${ver.title}</h2></div>
     <div class="big">${r.slope > 0 ? "+" : ""}${fmt(r.slope)} <small>${a.trend_units}</small></div>
     <div class="ginfo">${pStr(r.p)} · ${a.start}–${a.end}</div>
     <p class="ginfo"><span class="tag">${v.kind}</span>${v.product}</p>
-    <button id="gOpen" class="btn">Full analysis${ic("arrow")}</button>`;
+    <button id="gOpen" class="btn">${t("globe.fullAnalysis")}${ic("arrow")}</button>`;
   const s = a.series, x = s.dates.map((d) => d + "-15");
   plot("gChart", [
-    { x, y: s.anomaly, type: "scatter", mode: "lines", line: { color: "#8aa4bf", width: 1 }, name: "Month" },
-    ...(s.running12 ? [{ x, y: s.running12, type: "scatter", mode: "lines", line: { color: "#5ea8ff", width: 2 }, name: "12-month mean" }] : []),
-    { x, y: s.fit, type: "scatter", mode: "lines", line: { color: "#ff7b5c", width: 2.5 }, name: "Trend" },
+    { x, y: s.anomaly, type: "scatter", mode: "lines", line: { color: "#8aa4bf", width: 1 }, name: t("charts.month") },
+    ...(s.running12 ? [{ x, y: s.running12, type: "scatter", mode: "lines", line: { color: "#5ea8ff", width: 2 }, name: t("charts.runningMean") }] : []),
+    { x, y: s.fit, type: "scatter", mode: "lines", line: { color: "#ff7b5c", width: 2.5 }, name: t("charts.trend") },
   ], layoutBase({ showlegend: false, margin: { l: 36, r: 6, t: 4, b: 24 }, font: { size: 10, color: "#dfe7ef" },
     xaxis: { gridcolor: "#2a3542", linecolor: "#2a3542" }, yaxis: { gridcolor: "#2a3542", linecolor: "#2a3542", zerolinecolor: "#4b5a6a" } }));
   $("#gOpen").onclick = () => {
@@ -626,7 +638,7 @@ function buildGlobeControls() {
     $$("#gRegions .chip:not(#gWorld)").forEach((b) => b.remove());
     if (G.map.getSource("regions")) {
       applyGlobePlace();
-      $("#gPlaceNote").textContent = "Loading data coverage…";
+      $("#gPlaceNote").textContent = t("globe.loadingCoverage");
     }
     loadLayers();
   };
@@ -638,7 +650,7 @@ function buildGlobeControls() {
   });
   $("#gYear").oninput = (e) => { G.year = +e.target.value; $("#gYearV").textContent = G.year; onYear(); };
   $("#gPlay").onclick = () => G.playing ? stopPlay() : startPlay();
-  $("#gImagery").innerHTML = Object.entries(IMAGERY).map(([k, L]) => `<option value="${k}">${L.name}</option>`).join("");
+  $("#gImagery").innerHTML = Object.entries(IMAGERY).map(([k, L]) => `<option value="${k}">${t(`globe.imageryLayers.${k}`)}</option>`).join("");
   $("#gImagery").onchange = (e) => { G.imagery = e.target.value; syncGlobeDisplay(); setImagery(); };
   $("#gImgMonth").onchange = (e) => { G.imgMonth = +e.target.value; setImagery(); };
   $("#gOpacity").oninput = (e) => {
@@ -655,16 +667,19 @@ function buildGlobeControls() {
   $("#gDraw").onclick = () => setDrawing(!G.drawing);
   $("#gGo").onclick = runCompute;
   $("#gClose").onclick = () => { $("#gResult").hidden = true; setSelection(null, false); };
-  $$(".tab").forEach((t) => t.addEventListener("click", () => { if (t.dataset.tab === "globe" && G.map) setTimeout(() => G.map.resize(), 50); }));
+  if (!G.controlsReady) {
+    G.controlsReady = true;
+    $$(".tab").forEach((tab) => tab.addEventListener("click", () => { if (tab.dataset.tab === "globe" && G.map) setTimeout(() => G.map.resize(), 50); }));
+  }
 }
 function syncGlobeDisplay() {
   const monthly = Boolean(G.monthly), show = $("#gShow").checked, imageryYear = Boolean(IMAGERY[G.imagery].time);
   $("#gMode").hidden = monthly;
   $("#gPlay").hidden = monthly;
-  $("#gFade").hidden = monthly || G.mode !== "trend";
+  $("#gFade").hidden = monthly || G.mode !== t("methods.notes.trend.label");
   $("#gYearRow").hidden = monthly && !imageryYear;
   $("#gYearRow").classList.toggle("dim", !monthly && G.mode !== "year" && !imageryYear);
-  $("#gYear").setAttribute("aria-label", monthly ? "Imagery year" : "Year");
+  $("#gYear").setAttribute("aria-label", monthly ? t("globe.imageryYear") : t("common.year"));
   $$("#gMode .ibtn, #gFade, #gOpacity, #gPlay").forEach((el) => { el.disabled = !show; });
   $("#gYear").disabled = !show && !imageryYear;
   if (monthly && G.playing) stopPlay();
@@ -694,7 +709,7 @@ function startPlay() {
 }
 function setPlayIcon(on) {
   const b = $("#gPlay");
-  b.innerHTML = ic(on ? "pause" : "play"); b.dataset.tip = on ? "Pause" : "Play years"; b.setAttribute("aria-label", b.dataset.tip);
+  b.innerHTML = ic(on ? "pause" : "play"); b.dataset.tip = on ? t("globe.pause") : t("globe.playYears"); b.setAttribute("aria-label", b.dataset.tip);
 }
 function stopPlay() { G.playing = null; setPlayIcon(false); }
 let baseIdx = 0, baseKey = "", baseSwap = 0;
@@ -702,7 +717,7 @@ function setImagery() {
   const L = IMAGERY[G.imagery];
   const tiles = gibsTiles(G.imagery), key = tiles[0];
   $("#gImgMonth").hidden = !L.time;
-  $("#gImgNote").textContent = L.time ? (G.year < L.from ? `Not available before ${L.from}.` : `${G.year}-${String(G.imgMonth).padStart(2, "0")}${L.time === "day" ? "-15" : ""} · follows the year`) : "";
+  $("#gImgNote").textContent = L.time ? (G.year < L.from ? t("globe.imageryUnavailableBefore", { year: L.from }) : t("globe.imageryFollowsYear", { date: `${G.year}-${String(G.imgMonth).padStart(2, "0")}${L.time === "day" ? "-15" : ""}` })) : "";
   if (!G.map || key === baseKey) return;
   baseKey = key;
   // load the new date into the hidden base layer, then cross-fade once its tiles are in
@@ -724,6 +739,39 @@ function setImagery() {
   G.map.on("sourcedata", check);
   setTimeout(() => { G.map.off("sourcedata", check); swap(); }, 2500); // never wait forever
 }
+
+function localiseGlobeCredits() {
+  if (G.credits) G.map.removeControl(G.credits);
+  G.credits = new maplibregl.AttributionControl({ compact: true, customAttribution: t("globe.attribution", {
+    imagery: '<a href="https://earthdata.nasa.gov/gibs" target="_blank" rel="noopener">NASA GIBS</a>',
+    borders: "Natural Earth", stars: "Yale BSC",
+  }) });
+  G.map.addControl(G.credits, "bottom-right");
+}
+
+window.localiseGlobe = async () => {
+  const last = G.lastAnalysis;
+  buildGlobeControls(); setPlayIcon(Boolean(G.playing));
+  if (G.drawing) setDrawing(true);
+  if (G.map) {
+    localiseGlobeCredits();
+    G.map.getCanvas().setAttribute("aria-label", t("mapControls.dragPan"));
+    [
+      [".maplibregl-ctrl-zoom-in", "mapControls.zoomIn"],
+      [".maplibregl-ctrl-zoom-out", "mapControls.zoomOut"],
+      [".maplibregl-ctrl-compass", "mapControls.resetBearing"],
+      [".maplibregl-ctrl-attrib-button", "mapControls.attributionToggle"],
+    ].forEach(([selector, key]) => {
+      const button = G.map.getContainer().querySelector(selector);
+      if (button) { button.title = t(key); button.setAttribute("aria-label", t(key)); }
+    });
+  }
+  if (G.map && G.map.getSource("regions")) await loadLayers();
+  if (G.sel && !$("#gGo").disabled) {
+    setSelection(G.sel, true);
+    if (last) showResult(I18N.response("analysis", last.raw), last.region);
+  }
+};
 
 window.refreshGlobeAreas = () => { if (G.map && G.map.getSource("regions")) loadLayers(); };
 window.initGlobeTab = function () {
