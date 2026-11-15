@@ -233,7 +233,8 @@
       "imerg": "Rain (day)"
     },
     "attribution": "Imagery: {imagery} · borders: {borders} · stars: {stars}",
-    "savingPlace": "Adding area…"
+    "savingPlace": "Adding area…",
+    "noPlaceData": "No data for this place in the selected dataset yet."
   },
   "detective": {
     "controlsLabel": "Choose what to investigate",

@@ -233,7 +233,8 @@
       "imerg": "Opad (dzień)"
     },
     "attribution": "Obrazy: {imagery} · granice: {borders} · gwiazdy: {stars}",
-    "savingPlace": "Dodawanie obszaru…"
+    "savingPlace": "Dodawanie obszaru…",
+    "noPlaceData": "Wybrany zbiór nie ma jeszcze danych dla tego miejsca."
   },
   "detective": {
     "controlsLabel": "Wybierz, co chcesz zbadać",

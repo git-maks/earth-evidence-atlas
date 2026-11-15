@@ -339,6 +339,22 @@ function setDrawing(on) {
 // ---------------------------------------------------------------- data layers
 let layersSeq = 0;
 const savedPlaces = () => lsGet("atlas.globePlaces", []);
+const sameBox = (a, b) => a.every((coordinate, i) => coordinate === b[i]);
+const coversPlace = ([w, s, e, n], [west, south, east, north]) => w <= west && s <= south && e >= east && n >= north;
+function placesForDataset(layers, variable) {
+  const visible = layers.filter((l) => AREAS.visible(l.region));
+  const owned = AREAS.mine();
+  const registered = CAT.regions.filter((r) => r.custom && owned.includes(r.id) && AREAS.visible(r.id))
+    .map(({ id, name, bbox, custom }) => ({ region: id, name, bbox, custom }));
+  const places = [...visible];
+  for (const place of [...registered, ...savedPlaces()]) {
+    if (places.some((l) => l.custom && sameBox(l.bbox, place.bbox))) continue;
+    const original = place.variable === variable && layers.find((l) => l.region === place.dataRegion);
+    const source = original || visible.find((l) => coversPlace(l.bbox, place.bbox));
+    places.push({ ...place, dataRegion: source ? source.region : null });
+  }
+  return places;
+}
 async function loadLayers(cached) {
   if (!G.map || !G.map.getSource("regions")) return;
   const seq = ++layersSeq;
@@ -356,8 +372,7 @@ async function loadLayers(cached) {
   if (seq !== layersSeq) return;
   G.allPlaces = all;
   G.allPlacesVar = v.id;
-  G.places = all.filter((l) => AREAS.visible(l.region));
-  G.places.push(...savedPlaces().filter((l) => l.variable === v.id && all.some((source) => source.region === l.dataRegion)));
+  G.places = placesForDataset(all, v.id);
   const regional = G.places.filter((l) => l.region !== "world");
   if (G.place !== "world" && !regional.some((l) => l.region === G.place) && (G.place !== "all" || !regional.length)) G.place = "world";
   const others = all.filter((l) => l.custom && !AREAS.mine().includes(l.region) && !AREAS.hidden().includes(l.region));
@@ -367,7 +382,7 @@ async function loadLayers(cached) {
   $$("#gRegions [data-r]:not(#gWorld)").forEach((b) => b.remove());
   $("#gRegions").insertAdjacentHTML("beforeend",
     (regional.length ? `<button class="chip" data-r="all" data-tip="${esc(t("globe.allPlacesHint"))}">${t("globe.allPlaces")}</button>` : "") +
-    regional.map((l) => `<button class="chip" data-r="${l.region}" ${l.custom ? `data-tip="${esc(l.name)}"` : ""}>${l.custom ? ic("pin") : ""}${l.custom ? (l.dataRegion || AREAS.mine().includes(l.region) ? t("globe.myArea") : t("globe.area")) : short(l)}` +
+    regional.map((l) => `<button class="chip" data-r="${l.region}" ${l.custom ? `data-tip="${esc(l.name)}"` : ""}>${l.custom ? ic("pin") : ""}${l.custom ? (l.region.startsWith("saved-") || AREAS.mine().includes(l.region) ? t("globe.myArea") : t("globe.area")) : short(l)}` +
       (l.custom ? `<span class="chipx" role="button" tabindex="0" aria-label="${esc(t("common.hideArea"))}" data-hide="${l.region}">${ic("close")}</span>` : "") + `</button>`).join(""));
   $$("#gRegions .chipx").forEach((x) => x.onclick = (ev) => {
     ev.stopPropagation(); hideTip();
@@ -398,6 +413,7 @@ function selectGlobePlace(place) {
   } else if (region) {
     const [w, s, e, n] = region.bbox;
     G.map.fitBounds([[w, Math.max(s, -70)], [e, Math.min(n, 75)]], { padding: 60, duration: 1800 });
+    if (region.dataRegion === null) setSelection(region.bbox, true);
   }
   applyGlobePlace();
 }
@@ -408,19 +424,19 @@ function applyGlobePlace() {
   G.monthly = place === "world" && !global ? WORLD_MONTHLY[G.var] : null;
   const shown = place === "all" || G.monthly ? regional : G.places.filter((l) => l.region === place);
   // In the combined view use the enclosing grid for nested areas.
-  const inside = (a, b) => a.bbox[0] >= b.bbox[0] && a.bbox[1] >= b.bbox[1] && a.bbox[2] <= b.bbox[2] && a.bbox[3] <= b.bbox[3];
-  G.layers = shown.filter((l) => !shown.some((o) => o !== l && inside(l, o) && !inside(o, l)));
+  const withData = shown.filter((l) => l.dataRegion !== null);
+  G.layers = withData.filter((l) => !withData.some((o) => coversPlace(o.bbox, l.bbox) && !sameBox(o.bbox, l.bbox)));
   G.map.getSource("regions").setData({ type: "FeatureCollection", features: shown.filter((l) => l.region !== "world").map((l) => rectPoly(l.bbox)) });
   $$("#gRegions [data-r]").forEach((b) => setPressed(b, b.dataset.r === place));
   const note = $("#gPlaceNote");
-  note.textContent = t("globe.noDatasetData");
+  note.textContent = t(shown.some((l) => l.dataRegion === null) ? "globe.noPlaceData" : "globe.noDatasetData");
   note.hidden = G.layers.length > 0 || Boolean(G.monthly);
   syncGlobeDisplay();
   return drawData();
 }
 const imgCache = new Map();
 async function fetchFrame(l, mode, year) {
-  const key = `${mode}|${G.var}|${l.region}|${G.months}|${mode === "year" ? year : ""}`;
+  const key = `${mode}|${G.var}|${l.region}|${l.dataRegion || l.region}|${G.months}|${mode === "year" ? year : ""}`;
   if (!G.frameCache.has(key)) {
     const q = new URLSearchParams({ var: G.var, region: l.dataRegion || l.region, months: G.months, ...(mode === "year" ? { year } : {}) });
     const request = api(mode === "year" ? "frame" : "map", q).catch(() => {
@@ -611,12 +627,14 @@ async function runCompute() {
     const [w, s, e, n] = j.bbox;
     const bbox = [Math.max(w, selection[0]), Math.max(s, selection[1]), Math.min(e, selection[2]), Math.min(n, selection[3])];
     const source = CAT.regions.find((region) => region.id === j.region);
-    if (source && source.custom && source.bbox.every((value, i) => value === bbox[i])) {
+    const saved = savedPlaces();
+    const existing = saved.find((l) => sameBox(l.bbox, bbox));
+    if (!existing && source && source.custom && sameBox(source.bbox, bbox)) {
       AREAS.add(j.region);
     } else {
-      const region = `saved-${varId}-${bbox.join(",")}`;
+      const region = existing ? existing.region : `saved-${bbox.join(",")}`;
       const place = { region, dataRegion: j.region, variable: varId, bbox, name: bbox.join(", "), custom: true };
-      lsSet("atlas.globePlaces", [...savedPlaces().filter((l) => l.region !== region), place]);
+      lsSet("atlas.globePlaces", [...saved.filter((l) => !sameBox(l.bbox, bbox)), place]);
     }
     if (G.sel === selection && G.var === displayedVar && varId !== G.var) {
       $("#gVar").value = varId;

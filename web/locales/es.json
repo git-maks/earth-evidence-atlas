@@ -233,7 +233,8 @@
       "imerg": "Lluvia (día)"
     },
     "attribution": "Imágenes: {imagery} · fronteras: {borders} · estrellas: {stars}",
-    "savingPlace": "Añadiendo área…"
+    "savingPlace": "Añadiendo área…",
+    "noPlaceData": "El conjunto seleccionado aún no tiene datos para este lugar."
   },
   "detective": {
     "controlsLabel": "Elige qué investigar",
