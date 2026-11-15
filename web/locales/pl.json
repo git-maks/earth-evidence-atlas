@@ -363,10 +363,13 @@
         "label": "minimalna ilość danych",
         "text": "Trend jest obliczany tylko wtedy, gdy co najmniej {percent}% wybranych miesięcy ma poprawne dane."
       }
-    }
+    },
+    "existingNoteTitle": "Informacja o użyciu AI",
+    "existingNoteText": "Kod tego prototypu powstał z pomocą asystenta AI Claude (Anthropic). Wartości danych pochodzą wyłącznie z podanych źródeł NASA."
   },
   "footer": {
-    "data": "NASA Space Apps Challenge 2026 · Dane: NASA (MODIS, MERRA-2 przez POWER, GISTEMP)."
+    "data": "NASA Space Apps Challenge 2026 · Dane: NASA (MODIS, MERRA-2 przez POWER, GISTEMP).",
+    "existingNote": "Informacja o użyciu AI: kod napisano z pomocą Claude (Anthropic). Analizy Ziemi wykorzystują podane dane NASA."
   },
   "verdicts": {
     "insufficient_data": {

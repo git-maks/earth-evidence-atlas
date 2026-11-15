@@ -51,9 +51,9 @@
     <div class="row">
       <select id="gImagery"></select>
       <select id="gImgMonth" aria-label="Month" hidden data-i18n-attrs="aria-label:charts.month">
-        <option value="1" data-i18n="calendar.months.1.short"><span data-i18n="calendar.months.1.short">Jan</span></option><option value="2" data-i18n="calendar.months.2.short"><span data-i18n="calendar.months.2.short">Feb</span></option><option value="3" data-i18n="calendar.months.3.short"><span data-i18n="calendar.months.3.short">Mar</span></option><option value="4" data-i18n="calendar.months.4.short"><span data-i18n="calendar.months.4.short">Apr</span></option>
-        <option value="5" data-i18n="calendar.months.5.short"><span data-i18n="calendar.months.5.short">May</span></option><option value="6" data-i18n="calendar.months.6.short"><span data-i18n="calendar.months.6.short">Jun</span></option><option value="7" selected data-i18n="calendar.months.7.short"><span data-i18n="calendar.months.7.short">Jul</span></option><option value="8" data-i18n="calendar.months.8.short"><span data-i18n="calendar.months.8.short">Aug</span></option>
-        <option value="9" data-i18n="calendar.months.9.short"><span data-i18n="calendar.months.9.short">Sep</span></option><option value="10" data-i18n="calendar.months.10.short"><span data-i18n="calendar.months.10.short">Oct</span></option><option value="11" data-i18n="calendar.months.11.short"><span data-i18n="calendar.months.11.short">Nov</span></option><option value="12" data-i18n="calendar.months.12.short"><span data-i18n="calendar.months.12.short">Dec</span></option>
+        <option value="1" data-i18n="calendar.months.1.short">Jan</option><option value="2" data-i18n="calendar.months.2.short">Feb</option><option value="3" data-i18n="calendar.months.3.short">Mar</option><option value="4" data-i18n="calendar.months.4.short">Apr</option>
+        <option value="5" data-i18n="calendar.months.5.short">May</option><option value="6" data-i18n="calendar.months.6.short">Jun</option><option value="7" selected data-i18n="calendar.months.7.short">Jul</option><option value="8" data-i18n="calendar.months.8.short">Aug</option>
+        <option value="9" data-i18n="calendar.months.9.short">Sep</option><option value="10" data-i18n="calendar.months.10.short">Oct</option><option value="11" data-i18n="calendar.months.11.short">Nov</option><option value="12" data-i18n="calendar.months.12.short">Dec</option>
       </select>
     </div>
     <p id="gImgNote" class="ginfo"></p>
@@ -187,7 +187,7 @@
 
 <main id="lab" class="panel">
   <div class="banner"><span data-i18n="lab.banner">Simulation with synthetic data</span>
-    <span class="sim-info" tabindex="0" aria-label="About the simulation" data-tiphtml="<b data-i18n-attrs="aria-label:lab.aboutSimulation"><span data-i18n="lab.generationTitle">How these data are generated</span></b><br>The lab generates random monthly values with no underlying trend to show how month-to-month persistence can produce false alarms."><svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-info"/></svg></span>
+    <span class="sim-info" tabindex="0" data-i18n-attrs="aria-label:lab.aboutSimulation;data-tiphtml:lab.generationTooltipHtml"><svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-info"/></svg></span>
   </div>
   <section class="grid2">
     <div class="card">
@@ -217,11 +217,15 @@
 
 <footer class="foot">
   <span data-i18n="footer.data">NASA Space Apps Challenge 2026 · Data: NASA (MODIS, MERRA-2 via POWER, GISTEMP).</span>
-  <br>AI disclosure: code written with Claude (Anthropic). Earth analyses use the cited NASA data.
+  <br><span data-i18n="footer.existingNote"></span>
 </footer>
 
-<aside class="language-panel" aria-labelledby="languageLabel">
+<button id="languageToggle" class="language-toggle" type="button" aria-expanded="false" aria-controls="languagePanel" data-i18n-attrs="aria-label:localisation.language;data-tip:localisation.language">
+  <svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-language"/></svg>
+</button>
+<aside id="languagePanel" class="language-panel" aria-labelledby="languageLabel" hidden>
   <label id="languageLabel" for="languageSelect" data-i18n="localisation.language"></label>
+  <button id="languageClose" class="ibtn" type="button" data-i18n-attrs="aria-label:common.close;data-tip:common.close"><svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-close"/></svg></button>
   <select id="languageSelect">
     <option value="en" lang="en" data-i18n="localisation.languages.en"></option>
     <option value="es" lang="es" data-i18n="localisation.languages.es"></option>

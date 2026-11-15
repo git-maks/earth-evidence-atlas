@@ -4,7 +4,7 @@
 "use strict";
 
 const G = {
-  map: null, var: "gistemp", mode: t("methods.notes.trend.label"), year: null, months: ALL, imagery: "bluemarble", imgMonth: 7,
+  map: null, var: "gistemp", mode: "trend", year: null, months: ALL, imagery: "bluemarble", imgMonth: 7,
   place: "world", places: [], layers: [], monthly: null,
   grids: [], sel: null, playing: null, frameCache: new Map(), drawing: false, spin: true, opacity: 0.8,
 };
@@ -338,13 +338,13 @@ function setDrawing(on) {
 
 // ---------------------------------------------------------------- data layers
 let layersSeq = 0;
-async function loadLayers() {
+async function loadLayers(cached) {
   if (!G.map || !G.map.getSource("regions")) return;
   const seq = ++layersSeq;
   const v = GV();
   let all;
   try {
-    all = await api("layers", new URLSearchParams({ var: v.id }));
+    all = cached || await api("layers", new URLSearchParams({ var: v.id }));
   } catch (e) {
     if (seq === layersSeq) {
       $("#gPlaceNote").textContent = t("globe.coverageError");
@@ -353,6 +353,8 @@ async function loadLayers() {
     return;
   }
   if (seq !== layersSeq) return;
+  G.allPlaces = all;
+  G.allPlacesVar = v.id;
   G.places = all.filter((l) => AREAS.visible(l.region));
   const regional = G.places.filter((l) => l.region !== "world");
   if (G.place !== "world" && !regional.some((l) => l.region === G.place) && (G.place !== "all" || !regional.length)) G.place = "world";
@@ -491,7 +493,7 @@ async function drawData() {
   const grids = [];
   ok.forEach(([l, key, d]) => {
     const vals = mode === "year" ? d.values : d.slope;
-    const sig = mode === t("methods.notes.trend.label") ? d.sig_fdr : null;
+    const sig = mode === "trend" ? d.sig_fdr : null;
     const bounds = gridBounds(d.lat, d.lon, l.bbox);
     if (bounds[0] >= bounds[2] || bounds[1] >= bounds[3]) return;
     const ik = `${key}|${lim}|${fade}`;
@@ -676,7 +678,7 @@ function syncGlobeDisplay() {
   const monthly = Boolean(G.monthly), show = $("#gShow").checked, imageryYear = Boolean(IMAGERY[G.imagery].time);
   $("#gMode").hidden = monthly;
   $("#gPlay").hidden = monthly;
-  $("#gFade").hidden = monthly || G.mode !== t("methods.notes.trend.label");
+  $("#gFade").hidden = monthly || G.mode !== "trend";
   $("#gYearRow").hidden = monthly && !imageryYear;
   $("#gYearRow").classList.toggle("dim", !monthly && G.mode !== "year" && !imageryYear);
   $("#gYear").setAttribute("aria-label", monthly ? t("globe.imageryYear") : t("common.year"));
@@ -751,6 +753,7 @@ function localiseGlobeCredits() {
 
 window.localiseGlobe = async () => {
   const last = G.lastAnalysis;
+  const model = $("#gModel").value;
   buildGlobeControls(); setPlayIcon(Boolean(G.playing));
   if (G.drawing) setDrawing(true);
   if (G.map) {
@@ -766,9 +769,12 @@ window.localiseGlobe = async () => {
       if (button) { button.title = t(key); button.setAttribute("aria-label", t(key)); }
     });
   }
-  if (G.map && G.map.getSource("regions")) await loadLayers();
+  if (G.map && G.map.getSource("regions")) {
+    await loadLayers(G.allPlacesVar === G.var && G.allPlaces ? I18N.response("layers", G.allPlaces.map((layer) => layer._raw || layer)) : undefined);
+  }
   if (G.sel && !$("#gGo").disabled) {
     setSelection(G.sel, true);
+    if (model) $("#gModel").value = model;
     if (last) showResult(I18N.response("analysis", last.raw), last.region);
   }
 };

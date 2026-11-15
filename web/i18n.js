@@ -82,7 +82,7 @@ const I18N = (() => {
   }
   function response(path, raw) {
     if (path === "catalog") return catalog(raw);
-    if (path === "layers") return raw.map((layer) => Object.assign({}, layer, { name: get(dictionary, `catalog.regions.${layer.region}.name`) || text(layer.name) }));
+    if (path === "layers") return raw.map((layer) => Object.assign({}, layer, { _raw: layer, name: get(dictionary, `catalog.regions.${layer.region}.name`) || text(layer.name) }));
     if (path.startsWith("jobs/")) return Object.assign({}, raw, { message: text(raw.message) });
     if (!["analysis", "map", "frame"].includes(path)) return raw;
     const data = Object.assign({}, raw);
@@ -99,7 +99,7 @@ const I18N = (() => {
       lines: raw.answer.lines.map((line) => text(line)), how: raw.answer.how.map((line) => text(line)),
       caveat: text(raw.answer.caveat), note: text(raw.answer.note),
     });
-    if (path === "analysis") data._raw = raw;
+    data._raw = raw;
     return data;
   }
   function apply(root = document) {
@@ -125,6 +125,26 @@ const I18N = (() => {
     }
     apply();
     const select = document.getElementById("languageSelect"), status = document.getElementById("languageStatus");
+    const toggle = document.getElementById("languageToggle"), panel = document.getElementById("languagePanel");
+    const setOpen = (open, restoreFocus = false) => {
+      if (!toggle || !panel) return;
+      panel.hidden = !open; toggle.setAttribute("aria-expanded", String(open));
+      if (open) select.focus();
+      else if (restoreFocus) toggle.focus();
+    };
+    if (toggle && panel) {
+      toggle.addEventListener("click", () => setOpen(panel.hidden));
+      document.getElementById("languageClose").addEventListener("click", () => setOpen(false, true));
+      document.addEventListener("pointerdown", (event) => {
+        if (!panel.hidden && !panel.contains(event.target) && !toggle.contains(event.target)) setOpen(false);
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !panel.hidden) { event.stopPropagation(); setOpen(false, true); }
+      }, true);
+      panel.addEventListener("focusout", (event) => {
+        if (event.relatedTarget && !panel.contains(event.relatedTarget) && !toggle.contains(event.relatedTarget)) setOpen(false);
+      });
+    }
     select.value = language;
     select.addEventListener("change", async () => {
       select.disabled = true; status.textContent = "";
@@ -133,7 +153,7 @@ const I18N = (() => {
         dictionary = await load(next); language = next;
         try { localStorage.setItem("atlas.language", language); } catch (error) { /* storage is optional */ }
         const url = new URL(location.href); url.searchParams.set("lang", language); history.replaceState(null, "", url);
-        apply(); window.dispatchEvent(new Event("languagechange"));
+        apply(); window.dispatchEvent(new Event("languagechange")); setOpen(false, true);
       } catch (error) { select.value = language; status.textContent = t("localisation.loadError"); }
       finally { select.disabled = false; }
     });

@@ -6,6 +6,7 @@ import subprocess
 from collections import Counter
 from copy import deepcopy
 from pathlib import Path
+from html.parser import HTMLParser
 
 import pytest
 
@@ -31,6 +32,32 @@ def test_locale_keys_placeholders_and_markup_match():
             english = locales["en"][key]
             assert Counter(re.findall(r"\{\w+\}", text)) == Counter(re.findall(r"\{\w+\}", english)), (lang, key)
             assert re.findall(r"</?b>|<br>", text) == re.findall(r"</?b>|<br>", english), (lang, key)
+
+
+def test_static_translation_bindings_are_valid_html_and_existing_keys():
+    resources = leaves(json.loads((ROOT / "web/locales/en.json").read_text()))
+
+    class Bindings(HTMLParser):
+        in_option = False
+
+        def handle_starttag(self, tag, attrs):
+            assert not self.in_option, "Options must contain text rather than nested translation elements"
+            self.in_option = tag == "option"
+            assert len({key for key, _ in attrs}) == len(attrs), (tag, attrs)
+            for name, value in attrs:
+                assert re.fullmatch(r"[a-zA-Z][a-zA-Z0-9:_-]*", name), (tag, name)
+                if name in ("data-i18n", "data-i18n-html"):
+                    assert "." + value in resources, value
+                if name == "data-i18n-attrs":
+                    for binding in value.split(";"):
+                        attribute, key = binding.split(":")
+                        assert attribute and "." + key in resources, binding
+
+        def handle_endtag(self, tag):
+            if tag == "option":
+                self.in_option = False
+
+    Bindings().feed((ROOT / "web/index.html").read_text())
 
 
 @pytest.mark.skipif(not shutil.which("node"), reason="Node is needed to exercise the browser localisation module")

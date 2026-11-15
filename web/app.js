@@ -542,17 +542,22 @@ function renderSource(a) {
 }
 
 // ---------------------------------------------------------------- refresh
-let seq = 0;
+let seq = 0, lastAnalysis = null, lastAnalysisQuery = "", lastMapQuery = "";
+function renderAnalysis(a) {
+  renderAnswer(a); renderCard(a); renderChart(a); renderMatrix(a); renderSeason(a); renderSource(a);
+}
 async function refreshAnalysis() {
   const my = ++seq;
+  const params = query(true);
   writeHash();
   $("#dlCsv").href = `/api/export.csv?${query(true)}`;
   $("#dlJson").href = `/api/export.json?${query(true)}`;
   answerLoading();
   try {
-    const a = await api("analysis", query(true));
+    const a = await api("analysis", params);
     if (my !== seq) return;
-    renderAnswer(a); renderCard(a); renderChart(a); renderMatrix(a); renderSeason(a); renderSource(a);
+    lastAnalysis = a._raw || a; lastAnalysisQuery = params;
+    renderAnalysis(a);
   } catch (e) {
     if (my !== seq) return;
     $("#answer").classList.remove("loading");
@@ -563,20 +568,25 @@ async function refreshAnalysis() {
 let mapSeq = 0;
 async function refresh(regionChanged) {
   const my = ++mapSeq;
+  const params = query(false);
   if (regionChanged) { drawRegion(); drawSelection(); }
   refreshAnalysis();
   try {
-    const m = await api("map", query(false));
-    if (my === mapSeq) drawGrid(m);
+    const m = await api("map", params);
+    if (my === mapSeq) { lastMapQuery = params; drawGrid(m); }
   } catch (e) { if (my === mapSeq) $("#mapSummary").innerHTML = `<span class="err">${th("errors.mapUnavailable", { message: e.message })}</span>`; }
 }
 
 // ---------------------------------------------------------------- false-alarm lab
-let simSeed = 7;
+let simSeed = 7, lastSimulation = null, lastSimulationBatch = null;
 async function simOne() {
   const yrs = +$("#simYears").value, phi = +$("#simPhi").value;
   $("#simYearsV").textContent = yrs; $("#simPhiV").textContent = phi;
   const s = await api("simulate", new URLSearchParams({ seed: simSeed, years: yrs, phi }));
+  lastSimulation = s;
+  renderSimulation(s);
+}
+function renderSimulation(s) {
   plot("simChart", [
     { x: s.dates, y: s.values, type: "scatter", mode: "lines", name: t("lab.simulatedSeries"), line: { color: "#8aa4bf" } },
     { x: s.dates, y: s.fit, type: "scatter", mode: "lines", name: t("lab.fittedLine"), line: { color: "#d6604d", width: 2.5 } },
@@ -591,6 +601,10 @@ async function simMany() {
   $("#simMultiOut").textContent = t("common.running");
   const N = 200;
   const r = await api("simulate_many", new URLSearchParams({ runs: N, years: yrs, phi }));
+  lastSimulationBatch = { r, yrs, phi, N };
+  renderSimulationBatch(lastSimulationBatch);
+}
+function renderSimulationBatch({ r, yrs, phi, N }) {
   const naive = r.naive_significant, corr = r.corrected_significant;
   const pct = [naive / N * 100, corr / N * 100, 5];
   plot("simMulti", [{
@@ -611,7 +625,7 @@ function renderAbout() {
     <h2>${t("methods.methodsTitle")}</h2><ul>${Object.entries(CAT.methods).map(([k, v]) => `<li><b>${t(`methods.notes.${k}.label`)}:</b> ${esc(v)}</li>`).join("")}</ul>
     <p>${t("methods.references")}</p>
     <h2>${t("methods.limitsTitle")}</h2><p>${t("methods.limitsDescription")}</p>
-    <h2>AI disclosure</h2><p>${CAT.ai_disclosure}</p>`;
+    ${CAT.ai_disclosure ? `<h2>${t("methods.existingNoteTitle")}</h2><p>${esc(I18N.text(CAT.ai_disclosure))}</p>` : ""}`;
 }
 
 // ---------------------------------------------------------------- boot
@@ -631,7 +645,7 @@ function renderAbout() {
   $("#simYears").oninput = simOne; $("#simPhi").oninput = simOne;
   $("#simMany").onclick = simMany;
   if (window.initGlobeTab) window.initGlobeTab();
-  window.addEventListener("languagechange", async () => {
+  window.addEventListener("languagechange", () => {
     hideTip();
     CAT = I18N.response("catalog", CAT._raw || CAT);
     buildVarCards(); syncControls(); renderAbout();
@@ -650,10 +664,12 @@ function renderAbout() {
     $(".drawbanner span").textContent = t("detective.dragToSelect");
     $(".drawbanner button").textContent = t("common.cancel");
     setHeaderHeight();
-    refresh(false);
+    // Reuse the source results, including charts in inactive tabs, without navigation or recomputation.
+    if (lastAnalysis && lastAnalysisQuery === query(true)) renderAnalysis(I18N.response("analysis", lastAnalysis));
+    if (lastMap && lastMapQuery === query(false)) drawGrid(I18N.response("map", lastMap._raw || lastMap));
     if (window.localiseGlobe) window.localiseGlobe();
-    if ($("#lab").classList.contains("active")) simOne();
-    if ($("#simMulti").data) simMany();
+    if (lastSimulation) renderSimulation(lastSimulation);
+    if (lastSimulationBatch) renderSimulationBatch(lastSimulationBatch);
     window.dispatchEvent(new Event("resize"));
   });
   await refresh(true);

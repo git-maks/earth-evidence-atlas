@@ -13,7 +13,7 @@ async function runtime(preferred, failLanguage) {
     location: { search: preferred ? `?lang=${preferred}` : "", href: "http://localhost/" },
     localStorage: { getItem(key) { return stored[key]; }, setItem(key, value) { stored[key] = value; } },
     history: { replaceState() {} }, window: { dispatchEvent() {} },
-    document: { documentElement: {}, querySelectorAll() { return []; }, getElementById(id) { return id === "languageSelect" ? select : status; } },
+    document: { documentElement: {}, querySelectorAll() { return []; }, getElementById(id) { return id === "languageSelect" ? select : id === "languageStatus" ? status : null; } },
     fetch: async (path) => {
       if (path.endsWith(`/${failLanguage}.json`)) throw Error("unavailable");
       return { ok: true, json: async () => JSON.parse(fs.readFileSync("web" + path.replace("/static", ""), "utf8")) };
