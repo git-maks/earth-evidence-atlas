@@ -411,7 +411,7 @@ html { overflow-y: scroll; }
   #gResult { order: 3; position: relative; inset: auto; width: 100%; min-width: 0; }
   .gleft { order: 4; }
   .gscroll { display: inline-flex; position: absolute; z-index: 4; left: 12px;
-    top: calc(clamp(320px, 62svh, 118vw) - 48px); gap: 6px; align-items: center;
+    top: calc(clamp(320px, 62svh, 118vw) - 80px); gap: 6px; align-items: center;
     background: #0c121a; color: #e6edf3; border-color: #7cb7f7; }
   .gscroll .ic { transform: rotate(90deg); }
   .gpanel { border-left: 0; border-right: 0; box-shadow: none; backdrop-filter: none; background: #0c121a; }
