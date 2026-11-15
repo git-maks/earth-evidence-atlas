@@ -9,6 +9,11 @@ const G = {
   grids: [], sel: null, playing: null, frameCache: new Map(), drawing: false, spin: true, opacity: 0.8,
 };
 const GLOBE_ZOOM = 1.5;
+// whole globe in view on small screens: the globe is 512 * 2^zoom / pi px wide, so fit it into ~88% of the shorter side
+function globeZoom() {
+  const el = document.getElementById("globeMap"), side = Math.min(el.clientWidth || innerWidth, el.clientHeight || innerHeight);
+  return Math.min(GLOBE_ZOOM, Math.log2((side * 0.88 * Math.PI) / 512));
+}
 const GIBS_BASE = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/";
 const IMAGERY = {
   bluemarble: { layer: "BlueMarble_ShadedRelief_Bathymetry", ext: "jpeg", level: 8, time: null },
@@ -266,7 +271,7 @@ function initGlobe() {
       ],
       sky: { "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 0, 1, 5, 1, 7, 0] },
     },
-    center: [20, 25], zoom: GLOBE_ZOOM, maxZoom: 10,
+    center: [20, 25], zoom: globeZoom(), maxZoom: 10,
     locale: {
       "Map.Title": t("mapControls.dragPan"),
       "NavigationControl.ZoomIn": t("mapControls.zoomIn"),
@@ -318,6 +323,22 @@ function initGlobe() {
     if (b[2] - b[0] < 0.2 || b[3] - b[1] < 0.2) return;
     setSelection(b, true);
   });
+  // the same rectangle with one finger
+  let last = null;
+  G.map.on("touchstart", (e) => {
+    if (!G.drawing || e.points.length !== 1) return;
+    e.preventDefault(); start = last = e.lngLat;
+  });
+  G.map.on("touchmove", (e) => {
+    if (!G.drawing || !start) return;
+    e.preventDefault(); last = e.lngLat; setSelection(normBox(start, last), false);
+  });
+  G.map.on("touchend", () => {
+    if (!G.drawing || !start) return;
+    const b = normBox(start, last); start = null; setDrawing(false);
+    if (b[2] - b[0] < 0.2 || b[3] - b[1] < 0.2) { setSelection(null, false); return; }
+    setSelection(b, true);
+  });
 }
 function spin() {
   if (!G.spin || !G.map || !$("#globe").classList.contains("active") || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -330,8 +351,10 @@ function normBox(a, b) {
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && G.drawing) setDrawing(false); });
 function setDrawing(on) {
   G.drawing = on; G.spin = false;
+  if (on) G.map.stop(); // a running spin would move the globe under the finger while drawing
   $("#gDraw").classList.toggle("on", on);
   G.map.getCanvas().style.cursor = on ? "crosshair" : "";
+  $("#globeMap").classList.toggle("drawing", on); // touch-action: none, so a finger draws instead of scrolling the page
   on ? G.map.dragPan.disable() : G.map.dragPan.enable();
   $("#gDraw").lastChild.textContent = on ? t("globe.dragToSelect") : t("common.selectArea");
 }
@@ -409,7 +432,7 @@ function selectGlobePlace(place) {
   hideTip();
   const region = G.places.find((l) => l.region === place);
   if (place === "world" || place === "all") {
-    G.map.easeTo({ zoom: GLOBE_ZOOM, pitch: 0, bearing: 0, duration: 900 });
+    G.map.easeTo({ zoom: globeZoom(), pitch: 0, bearing: 0, duration: 900 });
   } else if (region) {
     const [w, s, e, n] = region.bbox;
     G.map.fitBounds([[w, Math.max(s, -70)], [e, Math.min(n, 75)]], { padding: 60, duration: 1800 });
@@ -596,6 +619,8 @@ function setSelection(b, final) {
   $("#gOut").innerHTML = `<p class="ginfo">${t("globe.downloadNotice")}</p>`;
   $("#gProg").hidden = true;
   Plotly.purge("gChart");
+  // phones: the result panel sits under the globe, so show that something opened there
+  if (PHONE() && $("#globe").classList.contains("active")) setTimeout(() => $("#gResult").scrollIntoView({ behavior: "smooth", block: "nearest" }), 350);
 }
 function legacyPowerBounds([w, s, e, n]) {
   const span = 2.02; // allow the legacy server to round the registered bounds to hundredths
@@ -730,7 +755,11 @@ function buildGlobeControls() {
     drawData();
   };
   $("#gFade").onclick = () => { setPressed($("#gFade"), !pressed($("#gFade"))); drawData(); };
-  $("#gDraw").onclick = () => setDrawing(!G.drawing);
+  $("#gDraw").onclick = () => {
+    setDrawing(!G.drawing);
+    // phones: the controls sit under the globe, so bring the globe into view to draw on it
+    if (G.drawing && PHONE()) $("#globeMap").scrollIntoView({ behavior: "smooth", block: "start" });
+  };
   $("#gGo").onclick = runCompute;
   $("#gClose").onclick = () => { $("#gResult").hidden = true; setSelection(null, false); };
   if (!G.controlsReady) {
@@ -813,6 +842,9 @@ function localiseGlobeCredits() {
     borders: "Natural Earth", stars: "Yale BSC",
   }) });
   G.map.addControl(G.credits, "bottom-right");
+  // small screens: start with the credits folded into the (i) button
+  const attrib = G.map.getContainer().querySelector(".maplibregl-ctrl-attrib");
+  if (PHONE() && attrib) attrib.classList.remove("maplibregl-compact-show");
 }
 
 window.localiseGlobe = async () => {

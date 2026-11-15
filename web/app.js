@@ -29,6 +29,8 @@ const fmtP = (p) => p === null || p === undefined ? "–" : p < 0.001 ? `< ${I18
 const pStr = (p) => p === null || p === undefined ? t("common.pValueUnavailable") : p < 0.001 ? t("common.pValueBelow", { value: I18N.number(0.001) }) : t("common.pValue", { value: fmtP(p) });
 const plotCfg = { displaylogo: false, responsive: true, displayModeBar: false };
 const dark = () => matchMedia("(prefers-color-scheme: dark)").matches;
+const TOUCH = matchMedia("(pointer: coarse)").matches; // phones and tablets
+const PHONE = () => matchMedia("(max-width: 900px)").matches; // stacked layout (same breakpoint as style.css)
 function layoutBase(extra) {
   // axes are merged key by key, so a chart can add a title without losing the theme colours
   const ink = getComputedStyle(document.body).color, grid = dark() ? "#2a3542" : "#e8edf2";
@@ -40,6 +42,8 @@ function layoutBase(extra) {
     legend: { orientation: "h", y: -0.18 }, hovermode: "x unified",
     hoverlabel: { bgcolor: "#0f1720", bordercolor: "#2a3542", font: { color: "#e6edf3" } },
   };
+  // touch screens: a finger drag on a chart scrolls the page instead of zooming the chart
+  if (TOUCH) { base.dragmode = false; base.xaxis.fixedrange = true; base.yaxis.fixedrange = true; }
   const e = extra || {};
   const out = Object.assign({}, base, e);
   ["xaxis", "yaxis"].forEach((k) => { out[k] = Object.assign({}, base[k], e[k] || {}); });
@@ -82,6 +86,8 @@ function wireTips(root = document) {
     if (el) { const r = el.getBoundingClientRect(); showTip(el.dataset.tiphtml || el.dataset.tip, r.left, r.bottom - 6); }
   });
   root.addEventListener("focusout", hideTip);
+  // a tapped tooltip would otherwise stay on screen while the page scrolls under it
+  if (TOUCH) window.addEventListener("scroll", hideTip, { passive: true });
 }
 const monthLabel = (month, form = "short") => t(`calendar.months.${month}.${form}`);
 function fmtX(x) {
@@ -323,7 +329,8 @@ function wireControls() {
 
 // ---------------------------------------------------------------- map
 function initMap() {
-  map = L.map("map", { preferCanvas: true, worldCopyJump: false, minZoom: 1, zoomControl: false });
+  // touch: one finger scrolls the page, two fingers move and zoom the map
+  map = L.map("map", { preferCanvas: true, worldCopyJump: false, minZoom: 1, zoomControl: false, dragging: !TOUCH });
   L.control.zoom({ zoomInTitle: t("mapControls.zoomIn"), zoomOutTitle: t("mapControls.zoomOut") }).addTo(map);
   mapObserver.observe($("#map"));
   // NASA GIBS basemap (no API key): Blue Marble relief + reference coastlines/borders/labels on top of the data
@@ -352,23 +359,31 @@ function initMap() {
   const setDraw = (on) => {
     drawing = on; setPressed($("#drawBtn"), on);
     $("#map").classList.toggle("drawing", on); banner.hidden = !on;
-    on ? map.dragging.disable() : map.dragging.enable();
+    if (on) map.dragging.disable(); else if (!TOUCH) map.dragging.enable();
     hideTip();
     if (!on && rect) { map.removeLayer(rect); rect = null; }
   };
   $("#drawBtn").onclick = () => setDraw(!drawing);
   banner.querySelector("button").onclick = () => setDraw(false);
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && drawing) setDraw(false); });
-  map.on("mousedown", (e) => { if (!drawing || e.originalEvent.button !== 0 || rect) return; startLL = e.latlng; rect = L.rectangle([startLL, startLL], { color: "#ffd166", weight: 2, fill: true, fillOpacity: 0.12, dashArray: "4", interactive: false }).addTo(map); });
-  map.on("mousemove", (e) => { if (drawing && rect) rect.setBounds([startLL, e.latlng]); });
-  map.on("mouseup", (e) => {
+  // pointer events, so the rectangle can be drawn with a mouse, a pen or a finger
+  const box = map.getContainer(), onTool = (ev) => ev.target.closest(".leaflet-control, .drawbanner");
+  box.addEventListener("pointerdown", (ev) => {
+    if (!drawing || ev.button !== 0 || rect || onTool(ev)) return;
+    ev.preventDefault(); box.setPointerCapture(ev.pointerId);
+    startLL = map.mouseEventToLatLng(ev);
+    rect = L.rectangle([startLL, startLL], { color: "#ffd166", weight: 2, fill: true, fillOpacity: 0.12, dashArray: "4", interactive: false }).addTo(map);
+  }, true); // capture: Leaflet's own layers must not swallow the touch
+  box.addEventListener("pointermove", (ev) => { if (drawing && rect) rect.setBounds([startLL, map.mouseEventToLatLng(ev)]); }, true);
+  box.addEventListener("pointercancel", () => { if (drawing && rect) { map.removeLayer(rect); rect = null; } }, true);
+  box.addEventListener("pointerup", (ev) => {
     if (!drawing || !rect) return;
-    const b = L.latLngBounds(startLL, e.latlng);
+    const b = L.latLngBounds(startLL, map.mouseEventToLatLng(ev));
     setDraw(false); justDrew = Date.now(); // the click that ends a drag must not also select a cell
     if (b.getEast() - b.getWest() < 1e-3 || b.getNorth() - b.getSouth() < 1e-3) return;
     state.bbox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
     syncControls(); drawSelection(); refreshAnalysis();
-  });
+  }, true);
   // hover / click on the data grid (drawn as one image, so the cell is found from the cursor position)
   const cellAt = (ll) => {
     const m = lastMap; if (!m || !gridLayer) return null;
@@ -699,7 +714,9 @@ function renderSpikeExample() {
 
 // ---------------------------------------------------------------- about
 function renderAbout() {
-  const rows = CAT.variables.map((v) => `<tr><td><b>${v.name}</b><br><span class="tag">${v.kind}</span></td><td>${v.product}<br>${v.provider}</td><td>${v.resolution}<br>${v.years[0]}–${v.years[1]}</td><td>${v.citation} <a href="${v.url}" target="_blank" rel="noopener">${t("common.link")}</a><br><i>${v.license}</i></td></tr>`).join("");
+  // data-label: on phones each row becomes a small card with these labels (style.css)
+  const lab = (k) => esc(t(`methods.${k}`));
+  const rows = CAT.variables.map((v) => `<tr><td><b>${v.name}</b><br><span class="tag">${v.kind}</span></td><td data-label="${lab("productColumn")}">${v.product}<br>${v.provider}</td><td data-label="${lab("gridYearsColumn")}">${v.resolution}<br>${v.years[0]}–${v.years[1]}</td><td data-label="${lab("citationLicenceColumn")}">${v.citation} <a href="${v.url}" target="_blank" rel="noopener">${t("common.link")}</a><br><i>${v.license}</i></td></tr>`).join("");
   $("#aboutBody").innerHTML = `<h2>${t("methods.toolTitle")}</h2>
     <p>${th("methods.toolDescriptionHtml")}</p>
     <h2>${t("methods.dataTitle")}</h2><table><tr><th>${t("methods.variableColumn")}</th><th>${t("methods.productColumn")}</th><th>${t("methods.gridYearsColumn")}</th><th>${t("methods.citationLicenceColumn")}</th></tr>${rows}</table>
