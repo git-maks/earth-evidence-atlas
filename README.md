@@ -10,7 +10,7 @@ Prezentację przeniesiono do **`earthatlas.github.io/`**, samodzielnego repo Git
 
 Repo organizacji: **[EarthAtlas/earthatlas.github.io](https://github.com/EarthAtlas/earthatlas.github.io)**; opublikowana prezentacja: **https://earthatlas.github.io/**. GitHub wymaga małych liter w nazwie repo strony organizacji. Workflow w osobnym repo buduje statyczny katalog `_site/` i publikuje przez GitHub Actions po pushu do `main`. Zwykły build nie potrzebuje checkoutu aplikacji, API ani dostępu do NASA. Pages korzysta ze źródła GitHub Actions i wymusza HTTPS; pierwsze wdrożenie zakończyło się sukcesem 15.11.2026. PDF jest dostępny pod **https://earthatlas.github.io/earth-evidence-atlas.pdf**. Konfigurację i kolejne aktualizacje opisuje README prezentacji.
 
-Kod aplikacji powinien mieć osobne repo, np. `EarthAtlas/earth-evidence-atlas`. GitHub Pages obsługuje prezentację; backend FastAPI potrzebuje własnego hostingu. Po sklonowaniu samej aplikacji prezentację klonuje się osobno do ignorowanego folderu.
+Migawka kodu do oceny jest w **[EarthAtlas/earth-evidence-atlas](https://github.com/EarthAtlas/earth-evidence-atlas)**, z angielskim README, czterema zrzutami i linkiem do demo. To osobne repo w lokalnym, ignorowanym folderze `.snapshots/earth-evidence-atlas/`, bez historii roboczego projektu, danych i CI/CD; GitHub Actions jest wyłączone. Migawka nie synchronizuje się automatycznie z bieżącymi zmianami. GitHub Pages obsługuje osobną prezentację; backend FastAPI pozostaje pod dotychczasowym adresem demo.
 
 ```bash
 python3 earthatlas.github.io/publish.py

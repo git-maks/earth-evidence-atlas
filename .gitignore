@@ -11,3 +11,4 @@ data/
 
 # Independent organization website repository (not a submodule).
 /earthatlas.github.io/
+/.snapshots/
