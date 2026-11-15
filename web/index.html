@@ -10,21 +10,24 @@
 <link rel="stylesheet" href="/static/vendor/leaflet.css">
 <link rel="stylesheet" href="/static/vendor/maplibre-gl.css">
 <link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/resilience.css">
 </head>
 <body class="on-globe">
 <header class="top">
   <div class="brand">
     <h1 id="logo"><span class="logo-text">Earth Evidence Atlas</span><span class="spark" aria-hidden="true"></span></h1>
   </div>
-  <nav class="tabs" role="tablist">
-    <button class="tab active" data-tab="globe" role="tab"><svg class="ic"><use href="/static/icons.svg#i-globe"/></svg><span data-i18n="navigation.globe">Globe</span></button>
-    <button class="tab" data-tab="atlas" role="tab"><svg class="ic"><use href="/static/icons.svg#i-search"/></svg><span data-i18n="navigation.detective">Detective</span></button>
-    <button class="tab" data-tab="lab" role="tab"><svg class="ic"><use href="/static/icons.svg#i-flask"/></svg><span data-i18n="navigation.lab">False alarms</span></button>
-    <button class="tab" data-tab="about" role="tab"><svg class="ic"><use href="/static/icons.svg#i-book"/></svg><span data-i18n="methods.methodsTitle">Methods</span></button>
-  </nav>
+  <div class="tabs" role="tablist" aria-label="Views" data-i18n-attrs="aria-label:navigation.views">
+    <button id="tab-globe" class="tab active" data-tab="globe" role="tab" aria-controls="globe" aria-selected="true"><svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-globe"/></svg><span data-i18n="navigation.globe">Globe</span></button>
+    <button id="tab-atlas" class="tab" data-tab="atlas" role="tab" aria-controls="atlas" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-search"/></svg><span data-i18n="navigation.detective">Detective</span></button>
+    <button id="tab-lab" class="tab" data-tab="lab" role="tab" aria-controls="lab" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-flask"/></svg><span data-i18n="navigation.lab">False alarms</span></button>
+    <button id="tab-resilience" class="tab" data-tab="resilience" role="tab" aria-controls="resilience" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-layers"/></svg><span data-i18n="navigation.resilience">Resilience</span></button>
+    <button id="tab-about" class="tab" data-tab="about" role="tab" aria-controls="about" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-book"/></svg><span data-i18n="methods.methodsTitle">Methods</span></button>
+  </div>
 </header>
 
-<main id="globe" class="panel globe-panel active">
+<main id="atlas-views">
+<div id="globe" class="panel globe-panel active" role="tabpanel" aria-labelledby="tab-globe">
   <canvas id="gStars" aria-hidden="true"></canvas>
   <div id="globeMap"></div>
   <aside class="gpanel gleft" aria-label="Globe controls" data-i18n-attrs="aria-label:globe.controlsLabel">
@@ -77,6 +80,7 @@
     </div>
     <div id="gProg" class="gprog" hidden><div class="gbar"><div id="gProgBar"></div></div><p id="gProgMsg" class="ginfo"></p></div>
     <div id="gOut" class="result"></div>
+    <button id="gResilience" type="button" class="btn ghost" data-i18n="resilience.openBrief">Open in Resilience</button>
     <section id="gSimilar" class="gsimilar" hidden aria-labelledby="gSimilarToggle">
       <button id="gSimilarToggle" type="button" class="btn ghost" aria-controls="gSimilarOptions" aria-expanded="false" data-i18n="similar.title">Find similar areas</button>
       <div id="gSimilarOptions" hidden>
@@ -95,9 +99,9 @@
     <div id="gChart" class="chart small"></div>
   </aside>
   <div id="gLegend" class="gpanel glegend"></div>
-</main>
+</div>
 
-<main id="atlas" class="panel">
+<div id="atlas" class="panel" role="tabpanel" aria-labelledby="tab-atlas">
   <section class="controls" aria-label="Choose what to investigate" data-i18n-attrs="aria-label:detective.controlsLabel">
     <div class="step">
       <span class="num">1</span>
@@ -117,6 +121,7 @@
         <p id="regionStory" class="hint"></p>
         <label class="row ginline small" data-tip="Areas other visitors have analysed" data-i18n-attrs="data-tip:common.areasFromOthersHint"><span class="switch light"><input type="checkbox" id="showOthers"><span></span></span><span data-i18n="common.areasFromOthers">Areas from others</span></label>
         <p id="selInfo" class="hint"></p>
+        <div class="row"><button id="detectiveResilience" type="button" class="ghost" data-i18n="resilience.openBrief">Open in Resilience</button></div>
       </div>
     </div>
     <div class="step">
@@ -199,9 +204,9 @@
       <div id="source" class="source"></div>
     </div>
   </section>
-</main>
+</div>
 
-<main id="lab" class="panel">
+<div id="lab" class="panel" role="tabpanel" aria-labelledby="tab-lab">
   <div class="banner"><span data-i18n="lab.banner">Simulation with synthetic data</span>
     <span class="sim-info" tabindex="0" data-i18n-attrs="aria-label:lab.aboutSimulation;data-tiphtml:lab.generationTooltipHtml"><svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-info"/></svg></span>
   </div>
@@ -237,10 +242,77 @@
     <div id="simSpikeOut" class="sim" role="status"></div>
     <p id="simSpikeNote" class="hint" data-i18n="lab.spikeLesson" hidden></p>
   </section>
-</main>
+</div>
 
-<main id="about" class="panel">
+<div id="resilience" class="panel" role="tabpanel" aria-labelledby="tab-resilience" tabindex="0">
+  <header class="resilience-intro">
+    <h2 data-i18n="resilience.title">Environmental Resilience Brief</h2>
+    <p data-i18n="resilience.intro"></p>
+  </header>
+
+  <section class="card resilience-controls" aria-labelledby="resilience-scope">
+    <h3 id="resilience-scope" data-i18n="resilience.scope">Area and period</h3>
+    <div class="resilience-fields" aria-describedby="resilience-status">
+      <label><span data-i18n="detective.place">Place</span><select id="resilience-area"></select></label>
+      <label><span data-i18n="common.startYear">Start year</span><select id="resilience-start" disabled></select></label>
+      <label><span data-i18n="common.endYear">End year</span><select id="resilience-end" disabled></select></label>
+      <label><span data-i18n="calendar.season">Season</span>
+        <select id="resilience-months">
+          <option value="1,2,3,4,5,6,7,8,9,10,11,12" data-i18n="calendar.allYear">All year</option>
+          <option value="12,1,2" data-i18n="calendar.seasons.djf.label">DJF</option>
+          <option value="3,4,5" data-i18n="calendar.seasons.mam.label">MAM</option>
+          <option value="6,7,8" data-i18n="calendar.seasons.jja.label">JJA</option>
+          <option value="9,10,11" data-i18n="calendar.seasons.son.label">SON</option>
+        </select>
+      </label>
+    </div>
+    <p id="resilience-status" class="hint" role="status"></p>
+    <button id="resilience-retry" type="button" class="ghost" data-i18n="resilience.retry" hidden>Reload brief</button>
+  </section>
+
+  <div id="resilience-report" hidden>
+    <div class="resilience-report-head">
+      <div>
+        <h3 id="resilience-area-name"></h3>
+        <p id="resilience-parameters" class="hint"></p>
+        <p id="resilience-bounds" class="hint"></p>
+      </div>
+      <div class="resilience-actions">
+        <button id="resilience-copy" type="button" class="ghost"><svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-link"/></svg> <span data-i18n="common.copyLink">Copy link</span></button>
+        <a id="resilience-json" class="ghost"><span data-i18n="common.json">JSON</span></a>
+        <a id="resilience-csv" class="ghost"><span data-i18n="common.csv">CSV</span></a>
+        <button id="resilience-print" type="button" class="ghost" data-i18n="resilience.print">Print / PDF</button>
+      </div>
+    </div>
+    <input id="resilience-link" type="url" readonly hidden data-i18n-attrs="aria-label:resilience.reportLink">
+    <p id="resilience-share-status" class="hint" role="status"></p>
+    <p class="resilience-print-link"><a id="resilience-print-link"></a></p>
+    <p class="hint resilience-window-note" data-i18n="resilience.limits.windows"></p>
+    <div id="resilience-cards" class="resilience-cards">
+      <article id="resilience-card-t2m" class="card"></article>
+      <article id="resilience-card-lst_day" class="card"></article>
+      <article id="resilience-card-precip" class="card"></article>
+      <article id="resilience-card-soil_root" class="card"></article>
+    </div>
+    <details class="card resilience-details">
+      <summary data-i18n="resilience.methods">Analysis methods</summary>
+      <ul id="resilience-methods"></ul>
+    </details>
+  </div>
+  <section class="card resilience-details" aria-labelledby="resilience-limits">
+    <h3 id="resilience-limits" data-i18n="resilience.interpretation">How to read the brief</h3>
+    <ul id="resilience-limit-list"></ul>
+  </section>
+  <details class="card resilience-details resilience-use">
+    <summary data-i18n="resilience.who">Who can use this?</summary>
+    <p data-i18n="resilience.civilian"></p>
+    <p data-i18n="resilience.defence"></p>
+  </details>
+</div>
+
+<div id="about" class="panel" role="tabpanel" aria-labelledby="tab-about">
   <section class="card prose" id="aboutBody"></section>
+</div>
 </main>
 
 <footer class="foot">
@@ -271,5 +343,6 @@
 <script src="/static/app.js"></script>
 <script src="/static/globe-similarity.js"></script>
 <script src="/static/globe.js"></script>
+<script src="/static/resilience.js"></script>
 </body>
 </html>

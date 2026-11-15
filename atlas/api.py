@@ -416,6 +416,11 @@ def trend_map(var: str, region: str, start: int | None = None, end: int | None =
     return JSONResponse(_clean(_map(var, region, start, end, tuple(_months(months)), q)))
 
 
+def _evidence_attachment(content, media_type, filename):
+    return Response(content, media_type=media_type,
+                    headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
 @app.get("/api/export.csv")
 def export_csv(var: str, region: str, start: int | None = None, end: int | None = None,
                months: str | None = None, bbox: str | None = None):
@@ -431,8 +436,7 @@ def export_csv(var: str, region: str, start: int | None = None, end: int | None 
               f"(95% CI {out['result']['ci_low']:.4g}..{out['result']['ci_high']:.4g}, p={out['result']['p']:.3g})\n")
     df.to_csv(buf, index=False, float_format="%.5g")
     fn = f"atlas_{var}_{region}_{out['start']}-{out['end']}.csv"
-    return Response(buf.getvalue(), media_type="text/csv",
-                    headers={"Content-Disposition": f'attachment; filename="{fn}"'})
+    return _evidence_attachment(buf.getvalue(), "text/csv", fn)
 
 
 @app.get("/api/export.json")
@@ -441,8 +445,97 @@ def export_json(var: str, region: str, start: int | None = None, end: int | None
     out = _clean(_analysis(var, region, start, end, tuple(_months(months)), _bbox(bbox), 15))
     out.pop("series", None)
     fn = f"atlas_{var}_{region}_{out['start']}-{out['end']}_evidence.json"
-    return Response(json.dumps(out, indent=2, ensure_ascii=False), media_type="application/json",
-                    headers={"Content-Disposition": f'attachment; filename="{fn}"'})
+    return _evidence_attachment(json.dumps(out, indent=2, ensure_ascii=False), "application/json", fn)
+
+
+# ------------------------------------------------------------------ resilience brief
+RESILIENCE_VARIABLES = ("t2m", "lst_day", "precip", "soil_root")
+RESILIENCE_LIMITS = {
+    "exposure": "Regional exposure is one input to a facility risk assessment, which also needs local information about the site and its safeguards.",
+    "history": "Historical monthly records show past changes. Weather alerts and climate projections require other data and methods.",
+    "water": "Rainfall and soil wetness describe drying conditions. Estimating water supply requires local measurements or a hydrological model.",
+    "heat": "Air and land surface temperatures measure different things. Monthly means cannot give hot-day counts or human heat stress.",
+    "shared": "The POWER variables share the MERRA-2 reanalysis, so agreement between them does not count as independent confirmation.",
+    "scale": "The grid resolution sets the spatial scale. A regional trend cannot describe a building's microclimate.",
+    "causes": "Statistical significance describes the evidence for a trend. Its causes require a separate analysis.",
+    "windows": "The time windows overlap and share observations.",
+}
+
+
+@app.get("/api/resilience")
+def resilience(region: str | None = None, bbox: str | None = None, start: int | None = None,
+               end: int | None = None, months: str | None = None,
+               format: Literal["csv", "json"] | None = None):
+    """Assemble a brief from existing cubes and the same analysis as Detective."""
+    area = _bbox(bbox)
+    regions = {**REGIONS, **custom_regions()}
+    if area is None and region is None:
+        region = "central_europe"
+    selected = regions.get(region)
+    if selected is None and region is not None:
+        raise HTTPException(404, "unknown region")
+    if area is None:
+        area = tuple(selected.bbox)
+    if not _contains(REGIONS["world"].bbox, area):
+        raise HTTPException(400, "bbox must be within the world")
+    months_t = tuple(_months(months))
+    containing = [r for r in regions.values() if _contains(r.bbox, area)]
+    containing.sort(key=lambda r: (r.id != region, (r.bbox[2] - r.bbox[0]) * (r.bbox[3] - r.bbox[1]), r.id))
+    cards = []
+    for var in RESILIENCE_VARIABLES:
+        source = next((r for r in containing if cube_path(var, r.id).exists()), None)
+        years = None
+        if source:
+            time = load(var, source.id).time
+            chosen = time.where(time.dt.month.isin(months_t), drop=True)
+            if chosen.size:
+                first, last = VARIABLES[var].years
+                lo, hi = max(int(chosen.dt.year.min()), first), min(int(chosen.dt.year.max()), last)
+                if lo <= hi:
+                    years = (lo, hi)
+        cards.append(dict(variable=var, data_region=source.id if source else None, years=years,
+                          status="missing_cube" if source is None else "missing_months" if years is None else "no_common_period",
+                          result=None, verdict=None, cross_check=None, provenance=None))
+
+    ranges = [c["years"] for c in cards if c["years"] is not None]
+    common = (max(y[0] for y in ranges), min(y[1] for y in ranges)) if ranges else None
+    if common and common[1] - common[0] >= 4:
+        start = common[0] if start is None else start
+        end = common[1] if end is None else end
+        if common[0] <= start <= end - 4 and end <= common[1]:
+            for card in cards:
+                if card["years"] is None:
+                    continue
+                var, rid = card["variable"], card["data_region"]
+                cut = None if area == tuple(regions[rid].bbox) else area
+                a = _analysis(var, rid, start, end, months_t, cut, 15)
+                card.update({k: a[k] for k in ("result", "verdict", "cross_check", "provenance", "trend_units", "cells")})
+                card.update(status="ready", analysis_bbox=cut)
+                if a["cross_check"]:
+                    card["cross_check_source"] = VARIABLES[a["cross_check"]["variable"]].public()
+                if a["answer"].get("source_url"):
+                    card["advisory"] = {key: a["answer"][key] for key in ("caveat", "source_url")}
+        else:
+            raise HTTPException(400, "choose at least 5 years within the common period")
+    else:
+        common = start = end = None
+    out = _clean(dict(region=region, area_name=selected.name if selected else None, bbox=area, start=start, end=end,
+                      months=months_t, years=common, cards=cards, methods=METHOD_NOTE, limitations=RESILIENCE_LIMITS))
+    # Keep the exact coordinates used in _analysis for reopening and sharing selections.
+    out["bbox"] = area
+    for card, cleaned in zip(cards, out["cards"]):
+        if "analysis_bbox" in card:
+            cleaned["analysis_bbox"] = card["analysis_bbox"]
+    if format == "csv":
+        buf = io.StringIO()
+        buf.write("# Earth Evidence Atlas – Environmental Resilience Brief\n")
+        for key in ("region", "area_name", "bbox", "start", "end", "months", "years", "methods", "limitations"):
+            buf.write(f"# {key}: {json.dumps(out[key], ensure_ascii=False)}\n")
+        pd.json_normalize(out["cards"]).to_csv(buf, index=False)
+        return _evidence_attachment(buf.getvalue(), "text/csv", "atlas_resilience.csv")
+    if format == "json":
+        return _evidence_attachment(json.dumps(out, indent=2, ensure_ascii=False), "application/json", "atlas_resilience.json")
+    return JSONResponse(out)
 
 
 @app.get("/api/simulate")

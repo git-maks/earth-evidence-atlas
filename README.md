@@ -19,6 +19,12 @@ Stan na **14.11.2026, ok. 17:30**: działający lokalnie prototyp end-to-end. Ob
 
 > **Zasady AI:** według zasad organizatorów nie ma żadnych ograniczeń w używaniu AI i nie trzeba informować, kiedy ani gdzie AI zostało użyte; pełna dowolność. Liczby w aplikacji pochodzą wyłącznie z obliczeń na cytowanych danych NASA (to nasza zasada jakości, nie wymóg hackathonu).
 
+## Resilience (15.11.2026)
+
+**Environmental Resilience Brief** zestawia trendy temperatury powietrza, temperatury powierzchni lądu, opadu i wilgotności gleby w strefie korzeniowej dla jednego obszaru, okresu i sezonu. Wybierz region z listy lub użyj **Open in Resilience** w Globe albo Detective. Raport czyta istniejące kostki, ustala wspólny zakres na podstawie dostępnych danych i wskazuje braki osobno na każdej karcie. Porównania źródeł korzystają z tej samej analizy co Detective, m.in. GPCP dla opadu i Aqua dla temperatury powierzchni.
+
+**Open in Detective** otwiera pełną analizę wybranej zmiennej z tymi samymi parametrami. **Copy link** zachowuje wybór, **CSV** i **JSON** przez `GET /api/resilience` zapisują wyniki, metody, źródła i ograniczenia, a **Print / PDF** drukuje raport. Raport opisuje regionalną ekspozycję i pomaga wybrać miejsca do dalszej oceny infrastruktury cywilnej lub obronnej. Szczegóły zakresu są w [Dodatku D](formalne/07_ocena_i_plan_usprawnien.md#dodatek-d-zakładka-resilience--zastosowania-cywilne-i-obronne-do-p2-8).
+
 ## Uruchomienie
 
 ```bash

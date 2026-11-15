@@ -186,24 +186,37 @@ function setPressed(btn, on) { btn.classList.toggle("on", on); btn.setAttribute(
 const pressed = (btn) => btn.getAttribute("aria-pressed") === "true";
 
 // ---------------------------------------------------------------- URL state
+let detectiveDeepLink = false;
 function readHash() {
   const h = new URLSearchParams(location.hash.slice(1));
+  if (h.get("view") === "resilience") return;
+  detectiveDeepLink = h.get("view") === "atlas";
   ["var", "region", "months"].forEach((k) => { if (h.get(k)) state[k] = h.get(k); });
   ["start", "end"].forEach((k) => { if (h.get(k)) state[k] = +h.get(k); });
-  if (h.get("bbox")) state.bbox = h.get("bbox").split(",").map(Number);
+  state.bbox = h.get("bbox") ? h.get("bbox").split(",").map(Number) : null;
 }
 function writeHash() {
-  history.replaceState(null, "", "#" + query(true));
+  if ($("#resilience").classList.contains("active")) return;
+  history.replaceState(null, "", "#" + (detectiveDeepLink ? "view=atlas&" : "") + query(true));
 }
 function query(withBbox) {
   const p = new URLSearchParams({ var: state.var, region: state.region, start: state.start, end: state.end, months: state.months });
-  if (withBbox && state.bbox) p.set("bbox", state.bbox.map((x) => +x.toFixed(3)).join(","));
+  if (withBbox && state.bbox) p.set("bbox", state.bbox.join(","));
   return p.toString();
 }
-async function api(path, params) {
-  const r = await fetch(`/api/${path}?${params}`);
+async function api(path, params, options) {
+  const r = await fetch(`/api/${path}?${params}`, options);
   if (!r.ok) throw new Error(I18N.text((await r.json().catch(() => ({}))).detail || r.statusText));
   return I18N.response(path, await r.json());
+}
+
+function openInDetective(params) {
+  Object.assign(state, params);
+  detectiveDeepLink = true;
+  $("#tab-atlas").click();
+  $("#tab-atlas").focus();
+  syncControls();
+  refresh(true);
 }
 
 // ---------------------------------------------------------------- controls
@@ -315,14 +328,31 @@ function wireControls() {
     b.innerHTML = `${ic("check")}<span>${t("common.copied")}</span>`;
     setTimeout(() => { b.innerHTML = `${ic("link")}<span>${t("common.copyLink")}</span>`; }, 1500);
   };
-  $$(".tab").forEach((t) => t.onclick = () => {
-    $$(".tab").forEach((x) => x.classList.toggle("active", x === t));
-    $$(".panel").forEach((p) => p.classList.toggle("active", p.id === t.dataset.tab));
-    document.body.classList.toggle("on-globe", t.dataset.tab === "globe");
-    if (t.dataset.tab === "lab") { simOne(); if (!spikeExample) loadSpikeExample(); }
-    if (t.dataset.tab === "atlas") { map.invalidateSize(); drawRegion(); drawSelection(); }
-    window.dispatchEvent(new Event("resize"));
-    requestAnimationFrame(() => $$(`#${t.dataset.tab} .chart`).forEach((el) => { if (el.data) Plotly.Plots.resize(el); }));
+  const tabs = $$(".tabs .tab");
+  tabs.forEach((tab, index) => {
+    tab.onclick = () => {
+      const previous = $(".tabs .tab.active").dataset.tab, view = tab.dataset.tab;
+      tabs.forEach((other) => {
+        other.classList.toggle("active", other === tab);
+        other.setAttribute("aria-selected", String(other === tab));
+        other.tabIndex = other === tab ? 0 : -1;
+      });
+      $$(".panel").forEach((panel) => panel.classList.toggle("active", panel.id === view));
+      document.body.classList.toggle("on-globe", view === "globe");
+      if (view === "lab") { simOne(); if (!spikeExample) loadSpikeExample(); }
+      if (view === "atlas") { map.invalidateSize(); drawRegion(); drawSelection(); }
+      if (view === "resilience" && previous !== view) Resilience.enter();
+      if (previous === "resilience" && view !== previous) writeHash();
+      window.dispatchEvent(new Event("resize"));
+      requestAnimationFrame(() => $$(`#${view} .chart`).forEach((el) => { if (el.data) Plotly.Plots.resize(el); }));
+    };
+    tab.onkeydown = (event) => {
+      const next = { ArrowLeft: (index + tabs.length - 1) % tabs.length,
+        ArrowRight: (index + 1) % tabs.length, Home: 0, End: tabs.length - 1 }[event.key];
+      if (next === undefined) return;
+      event.preventDefault();
+      tabs[next].focus();
+    };
   });
 }
 
@@ -772,6 +802,19 @@ async function renderValidation() {
   $("#simSpikeNew").onclick = () => { spikeSeed += 1; loadSpikeExample(); };
   $("#simSpikeCompare").onclick = (e) => { setPressed(e.currentTarget, !pressed(e.currentTarget)); renderSpikeExample(); };
   if (window.initGlobeTab) window.initGlobeTab();
+  Resilience.init();
+  if (new URLSearchParams(location.hash.slice(1)).get("view") === "resilience") $("#tab-resilience").click();
+  if (detectiveDeepLink) $("#tab-atlas").click();
+  window.addEventListener("hashchange", () => {
+    const hash = new URLSearchParams(location.hash.slice(1));
+    if (hash.get("view") === "resilience") Resilience.restore(hash);
+    if (hash.get("view") === "atlas" && available(hash.get("var"), hash.get("region"))) {
+      readHash();
+      syncControls();
+      $("#tab-atlas").click();
+      refresh(true);
+    }
+  });
   window.addEventListener("languagechange", () => {
     hideTip();
     CAT = I18N.response("catalog", CAT._raw || CAT);
@@ -795,6 +838,7 @@ async function renderValidation() {
     if (lastAnalysis && lastAnalysisQuery === query(true)) renderAnalysis(I18N.response("analysis", lastAnalysis));
     if (lastMap && lastMapQuery === query(false)) drawGrid(I18N.response("map", lastMap._raw || lastMap));
     if (window.localiseGlobe) window.localiseGlobe();
+    Resilience.localise();
     if (lastSimulation) renderSimulation(lastSimulation);
     if (lastSimulationBatch) renderSimulationBatch(lastSimulationBatch);
     if (spikeExample) renderSpikeExample();

@@ -1,0 +1,75 @@
+/* Resilience report and compact five-tab navigation. */
+.tabs .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; border-radius: 5px; }
+#gResilience { color: #b7d9ff; border-color: #7cb7f7; margin-top: 8px; }
+#gResilience:hover { background: #15283d; }
+
+#resilience { max-width: 1240px; padding-bottom: 56px; overflow-wrap: anywhere; }
+#resilience:focus-visible, #resilience :is(a, button, select, summary, input):focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+#resilience a { color: var(--accent); }
+.resilience-intro { margin: 8px 0 18px; }
+.resilience-intro h2 { margin: 0; font-size: clamp(24px, 4vw, 34px); letter-spacing: -.025em; }
+.resilience-intro p { margin: 5px 0 0; color: var(--muted); max-width: 66ch; }
+.resilience-fields { display: grid; grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)); gap: 10px 14px; }
+.resilience-fields label { display: grid; gap: 4px; align-content: start; font-weight: 600; font-size: 13px; }
+.resilience-fields select { width: 100%; min-width: 0; min-height: 38px; font-weight: 400; }
+#resilience-retry { margin-top: 8px; }
+.resilience-report-head { display: flex; align-items: end; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+.resilience-report-head h3 { margin: 0; font-size: 19px; }
+.resilience-report-head p { margin-top: 2px; }
+.resilience-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.resilience-actions > * { min-height: 36px; }
+#resilience-link { width: 100%; margin-top: 12px; }
+#resilience-share-status:empty, .resilience-print-link { display: none; }
+.resilience-window-note { margin: 12px 0 8px; }
+.resilience-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.resilience-cards > article { display: flex; flex-direction: column; align-items: stretch; }
+.resilience-cards h3 { font-size: 17px; }
+.resilience-source p { margin: 0; }
+.resilience-trend { margin-top: 12px; padding: 8px 10px; border-radius: 6px; background: var(--bg); }
+.resilience-trend p { margin: 0; }
+.resilience-verdict { font-size: 14px; font-weight: 600; }
+.resilience-trend .trend_detected { color: var(--good); }
+.resilience-trend .insufficient_data { color: var(--bad); }
+.resilience-metrics { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 10px 0 0; }
+.resilience-metrics dd { margin: 0; font-variant-numeric: tabular-nums; font-weight: 600; }
+.resilience-metrics dt { color: var(--muted); font-size: 13px; }
+.resilience-robustness { border-top: 1px solid var(--line); padding-top: 8px; }
+.resilience-check, .resilience-advisory, .resilience-source-details { margin-top: 10px; }
+.resilience-check h4 { margin-top: 0; }
+.resilience-check p, .resilience-source-details p { margin: 4px 0; font-size: 13px; }
+.resilience-advisory { font-size: 13px; }
+.resilience-details { margin-top: 12px; }
+.resilience-details li + li { margin-top: 4px; }
+.resilience-details summary, .resilience-source-details summary { cursor: pointer; font-weight: 600; }
+.resilience-source-details { font-size: 13px; }
+.resilience-open { align-self: start; margin-top: 10px; }
+
+@media (max-width: 680px) {
+  .tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); max-width: none; gap: 2px; }
+  .tabs .tab { flex-direction: column; justify-content: start; text-align: center; min-width: 0;
+    padding: 7px 2px; gap: 3px; font-size: 12px; line-height: 1.2; white-space: normal; overflow-wrap: anywhere; }
+  .resilience-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .resilience-fields label:first-child { grid-column: 1 / -1; }
+  .resilience-cards { grid-template-columns: 1fr; }
+}
+
+@media print {
+  @page resilience { margin: 10mm; }
+  body:has(#resilience.active) { background: white; }
+  body:has(#resilience.active) > :not(#atlas-views) { display: none !important; }
+  #resilience.active { --bg: #fff; --panel: #fff; --ink: #111; --muted: #424242; --line: #aaa;
+    --accent: #0b4d83; --good: #14602a; --bad: #8b2118;
+    page: resilience; max-width: none; color: var(--ink); padding: 0; font-size: 10pt; }
+  #resilience .card { box-shadow: none; padding: 8px; }
+  #resilience .resilience-controls, #resilience .resilience-actions, #resilience .resilience-open,
+  #resilience #resilience-link, #resilience #resilience-share-status { display: none !important; }
+  #resilience .resilience-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  #resilience .resilience-cards article { display: block; margin-bottom: 4px; }
+  #resilience .resilience-print-link { display: block; font-size: 9pt; }
+  #resilience :is(.resilience-trend, .resilience-metrics, .resilience-check, .resilience-source-details) { break-inside: avoid; }
+  #resilience .resilience-source-details, #resilience .resilience-source-details p { font-size: 9pt; }
+  #resilience ul { margin: 4px 0; padding-inline-start: 16px; }
+  #resilience h3, #resilience summary { break-after: avoid; }
+}
