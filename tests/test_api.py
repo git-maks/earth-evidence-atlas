@@ -1,10 +1,8 @@
 """API smoke tests on the built data cubes (AI-generated with Claude)."""
-import json
-
 import pytest
 from fastapi.testclient import TestClient
 
-from atlas.api import WEB, app
+from atlas.api import app
 from atlas.config import VARIABLES, cube_path
 
 c = TestClient(app)
@@ -58,8 +56,6 @@ def test_simulation_is_labelled():
 def test_level_shift_example_and_batch_intervals():
     params = dict(seed=11, years=10, phi=0.25, sigma=0.35)
     step = c.get("/api/simulate", params={**params, "scenario": "step"}).json()
-    preset = json.loads((WEB / "level-shift.json").read_text())
-    assert preset == {key: step[key] for key in preset}
     noise = c.get("/api/simulate", params=params).json()
     before, after = step["segments"]
     assert step["change_date"] == after["dates"][0] == "2006-01"

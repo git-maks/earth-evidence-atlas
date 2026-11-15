@@ -211,13 +211,16 @@
       <p id="simMultiOut" class="hint" role="status"></p>
     </div>
   </section>
-  <section class="card" style="margin-top: 14px" aria-labelledby="simStepTitle">
-    <h3 id="simStepTitle" data-i18n="lab.stepTitle">Can a sudden shift look like a trend?</h3>
-    <p data-i18n="lab.stepDescription"></p>
-    <button id="simStepCompare" class="btn ghost" aria-pressed="false" aria-controls="simStepChart simStepOut" data-i18n="lab.stepCompare" disabled>Compare before and after</button>
-    <div id="simStepChart" class="chart"></div>
-    <div id="simStepOut" class="sim" role="status"></div>
-    <p id="simStepNote" class="hint" data-i18n="lab.stepLesson" hidden></p>
+  <section class="card" style="margin-top: 14px" aria-labelledby="simSpikeTitle">
+    <h3 id="simSpikeTitle" data-i18n="lab.spikeTitle">Can two spikes tilt a trend?</h3>
+    <p data-i18n="lab.spikeDescription"></p>
+    <div class="row wrap">
+      <button id="simSpikeNew" class="btn"><svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-shuffle"/></svg><span data-i18n="lab.spikeNew">Generate new data</span></button>
+      <button id="simSpikeCompare" class="btn ghost" aria-pressed="false" aria-controls="simSpikeChart simSpikeOut" data-i18n="lab.spikeCompare" disabled>Compare without spikes</button>
+    </div>
+    <div id="simSpikeChart" class="chart"></div>
+    <div id="simSpikeOut" class="sim" role="status"></div>
+    <p id="simSpikeNote" class="hint" data-i18n="lab.spikeLesson" hidden></p>
   </section>
 </main>
 
