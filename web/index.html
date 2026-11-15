@@ -98,16 +98,17 @@
     <h3><span data-i18n="common.selectedArea">Selected area</span></h3>
     <p id="gSelInfo" class="ginfo"></p>
     <div class="row">
-      <select id="gModel" aria-label="Dataset" data-i18n-attrs="aria-label:common.dataset"></select>
+      <select id="gModel" aria-label="Dataset" aria-describedby="gAreaLimit" data-i18n-attrs="aria-label:common.dataset"></select>
       <button id="gGo" class="btn"><span data-i18n="common.analyse">Analyse</span></button>
     </div>
+    <p id="gAreaLimit" class="ginfo" role="status" hidden></p>
     <div id="gProg" class="gprog" hidden><div class="gbar"><div id="gProgBar"></div></div><p id="gProgMsg" class="ginfo"></p></div>
     <div id="gOut" class="result"></div>
     <div id="gAnalysisActions" class="ganalysis-actions" hidden>
       <button id="gOpen" type="button" class="btn"><span data-i18n="globe.fullAnalysis">Full analysis</span></button>
       <button id="gSimilarToggle" type="button" class="btn ghost" aria-controls="gSimilarOptions" aria-expanded="false" data-i18n="similar.title">Find similar areas</button>
     </div>
-    <p id="gSimilarHint" class="ginfo" hidden></p>
+    <p id="gSimilarHint" hidden></p>
     <button id="gResilience" type="button" class="btn ghost" hidden data-i18n="resilience.openBrief">Open in Resilience</button>
     <section id="gSimilar" class="gsimilar" hidden aria-labelledby="gSimilarToggle">
       <div id="gSimilarOptions" hidden>
@@ -235,8 +236,10 @@
 </div>
 
 <div id="lab" class="panel" role="tabpanel" aria-labelledby="tab-lab">
-  <div class="banner"><span data-i18n="lab.banner">Simulation with synthetic data</span>
-    <span class="sim-info" tabindex="0" data-i18n-attrs="aria-label:lab.aboutSimulation;data-tiphtml:lab.generationTooltipHtml"><svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-info"/></svg></span>
+  <div class="lab-info-row">
+    <button id="labSimulationInfo" class="sim-info" type="button" data-i18n-attrs="aria-label:lab.banner;data-tiphtml:lab.generationTooltipHtml">
+      <svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-info"/></svg>
+    </button>
   </div>
   <section class="grid2">
     <div class="card">
@@ -355,6 +358,7 @@
 <script src="/static/tour.js"></script>
 <script src="/static/app.js"></script>
 <script src="/static/globe-similarity.js"></script>
+<script src="/static/gibs-colormaps.js"></script>
 <script src="/static/globe.js"></script>
 <script src="/static/resilience.js"></script>
 <script src="/static/tour-case1.js"></script>

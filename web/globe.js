@@ -7,11 +7,11 @@ const G = {
   place: "world", places: [], layers: [], monthly: null,
   grids: [], sel: null, playing: null, frameCache: new Map(), drawing: false, spin: true, opacity: 0.8,
 };
-const GLOBE_ZOOM = 1.5;
-// whole globe in view on small screens: the globe is 512 * 2^zoom / pi px wide, so fit it into ~88% of the shorter side
+const GLOBE_ZOOM = 1.76;
+// Fit the whole globe on small screens using the map's shorter side.
 function globeZoom() {
   const el = document.getElementById("globeMap"), side = Math.min(el.clientWidth || innerWidth, el.clientHeight || innerHeight);
-  return Math.min(GLOBE_ZOOM, Math.log2((side * 0.88 * Math.PI) / 512));
+  return Math.min(GLOBE_ZOOM, Math.log2((side * 0.92 * Math.PI) / 512));
 }
 const GIBS_BASE = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/";
 const IMAGERY = {
@@ -250,17 +250,16 @@ function gibsTileTemplate(layer, date) {
   return `${GIBS_BASE}${layer.layer}/default/${date}GoogleMapsCompatible_Level${layer.level}/{z}/{y}/{x}.${layer.ext}`;
 }
 function addParallels() {
-  const parallels = [-66.56, -23.44, 0, 23.44, 66.56];
+  const tropic = 23.44, polarCircle = 90 - tropic;
+  const parallels = [-polarCircle, -tropic, 0, tropic, polarCircle];
   const features = parallels.map((latitude) => ({
     type: "Feature", properties: { equator: latitude === 0, latitude },
     geometry: { type: "MultiLineString", coordinates: [-180, -90, 0, 90].map((start) =>
       Array.from({ length: 31 }, (_, i) => [start + i * 3, latitude])) },
   }));
   G.map.addSource("parallels", { type: "geojson", data: { type: "FeatureCollection", features } });
-  G.map.addLayer({ id: "parallels-outline", type: "line", source: "parallels",
-    paint: { "line-color": "#0b172b", "line-width": 3, "line-opacity": 0.75 } });
   G.map.addLayer({ id: "parallels", type: "line", source: "parallels",
-    paint: { "line-color": ["case", ["get", "equator"], "#ffd166", "#d8edff"], "line-width": 1.2, "line-opacity": 0.9 } });
+    paint: { "line-color": "#e5efff", "line-width": 0.9, "line-opacity": ["case", ["get", "equator"], 0.53, 0.42] } });
 }
 
 // Unprojecting the sky can still return a coordinate. Use the same surface hit test as MapLibre's pan handler.
@@ -306,7 +305,9 @@ function initGlobe() {
   G.map.on("load", async () => {
     try {
       const topo = await (await fetch("/static/vendor/countries-110m.json")).json();
-      G.map.addSource("borders", { type: "geojson", data: topojson.mesh(topo, topo.objects.countries) });
+      // Exterior polygon arcs include long artificial seams. The imagery already shows the coasts.
+      const boundaries = topojson.mesh(topo, topo.objects.countries, (a, b) => a !== b);
+      G.map.addSource("borders", { type: "geojson", data: boundaries });
     } catch (e) { G.map.addSource("borders", { type: "geojson", data: { type: "FeatureCollection", features: [] } }); }
     G.map.addLayer({ id: "polar2", type: "raster", source: "polar2", paint: { "raster-fade-duration": 0 } });
     G.map.addLayer({ id: "borders", type: "line", source: "borders", paint: { "line-color": "#ffffff", "line-opacity": 0.45, "line-width": 0.7 } });
@@ -545,10 +546,15 @@ function renderSimilarAreas() {
   const previous = G.lastAnalysis && G.lastAnalysis.raw;
   const hint = previous && !a ? t(available(previous.variable, "world") ? "similar.noReference" : "similar.requiresGlobalGrid") : "";
   $("#gSimilarHint").textContent = hint;
-  $("#gSimilarHint").hidden = !hint;
-  $("#gSimilarToggle").setAttribute("aria-disabled", String(!a));
-  if (hint) $("#gSimilarToggle").setAttribute("aria-describedby", "gSimilarHint");
-  else $("#gSimilarToggle").removeAttribute("aria-describedby");
+  const toggle = $("#gSimilarToggle");
+  toggle.setAttribute("aria-disabled", String(!a));
+  if (hint) {
+    toggle.dataset.tip = esc(hint);
+    toggle.setAttribute("aria-describedby", "gSimilarHint");
+  } else {
+    delete toggle.dataset.tip;
+    toggle.removeAttribute("aria-describedby");
+  }
   $("#gSimilar").hidden = !opened;
   $("#gSimilarOptions").hidden = !opened;
   $("#gSimilarToggle").setAttribute("aria-expanded", opened);
@@ -636,6 +642,18 @@ function checkMonthlyTiles(template) {
   }
   return monthlyChecks.get(template);
 }
+function renderGlobeLegend(title, name, colors, ticks, units) {
+  const text = ticks.map(([, label]) => label).join(" · ");
+  const tickLabels = ticks.map(([at, label]) =>
+    `<span style="--tick:${at}%">${esc(label)}</span>`).join("");
+  $("#gLegend").innerHTML = `
+    <div class="glegend-heading"><b>${esc(title)}</b><span>${esc(name)}</span></div>
+    <div class="glegend-scale" role="img" aria-label="${esc([t("globe.colourKey"), text, units].filter(Boolean).join(" · "))}">
+      <div class="bar" style="background:linear-gradient(90deg,${colors.join(",")})"></div>
+      <div class="glegend-ticks">${tickLabels}</div>
+      ${units ? `<div class="glegend-unit">${esc(units)}</div>` : ""}
+    </div>`;
+}
 let drawSeq = 0;
 async function drawData() {
   if (!G.map || !G.map.getSource("regions")) return;
@@ -675,9 +693,9 @@ async function drawData() {
     }
     if (G.map.getSource(monthlyId)) {
       note.hidden = true;
-      const legend = monthly.legend || monthly.layer;
-      $("#gLegend").innerHTML = `<div class="lrow"><b>${t("globe.latestMonthlyLayer")}</b> · NASA GIBS</div><div class="lrow">${GV().name}</div>` +
-        `<img class="glegend-image" src="/static/vendor/gibs-legends/${legend}.png" width="420" height="95" alt="${esc(t("globe.colourKey") + " · " + GV().name)}">`;
+      const legend = GIBS_COLORMAPS[monthly.legend || monthly.layer];
+      renderGlobeLegend(`${t("globe.latestMonthlyLayer")} · NASA GIBS`, GV().name, legend.colors,
+        legend.ticks.map(([at, label]) => [at, label.replace(".", I18N.number(0.1)[1])]), legend.units);
       return;
     }
     note.textContent = layers.length ? t("globe.gibsRegionalFallback") : t("globe.gibsUnavailable");
@@ -723,10 +741,9 @@ async function drawData() {
   G.grids.filter((g) => !grids.some((n) => n.id === g.id)).forEach((g) => removeGrid(g.id));
   G.grids = grids;
   if (!grids.length) { $("#gLegend").innerHTML = ""; return; }
-  const grad = Array.from({ length: 11 }, (_, k) => colorAt(stops, k / 10)).join(",");
   const unit = mode === "year" ? t("globe.unitVsAverage", { unit: v.units.replace(/ \(.*\)/, "") }) : v.trend_units;
-  $("#gLegend").innerHTML = `<div class="lrow"><b>${mode === "year" ? t("globe.annualComparison", { year }) : t("globe.trendPeriod", globePeriod(v.id))}</b> · ${v.name.replace(/ \(.*\)/, "")}</div>` +
-    `<div class="lrow"><span>${fmt(-lim, 2)}</span><span class="bar" style="background:linear-gradient(90deg,${grad})"></span><span>+${fmt(lim, 2)} ${unit}</span></div>`;
+  renderGlobeLegend(mode === "year" ? t("globe.annualComparison", { year }) : t("globe.trendPeriod", globePeriod(v.id)),
+    v.name.replace(/ \(.*\)/, ""), stops, [[0, fmt(-lim, 2)], [50, "0"], [100, "+" + fmt(lim, 2)]], unit);
 }
 function gridAt(ll) {
   for (const g of G.grids) {
@@ -770,8 +787,25 @@ function clearGlobeAnalysis() {
   $("#gChart").hidden = true;
   resetSimilarAreas();
 }
+function maxAreaForShape([w, s, e, n], limit) {
+  const width = e - w, height = n - s;
+  return Math.min(limit.max_area_deg2, limit.max_side_deg ** 2 * Math.min(width, height) / Math.max(width, height));
+}
+function limitedArea(box, model) {
+  const [w, s, e, n] = box;
+  const limit = CAT.compute_limits[model.source];
+  const tooBig = Math.max(e - w, n - s) > limit.max_side_deg || (e - w) * (n - s) > limit.max_area_deg2;
+  if (!tooBig || CAT.regions.some((r) => available(model.id, r.id) && coversPlace(r.bbox, box))) return null;
+  return maxAreaForShape(box, limit);
+}
+const areaLimitMessage = (area) => t("globe.areaLimit", { area: fmt(area) });
 function syncGlobeAnalyse() {
-  $("#gGo").disabled = Boolean(G.computing || !$("#gModel").value);
+  const model = CAT.variables.find((v) => v.id === $("#gModel").value);
+  const area = model && G.sel ? limitedArea(G.sel, model) : null;
+  const hint = $("#gAreaLimit");
+  hint.hidden = area === null;
+  hint.textContent = area === null ? "" : areaLimitMessage(area);
+  $("#gGo").disabled = Boolean(G.computing || !model || !G.sel || area !== null);
 }
 function setSelection(b, final, preserveAnalysis = false) {
   G.sel = b;
@@ -784,11 +818,9 @@ function setSelection(b, final, preserveAnalysis = false) {
   const coordinate = (value) => I18N.number(value, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   $("#gSelInfo").textContent = t("globe.selectionCoordinates", { south: coordinate(s), north: coordinate(n), west: coordinate(w), east: coordinate(e), width: coordinate(e - w), height: coordinate(n - s) });
   $("#gModel").innerHTML = CAT.variables.map((v) => {
-    const L = CAT.compute_limits[v.source];
-    const covered = CAT.regions.some((r) => available(v.id, r.id) && coversPlace(r.bbox, b));
-    const tooBig = !covered && ((e - w) > L.max_side_deg || (n - s) > L.max_side_deg || (e - w) * (n - s) > L.max_area_deg2);
+    const tooBig = limitedArea(b, v) !== null;
     const name = ["precip", "precip_gpcp"].includes(v.id) ? t(`globe.model.${v.id}`) : v.name.replace(/ \(.*\)/, "");
-    return `<option value="${v.id}" ${v.id === G.var && !tooBig ? "selected" : ""} ${tooBig ? "disabled" : ""}>${esc(name)}${tooBig ? t("globe.tooLargeSuffix") : ""}</option>`;
+    return `<option value="${v.id}" ${v.id === G.var ? "selected" : ""}>${esc(name)}${tooBig ? t("globe.tooLargeSuffix") : ""}</option>`;
   }).join("");
   syncGlobeAnalyse();
   $("#gOut").innerHTML = `<p class="ginfo">${t("globe.downloadNotice")}</p>`;
@@ -811,10 +843,10 @@ function legacyPowerBounds([w, s, e, n]) {
 }
 async function runCompute() {
   const selection = G.sel, varId = $("#gModel").value, displayedVar = G.var;
-  if (!selection || !varId || G.computing) return;
+  const model = CAT.variables.find((v) => v.id === varId);
+  if (!selection || !model || G.computing || limitedArea(selection, model) !== null) return;
   const period = globePeriod(varId), months = G.months;
   clearGlobeAnalysis();
-  const model = CAT.variables.find((v) => v.id === varId);
   const needsLegacyPadding = model.source === "power" && !CAT.compute_limits.power.pads_small_areas &&
     !CAT.regions.some((r) => available(varId, r.id) && coversPlace(r.bbox, selection));
   const requestBox = needsLegacyPadding ? legacyPowerBounds(selection) : selection;
@@ -827,7 +859,11 @@ async function runCompute() {
     const r = await fetch("/api/compute", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ var: varId, bbox: requestBox }) });
     const j = await r.json();
     if (!r.ok) {
-      if ([400, 429].includes(r.status) && typeof j.detail === "string") message = I18N.text(j.detail);
+      if (r.status === 400 && typeof j.detail === "string" && j.detail.startsWith("area too large")) {
+        message = areaLimitMessage(maxAreaForShape(requestBox, CAT.compute_limits[model.source]));
+      } else if (r.status === 429 && typeof j.detail === "string" && j.detail.startsWith("Hourly limit of new areas")) {
+        message = t("globe.demoHourlyLimit");
+      } else if ([400, 429].includes(r.status) && typeof j.detail === "string") message = I18N.text(j.detail);
       throw new Error(message);
     }
     if (j.status !== "ready") {
@@ -984,8 +1020,11 @@ function buildGlobeControls() {
     Plotly.purge("gChart");
     syncGlobeAnalyse();
   };
-  $("#gSimilarToggle").onclick = () => {
-    if (!similarReference()) return;
+  $("#gSimilarToggle").onclick = (event) => {
+    if (!similarReference()) {
+      if (event.currentTarget.dataset.tip) showControlTip(event.currentTarget);
+      return;
+    }
     if (similar.opened) { resetSimilarAreas(); return; }
     similar.opened = true;
     renderSimilarAreas();
@@ -1116,6 +1155,7 @@ window.localiseGlobe = async () => {
   if (G.sel && !$("#gGo").disabled) {
     setSelection(G.sel, true, true);
     if (model) $("#gModel").value = model;
+    syncGlobeAnalyse();
     if (last) showResult(I18N.response("analysis", last.raw), last.region);
   }
 };

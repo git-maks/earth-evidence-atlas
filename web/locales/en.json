@@ -291,6 +291,8 @@
     "cellAnomaly": "{year}: {value} {unit} vs average",
     "selectionCoordinates": "{south}°…{north}° N, {west}°…{east}° E · {width}° × {height}°",
     "tooLargeSuffix": " (too large)",
+    "areaLimit": "Choose a smaller area. The limit for this shape is {area} deg².",
+    "demoHourlyLimit": "The demo’s hourly limit for new areas has been reached. You can analyse a prepared area now or retry later.",
     "downloadNotice": "New areas are downloaded from NASA on the fly.",
     "downloading": "Downloading from NASA… ≈ {seconds} s",
     "fullAnalysis": "Full analysis",
@@ -378,7 +380,7 @@
     "aboutSimulation": "About the simulation",
     "generationTitle": "How these data are generated",
     "generationDescription": "The lab generates random monthly values with no underlying trend to show how month-to-month persistence can produce false alarms.",
-    "generationTooltipHtml": "<b>How these data are generated</b><br>The lab generates random monthly values with no underlying trend to show how month-to-month persistence can produce false alarms.",
+    "generationTooltipHtml": "<b>Simulation with synthetic data</b><br>The lab generates random monthly values with no underlying trend to show how month-to-month persistence can produce false alarms.",
     "noiseTitle": "Can noise look like a trend?",
     "noiseDescriptionHtml": "This series has <b>no underlying trend</b>. Nearby months can have similar values, which can lead either test to flag a trend.",
     "years": "Years",
@@ -877,7 +879,7 @@
     "loadError": "Could not load the language. Please try again."
   },
   "similar": {
-    "requiresGlobalGrid": "Requires a global trend grid. Choose GISTEMP or GPCP.",
+    "requiresGlobalGrid": "Finding similar areas compares trends around the world. Choose GISTEMP or GPCP to search.",
     "title": "Find similar areas",
     "limit": "Maximum results",
     "tolerance": "Maximum trend difference",

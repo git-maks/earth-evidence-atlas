@@ -291,6 +291,8 @@
     "cellAnomaly": "{year}: {value} {unit} respecto a la media",
     "selectionCoordinates": "{south}°…{north}° N, {west}°…{east}° E · {width}° × {height}°",
     "tooLargeSuffix": " (demasiado grande)",
+    "areaLimit": "Elige un área más pequeña. El límite para esta forma es de {area} grados².",
+    "demoHourlyLimit": "Se alcanzó el límite por hora de áreas nuevas de la demo. Puedes analizar un área ya preparada o intentarlo más tarde.",
     "downloadNotice": "Los datos de las nuevas áreas se descargan de la NASA al solicitarlos.",
     "downloading": "Descargando de la NASA… ≈ {seconds} s",
     "fullAnalysis": "Análisis completo",
@@ -378,7 +380,7 @@
     "aboutSimulation": "Acerca de la simulación",
     "generationTitle": "Cómo se generan estos datos",
     "generationDescription": "El laboratorio genera valores mensuales aleatorios sin una tendencia subyacente para mostrar cómo la persistencia de un mes a otro puede producir falsas alarmas.",
-    "generationTooltipHtml": "<b>Cómo se generan estos datos</b><br>El laboratorio genera valores mensuales aleatorios sin una tendencia subyacente para mostrar cómo la persistencia de un mes a otro puede producir falsas alarmas.",
+    "generationTooltipHtml": "<b>Simulación con datos sintéticos</b><br>El laboratorio genera valores mensuales aleatorios sin una tendencia subyacente para mostrar cómo la persistencia de un mes a otro puede producir falsas alarmas.",
     "noiseTitle": "¿Puede el ruido parecer una tendencia?",
     "noiseDescriptionHtml": "Esta serie tiene <b>una tendencia real nula</b>. Los meses cercanos pueden tener valores parecidos, por lo que ambas pruebas pueden detectar una tendencia aparente.",
     "years": "Años",
@@ -877,7 +879,7 @@
     "loadError": "No se pudo cargar el idioma. Inténtalo de nuevo."
   },
   "similar": {
-    "requiresGlobalGrid": "Requiere una cuadrícula global de tendencias. Elige GISTEMP o GPCP.",
+    "requiresGlobalGrid": "La búsqueda compara tendencias de todo el mundo. Elige GISTEMP o GPCP para buscar.",
     "title": "Buscar áreas similares",
     "limit": "Máximo de resultados",
     "tolerance": "Diferencia máxima de tendencia",

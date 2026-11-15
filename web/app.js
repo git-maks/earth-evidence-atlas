@@ -72,18 +72,21 @@ function showTip(html, x, y) {
   t.style.left = Math.max(8, left) + "px"; t.style.top = Math.max(8, top) + "px";
 }
 function hideTip() { $("#tip").hidden = true; }
+function showControlTip(element) {
+  const r = element.getBoundingClientRect();
+  showTip(element.dataset.tiphtml || element.dataset.tip, r.left, r.bottom - 6);
+}
 function wireTips(root = document) {
   // [data-tip] = short label, [data-tiphtml] = rich text set by code
   root.addEventListener("mouseover", (e) => {
     const el = e.target.closest("[data-tip],[data-tiphtml]");
     if (!el) return;
-    const r = el.getBoundingClientRect();
-    showTip(el.dataset.tiphtml || el.dataset.tip, r.left, r.bottom - 6);
+    showControlTip(el);
   });
   root.addEventListener("mouseout", (e) => { if (e.target.closest("[data-tip],[data-tiphtml]")) hideTip(); });
   root.addEventListener("focusin", (e) => {
     const el = e.target.closest("[data-tip],[data-tiphtml]");
-    if (el) { const r = el.getBoundingClientRect(); showTip(el.dataset.tiphtml || el.dataset.tip, r.left, r.bottom - 6); }
+    if (el) showControlTip(el);
   });
   root.addEventListener("focusout", hideTip);
   // a tapped tooltip would otherwise stay on screen while the page scrolls under it
@@ -820,6 +823,7 @@ async function renderValidation() {
     if (v) { state.var = v.id; state.region = v.regions.find((r) => available(v.id, r)); }
   }
   buildVarCards(); initMap(); wireControls(); syncControls(); renderAbout();
+  $("#labSimulationInfo").onclick = (event) => showControlTip(event.currentTarget);
   $("#simNew").onclick = () => { simSeed = Math.floor(Math.random() * 1e6); simOne(); };
   $("#simYears").oninput = simOne; $("#simPhi").oninput = simOne;
   $("#simMany").onclick = simMany;

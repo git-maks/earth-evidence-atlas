@@ -291,6 +291,8 @@
     "cellAnomaly": "{year}: {value} {unit} względem średniej",
     "selectionCoordinates": "{south}°…{north}° N, {west}°…{east}° E · {width}° × {height}°",
     "tooLargeSuffix": " (zbyt duży obszar)",
+    "areaLimit": "Zaznacz mniejszy obszar. Limit dla tego kształtu to {area} stopni².",
+    "demoHourlyLimit": "Osiągnięto godzinowy limit nowych obszarów w demo. Możesz przeanalizować gotowy obszar lub spróbować później.",
     "downloadNotice": "Dane dla nowych obszarów są pobierane z NASA na żądanie.",
     "downloading": "Pobieranie z NASA… ≈ {seconds} s",
     "fullAnalysis": "Pełna analiza",
@@ -378,7 +380,7 @@
     "aboutSimulation": "O symulacji",
     "generationTitle": "Jak powstają te dane",
     "generationDescription": "Laboratorium generuje losowe wartości miesięczne bez trendu, aby pokazać, jak zależności między kolejnymi miesiącami mogą wywoływać fałszywe alarmy.",
-    "generationTooltipHtml": "<b>Jak powstają te dane</b><br>Laboratorium generuje losowe wartości miesięczne bez trendu, aby pokazać, jak zależności między kolejnymi miesiącami mogą wywoływać fałszywe alarmy.",
+    "generationTooltipHtml": "<b>Symulacja danych syntetycznych</b><br>Laboratorium generuje losowe wartości miesięczne bez trendu, aby pokazać, jak zależności między kolejnymi miesiącami mogą wywoływać fałszywe alarmy.",
     "noiseTitle": "Czy szum może wyglądać jak trend?",
     "noiseDescriptionHtml": "Ta seria ma <b>zerowy trend</b>. Sąsiednie miesiące mogą mieć zbliżone wartości, przez co oba testy mogą wykryć pozorny trend.",
     "years": "Lata",
@@ -877,7 +879,7 @@
     "loadError": "Nie udało się wczytać języka. Spróbuj ponownie."
   },
   "similar": {
-    "requiresGlobalGrid": "Wymaga globalnej siatki trendów. Wybierz GISTEMP lub GPCP.",
+    "requiresGlobalGrid": "Wyszukiwanie porównuje trendy na całym świecie. Wybierz GISTEMP lub GPCP, aby wyszukać podobne obszary.",
     "title": "Znajdź podobne obszary",
     "limit": "Maksymalna liczba wyników",
     "tolerance": "Maksymalna różnica trendu",

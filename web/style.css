@@ -117,10 +117,12 @@ select, input:not([type=range]):not([type=checkbox]) { font: inherit; color: var
   margin-right: 4px; }
 .source { font-size: 13px; }
 .source ul { padding-left: 18px; margin: 4px 0; }
-.banner { background: #fff4e5; color: #7a4b00; border: 1px solid #f0c27b; padding: 8px 14px; border-radius: 8px;
-  font-weight: 700; letter-spacing: .03em; text-align: center; }
-.sim-info { display: inline-block; margin-left: 4px; border-radius: 4px; cursor: help; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .banner { background: #2d2310; color: #f0c27b; } }
+.lab-info-row { display: flex; justify-content: end; }
+#lab > .grid2 { margin-top: 6px; }
+.sim-info { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border-radius: 50%;
+  border: 1px solid #c7901e; background: #ffdb73; color: #523600; cursor: help; }
+.sim-info:hover, .sim-info:focus-visible { background: #ffe7a2; }
+.sim-info:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .sim { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-size: 14px; }
 .sim div { background: var(--bg); padding: 8px; border-radius: 6px; }
 .sim b { display: block; font-size: 18px; }
@@ -147,14 +149,18 @@ select, input:not([type=range]):not([type=checkbox]) { font: inherit; color: var
 .gpanel .tag { background: #15283d; color: #7cc4ff; }
 .gleft { top: 14px; left: 14px; width: 330px; max-height: calc(100% - 28px); overflow: auto; }
 .gright { top: 14px; right: 60px; width: 380px; max-height: calc(100% - 28px); overflow: auto; }
-.glegend { bottom: 30px; left: 50%; transform: translateX(-50%); padding: 8px 14px; font-size: 12px; display: flex; flex-wrap: wrap;
-  gap: 8px; align-items: center; justify-content: center; max-width: 560px; }
+.glegend { bottom: 30px; left: 50%; transform: translateX(-50%); padding: 10px 16px; font-size: 12px;
+  width: min(352px, calc(100% - 24px)); text-align: center; }
 .glegend:empty { display: none; }
 .gchips { flex-wrap: wrap; gap: 4px; }
-.glegend .lrow { display: flex; gap: 8px; align-items: center; width: 100%; justify-content: center; }
-.glegend .bar { height: 10px; width: 200px; border-radius: 3px; }
-.glegend .lrow { text-align: center; flex-wrap: wrap; }
-.glegend-image { display: block; width: min(420px, 100%); height: auto; background: #fff; border-radius: 4px; }
+.glegend-heading { display: grid; gap: 2px; margin-bottom: 8px; }
+.glegend-heading span, .glegend-unit { color: #b4c0cc; }
+.glegend-scale { max-width: 320px; margin-inline: auto; }
+.glegend .bar { width: 100%; height: 9px; border: 1px solid rgba(255,255,255,.28); border-radius: 4px; }
+.glegend-ticks { position: relative; height: 19px; margin-top: 3px; font-variant-numeric: tabular-nums; }
+.glegend-ticks span { position: absolute; left: var(--tick); transform: translateX(-50%); white-space: nowrap; }
+.glegend-ticks span:first-child { transform: none; }
+.glegend-ticks span:last-child { transform: translateX(-100%); }
 .gtrend-period { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; min-width: 0;
   padding: 0; margin: 10px 0 0; border: 0; color: #b4c0cc; font-size: 12px; }
 .gtrend-period legend { font-weight: 600; color: #e6edf3; padding: 0 0 4px; }
@@ -420,7 +426,7 @@ body.atlas-tour-active .tour-launch, body.atlas-tour-active .language-toggle, bo
   .panel.globe-panel.active { display: flex; flex-direction: column; }
   #globeMap, #gStars { height: 62vh; height: clamp(320px, 62svh, 118vw); min-height: 0; }
   #globeMap { order: 1; flex: none; }
-  .glegend { order: 2; }
+  .glegend { order: 2; width: 100%; }
   #gResult { order: 3; position: relative; inset: auto; width: 100%; min-width: 0; }
   .gleft { order: 4; }
   .gscroll { display: inline-flex; position: absolute; z-index: 4; left: 12px;
@@ -430,8 +436,6 @@ body.atlas-tour-active .tour-launch, body.atlas-tour-active .language-toggle, bo
   .gpanel { border-left: 0; border-right: 0; box-shadow: none; backdrop-filter: none; background: #0c121a; }
   .gpanel + .gpanel { border-top: 0; }
   .gleft .gtools { flex-wrap: nowrap; }
-  .glegend .bar { width: min(200px, 45vw); }
-  .glegend-image { width: min(420px, 100%); }
   .maplibregl-ctrl-attrib.maplibregl-compact { font-size: 11px; }
 }
 @media (max-width: 600px) {
@@ -462,7 +466,6 @@ body.atlas-tour-active .tour-launch, body.atlas-tour-active .language-toggle, bo
   /* lab: each slider gets a full row */
   #lab .row.wrap > label { flex: 1 1 100%; }
   #lab .row.wrap > label input[type=range] { flex: 1; }
-  .banner { font-size: 14px; padding: 8px 10px; }
 }
 @media (max-width: 380px) { .tabs { gap: 0; } .tab { padding: 9px 6px 10px; font-size: 13px; } }
 /* Methods: the data table turns into one small card per dataset */
