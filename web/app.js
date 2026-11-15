@@ -8,6 +8,7 @@ const MIN_PERIOD_SPAN = 4; // five years including both endpoints
 
 const state = { var: "ndvi", region: "central_europe", start: null, end: null, months: ALL, bbox: null };
 let CAT = null, map = null, baseLayer = null, gridLayer = null, selLayer = null, regionLayer = null, lastMap = null;
+let visibleGridBounds = null;
 
 // ---------------------------------------------------------------- colour maps (ColorBrewer)
 const CMAPS = {
@@ -412,14 +413,18 @@ function initMap() {
     if (!drawing || !rect) return;
     const b = L.latLngBounds(startLL, map.mouseEventToLatLng(ev));
     setDraw(false); justDrew = Date.now(); // the click that ends a drag must not also select a cell
-    if (b.getEast() - b.getWest() < 1e-3 || b.getNorth() - b.getSouth() < 1e-3) return;
-    state.bbox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
+    const [w, s, e, n] = CAT.regions.find((r) => r.id === state.region).bbox;
+    const selection = [Math.max(w, b.getWest()), Math.max(s, b.getSouth()), Math.min(e, b.getEast()), Math.min(n, b.getNorth())];
+    if (selection[2] - selection[0] < 1e-3 || selection[3] - selection[1] < 1e-3) return;
+    state.bbox = selection;
     syncControls(); drawSelection(); refreshAnalysis();
   }, true);
   // hover / click on the data grid (drawn as one image, so the cell is found from the cursor position)
   const cellAt = (ll) => {
     const m = lastMap; if (!m || !gridLayer) return null;
-    const dlat = m.lat.length > 1 ? Math.abs(m.lat[1] - m.lat[0]) : 2, dlon = m.lon.length > 1 ? Math.abs(m.lon[1] - m.lon[0]) : 2;
+    const [w, s, e, n] = visibleGridBounds;
+    if (ll.lng < w || ll.lng >= e || ll.lat < s || ll.lat >= n) return null;
+    const dlat = cellSize(m.lat), dlon = cellSize(m.lon);
     const i = Math.round((ll.lat - Math.min(...m.lat)) / dlat), j = Math.round((ll.lng - Math.min(...m.lon)) / dlon);
     return i >= 0 && i < m.lat.length && j >= 0 && j < m.lon.length ? { m, i, j, dlat, dlon } : null;
   };
@@ -438,12 +443,15 @@ function initMap() {
     if (drawing || Date.now() - justDrew < 400) return;
     const c = cellAt(e.latlng); if (!c) return;
     const la = c.m.lat[c.i], lo = c.m.lon[c.j];
-    state.bbox = [lo - c.dlon / 2, la - c.dlat / 2, lo + c.dlon / 2, la + c.dlat / 2];
+    const [west, south, east, north] = visibleGridBounds;
+    state.bbox = [Math.max(west, lo - c.dlon / 2), Math.max(south, la - c.dlat / 2),
+      Math.min(east, lo + c.dlon / 2), Math.min(north, la + c.dlat / 2)];
     syncControls(); drawSelection(); refreshAnalysis();
   });
 }
 function drawRegion() {
   if (regionLayer) map.removeLayer(regionLayer);
+  if (gridLayer && lastMap.region !== state.region) { map.removeLayer(gridLayer); gridLayer = null; }
   const [w, s, e, n] = CAT.regions.find((r) => r.id === state.region).bbox;
   regionLayer = L.rectangle([[s, w], [n, e]], { color: "#0b5cad", weight: 1, fill: false, interactive: false }).addTo(map);
   map.fitBounds([[Math.max(s, -60), w], [Math.min(n, 75), e]], { padding: [10, 10] });
@@ -457,6 +465,10 @@ function drawSelection() {
 function drawGrid(m) {
   lastMap = m;
   if (gridLayer) map.removeLayer(gridLayer);
+  gridLayer = null;
+  const regionBox = CAT.regions.find((r) => r.id === m.region).bbox;
+  visibleGridBounds = gridBounds(m.lat, m.lon, regionBox);
+  const [w, s, e, n] = visibleGridBounds;
   const v = V(), stops = CMAPS[v.colormap] || CMAPS.RdBu_r;
   const lim = m.color_limit || 1, cov = pressed($("#showCoverage")), fade = pressed($("#sigOnly"));
   // one Mercator-correct image for the whole grid: crisp at every zoom, no seams between cells
@@ -467,9 +479,10 @@ function drawGrid(m) {
     if (s === null) return "154,160,166,90";
     return rgba(colorAt(stops, 0.5 + s / (2 * lim)), fade && !sig ? 0.15 : 0.8);
   }));
-  const im = gridImage(m.lat, m.lon, vals, (x) => x.split(",").map(Number));
-  const [[w, n], , [e, s]] = im.coords;
-  gridLayer = L.imageOverlay(im.url, [[s, w], [n, e]], { className: "gridimg", interactive: false }).addTo(map);
+  if (w < e && s < n) {
+    const im = gridImage(m.lat, m.lon, vals, (x) => x.split(",").map(Number), visibleGridBounds);
+    gridLayer = L.imageOverlay(im.url, [[s, w], [n, e]], { className: "gridimg", interactive: false }).addTo(map);
+  }
   if (regionLayer) regionLayer.bringToFront();
   drawLegend(m, stops, lim, cov);
   const S = m.summary;
@@ -595,10 +608,12 @@ function renderSource(a) {
 let seq = 0, lastAnalysis = null, lastAnalysisQuery = "", lastMapQuery = "";
 function renderAnalysis(a) {
   renderAnswer(a); renderCard(a); renderChart(a); renderMatrix(a); renderSeason(a); renderSource(a);
+  $("#detectiveResilience").hidden = !Resilience.canOpen(a);
 }
 async function refreshAnalysis() {
   const my = ++seq;
   const params = query(true);
+  $("#detectiveResilience").hidden = true;
   writeHash();
   $("#dlCsv").href = `/api/export.csv?${query(true)}`;
   $("#dlJson").href = `/api/export.json?${query(true)}`;
@@ -674,16 +689,18 @@ function renderSimulationBatch(r) {
   $("#simMulti").hidden = $("#simMultiStats").hidden = false;
   const ink = getComputedStyle(document.body).color;
   plot("simMulti", [{
-    type: "bar", x: labels, y: pct, marker: { color: ["#d6604d", dark() ? "#5ea8ff" : "#0b5cad"] },
+    type: "bar", x: [...labels, t("lab.batchReference")], y: [...pct, 5],
+    marker: { color: ["#d6604d", dark() ? "#5ea8ff" : "#0b5cad", dark() ? "#9aa7b4" : "#5f6c7a"] },
+    text: ["", "", percent(5)], textposition: "outside",
+    customdata: [...counts.map((count, i) => `${th("lab.fooledCount", { count, total: r.runs })}<br>${th("lab.batchInterval", { range: ranges[i] })}`), t("lab.honestTest")],
+  }, {
+    // The reference is fixed at 5%. Only the two simulated rates have intervals.
+    type: "scatter", mode: "markers", x: labels, y: pct, marker: { size: 0 }, hoverinfo: "skip",
     error_y: { type: "data", symmetric: false, color: ink, array: intervals.map(([, high], i) => high - pct[i]),
       arrayminus: intervals.map(([low], i) => pct[i] - low), visible: true },
-    customdata: counts.map((count, i) => `${th("lab.fooledCount", { count, total: r.runs })}<br>${th("lab.batchInterval", { range: ranges[i] })}`),
-  }, {
-    type: "bar", x: [t("lab.batchReference")], y: [5], marker: { color: dark() ? "#9aa7b4" : "#5f6c7a" },
-    text: [percent(5)], textposition: "outside", customdata: [t("lab.honestTest")],
   }], layoutBase({ yaxis: { title: { text: t("lab.fooledAxis"), font: { size: 12 } }, ticksuffix: "%",
     range: [0, Math.min(100, Math.max(15, ...intervals.map(([, high]) => high + 8)))] },
-    margin: { t: 16, b: 35 }, barmode: "overlay", hovermode: "closest", showlegend: false }));
+    margin: { t: 16, b: 35 }, hovermode: "closest", showlegend: false }));
   $("#simMultiStats").innerHTML = labels.map((label, i) => `<div><span>${label}</span><b>${percent(pct[i])}</b>` +
     `${th("lab.fooledCount", { count: counts[i], total: r.runs })}<br>${th("lab.batchInterval", { range: ranges[i] })}</div>`).join("");
   $("#simMultiOut").textContent = t("lab.batchSummary", { runs: r.runs, years: r.years, memory: I18N.number(r.phi) });
@@ -751,15 +768,17 @@ function renderSpikeExample() {
 function renderAbout() {
   // data-label: on phones each row becomes a small card with these labels (style.css)
   const lab = (k) => esc(t(`methods.${k}`));
+  const expanded = new Set($$("#aboutBody details[open]").map((section) => section.id));
+  const section = (id, title, body) =>
+    `<details id="${id}" class="method-section" ${expanded.has(id) ? "open" : ""}><summary>${lab(title)}</summary>${body}</details>`;
   const rows = CAT.variables.map((v) => `<tr><td><b>${v.name}</b><br><span class="tag">${v.kind}</span></td><td data-label="${lab("productColumn")}">${v.product}<br>${v.provider}</td><td data-label="${lab("gridYearsColumn")}">${v.resolution}<br>${v.years[0]}–${v.years[1]}</td><td data-label="${lab("citationLicenceColumn")}">${v.citation} <a href="${v.url}" target="_blank" rel="noopener">${t("common.link")}</a><br><i>${v.license}</i></td></tr>`).join("");
   $("#aboutBody").innerHTML = `<h2>${t("methods.toolTitle")}</h2>
     <p>${th("methods.toolDescriptionHtml")}</p>
-    <h2>${t("methods.dataTitle")}</h2><table><tr><th>${t("methods.variableColumn")}</th><th>${t("methods.productColumn")}</th><th>${t("methods.gridYearsColumn")}</th><th>${t("methods.citationLicenceColumn")}</th></tr>${rows}</table>
-    <h2>${t("methods.methodsTitle")}</h2><ul>${Object.entries(CAT.methods).map(([k, v]) => `<li><b>${t(`methods.notes.${k}.label`)}:</b> ${esc(v)}</li>`).join("")}</ul>
-    <p>${t("methods.references")}</p>
-    <h2>${t("methods.validationTitle")}</h2><div id="validationBody"><p class="hint">${t("methods.validationLoading")}</p></div>
-    <h2>${t("methods.limitsTitle")}</h2><p>${t("methods.limitsDescription")}</p>`;
-  renderValidation();
+    ${section("methods-datasets", "dataTitle", `<table><tr><th>${lab("variableColumn")}</th><th>${lab("productColumn")}</th><th>${lab("gridYearsColumn")}</th><th>${lab("citationLicenceColumn")}</th></tr>${rows}</table>`)}
+    ${section("methods-analysis", "methodsTitle", `<ul>${Object.entries(CAT.methods).map(([k, v]) => `<li><b>${t(`methods.notes.${k}.label`)}:</b> ${esc(v)}</li>`).join("")}</ul><p>${t("methods.references")}</p>`)}
+    ${section("methods-validation", "validationTitle", `<div id="validationBody"><p class="hint">${t("methods.validationLoading")}</p></div>`)}
+    ${section("methods-limits", "limitsTitle", `<p>${t("methods.limitsDescription")}</p>`)}`;
+  $("#methods-validation").addEventListener("toggle", (event) => { if (event.target.open) renderValidation(); });
 }
 // Live evidence that results hold up: independent datasets, MODIS quality screening, test calibration.
 let validationData = null;

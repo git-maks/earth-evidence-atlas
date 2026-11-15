@@ -3,7 +3,7 @@
 "use strict";
 
 const G = {
-  map: null, var: "gistemp", mode: "trend", year: null, months: ALL, imagery: "bluemarble", imgMonth: 7,
+  map: null, var: "lst_day", mode: "trend", year: null, months: ALL, imagery: "bluemarble", imgMonth: 7, periods: new Map(),
   place: "world", places: [], layers: [], monthly: null,
   grids: [], sel: null, playing: null, frameCache: new Map(), drawing: false, spin: true, opacity: 0.8,
 };
@@ -249,6 +249,22 @@ function gibsTiles(key) {
 function gibsTileTemplate(layer, date) {
   return `${GIBS_BASE}${layer.layer}/default/${date}GoogleMapsCompatible_Level${layer.level}/{z}/{y}/{x}.${layer.ext}`;
 }
+function addParallels() {
+  const parallels = [-66.56, -23.44, 0, 23.44, 66.56];
+  const features = parallels.map((latitude) => ({
+    type: "Feature", properties: { equator: latitude === 0, latitude },
+    geometry: { type: "MultiLineString", coordinates: [-180, -90, 0, 90].map((start) =>
+      Array.from({ length: 31 }, (_, i) => [start + i * 3, latitude])) },
+  }));
+  G.map.addSource("parallels", { type: "geojson", data: { type: "FeatureCollection", features } });
+  G.map.addLayer({ id: "parallels-outline", type: "line", source: "parallels",
+    paint: { "line-color": "#0b172b", "line-width": 3, "line-opacity": 0.75 } });
+  G.map.addLayer({ id: "parallels", type: "line", source: "parallels",
+    paint: { "line-color": ["case", ["get", "equator"], "#ffd166", "#d8edff"], "line-width": 1.2, "line-opacity": 0.9 } });
+}
+
+// Unprojecting the sky can still return a coordinate. Use the same surface hit test as MapLibre's pan handler.
+const globeHit = (event) => G.map.transform.isPointOnMapSurface(event.point);
 function initGlobe() {
   G.map = new maplibregl.Map({
     container: "globeMap",
@@ -294,6 +310,7 @@ function initGlobe() {
     } catch (e) { G.map.addSource("borders", { type: "geojson", data: { type: "FeatureCollection", features: [] } }); }
     G.map.addLayer({ id: "polar2", type: "raster", source: "polar2", paint: { "raster-fade-duration": 0 } });
     G.map.addLayer({ id: "borders", type: "line", source: "borders", paint: { "line-color": "#ffffff", "line-opacity": 0.45, "line-width": 0.7 } });
+    addParallels();
     G.map.addSource("regions", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
     G.map.addLayer({ id: "regions", type: "line", source: "regions", paint: { "line-color": "#7cc4ff", "line-width": 1.5, "line-dasharray": [2, 2] } });
     G.map.addSource("similar", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
@@ -315,40 +332,41 @@ function initGlobe() {
   ["mousedown", "touchstart", "wheel", "dragstart"].forEach((ev) => G.map.on(ev, () => { G.spin = false; }));
   G.map.on("moveend", () => spin());
   G.map.on("mousemove", hover);
-  G.map.on("mouseout", hideTip);
+  G.map.on("mouseout", hideGlobeTip);
+  G.map.on("move", hideGlobeTip);
   G.map.on("click", (e) => {
-    if (G.drawing) return;
+    if (G.drawing || !globeHit(e)) return;
     const [match] = G.map.getLayer("similar-fill") ? G.map.queryRenderedFeatures(e.point, { layers: ["similar-fill"] }) : [];
     if (match) focusSimilarArea(+match.properties.index);
     else clickCell(e.lngLat);
   });
   // rectangle drawing
-  let start = null;
-  G.map.on("mousedown", (e) => { if (!G.drawing) return; e.preventDefault(); start = e.lngLat; });
+  let start = null, last = null;
+  G.map.on("mousedown", (e) => { if (!G.drawing || !globeHit(e)) return; e.preventDefault(); start = last = e.lngLat; });
   G.map.on("mousemove", (e) => {
-    if (!G.drawing || !start) return;
-    setSelection(normBox(start, e.lngLat), false);
+    if (!G.drawing || !start || !globeHit(e)) return;
+    last = e.lngLat;
+    setSelection(normBox(start, last), false);
   });
   G.map.on("mouseup", (e) => {
     if (!G.drawing || !start) return;
-    const b = normBox(start, e.lngLat); start = null; setDrawing(false);
-    if (b[2] - b[0] < 0.2 || b[3] - b[1] < 0.2) return;
+    const b = normBox(start, globeHit(e) ? e.lngLat : last); start = null; setDrawing(false);
+    if (b[2] - b[0] < 0.2 || b[3] - b[1] < 0.2) { $("#gClose").click(); return; }
     setSelection(b, true);
   });
   // the same rectangle with one finger
-  let last = null;
   G.map.on("touchstart", (e) => {
-    if (!G.drawing || e.points.length !== 1) return;
+    if (!G.drawing || e.points.length !== 1 || !globeHit(e)) return;
     e.preventDefault(); start = last = e.lngLat;
   });
   G.map.on("touchmove", (e) => {
-    if (!G.drawing || !start) return;
+    if (!G.drawing || !start || e.points.length !== 1 || !globeHit(e)) return;
     e.preventDefault(); last = e.lngLat; setSelection(normBox(start, last), false);
   });
   G.map.on("touchend", () => {
     if (!G.drawing || !start) return;
     const b = normBox(start, last); start = null; setDrawing(false);
-    if (b[2] - b[0] < 0.2 || b[3] - b[1] < 0.2) { setSelection(null, false); return; }
+    if (b[2] - b[0] < 0.2 || b[3] - b[1] < 0.2) { $("#gClose").click(); return; }
     setSelection(b, true);
   });
 }
@@ -482,7 +500,7 @@ function applyGlobePlace() {
 const similar = { opened: false, sequence: 0, status: "", result: null, active: -1, markers: [], grid: null };
 function similarReference() {
   const a = G.lastAnalysis && G.lastAnalysis.raw;
-  return a && a.variable === G.var && available(a.variable, "world") && Number.isFinite(a.result.slope) ? a : null;
+  return a && available(a.variable, "world") && Number.isFinite(a.result.slope) ? a : null;
 }
 function updateSimilarMap() {
   const source = G.map && G.map.getSource("similar");
@@ -520,14 +538,21 @@ function focusSimilarArea(index) {
 function renderSimilarAreas() {
   const a = similarReference();
   const opened = Boolean(a && similar.opened), result = opened ? similar.result : null;
-  $("#gSimilar").hidden = !a;
+  const previous = G.lastAnalysis && G.lastAnalysis.raw;
+  const hint = previous && !a ? t(available(previous.variable, "world") ? "similar.noReference" : "similar.requiresGlobalGrid") : "";
+  $("#gSimilarHint").textContent = hint;
+  $("#gSimilarHint").hidden = !hint;
+  $("#gSimilarToggle").setAttribute("aria-disabled", String(!a));
+  if (hint) $("#gSimilarToggle").setAttribute("aria-describedby", "gSimilarHint");
+  else $("#gSimilarToggle").removeAttribute("aria-describedby");
+  $("#gSimilar").hidden = !opened;
   $("#gSimilarOptions").hidden = !opened;
   $("#gSimilarToggle").setAttribute("aria-expanded", opened);
   $("#gSimilarGo").disabled = similar.status === "running";
-  $("#gSimilarUnit").textContent = a ? GV().trend_units : "";
+  const unit = a ? CAT.variables.find((v) => v.id === a.variable).trend_units : "";
+  $("#gSimilarUnit").textContent = unit;
   $("#gSimilarStatus").textContent = result && result.matches.length ? t("similar.found", { count: result.matches.length }) :
     similar.status ? t(`similar.${similar.status}`) : "";
-  const unit = a ? GV().trend_units : "";
   const trend = (value) => `${value > 0 ? "+" : ""}${fmt(value)} ${unit}`;
   $("#gSimilarReference").hidden = !result;
   $("#gSimilarReference").textContent = result ? t("similar.reference", { trend: trend(result.reference), cells: result.cells }) : "";
@@ -583,9 +608,10 @@ async function searchSimilarAreas() {
 }
 const imgCache = new Map();
 async function fetchFrame(l, mode, year) {
-  const key = `${mode}|${G.var}|${l.region}|${l.dataRegion || l.region}|${G.months}|${mode === "year" ? year : ""}`;
+  const fields = mode === "year" ? { year } : globePeriod(G.var);
+  const key = [mode, G.var, l.region, l.dataRegion || l.region, G.months, ...Object.values(fields)].join("|");
   if (!G.frameCache.has(key)) {
-    const q = new URLSearchParams({ var: G.var, region: l.dataRegion || l.region, months: G.months, ...(mode === "year" ? { year } : {}) });
+    const q = new URLSearchParams({ var: G.var, region: l.dataRegion || l.region, months: G.months, ...fields });
     const request = api(mode === "year" ? "frame" : "map", q).catch(() => {
       if (G.frameCache.get(key) === request) G.frameCache.delete(key);
       return null;
@@ -610,6 +636,7 @@ let drawSeq = 0;
 async function drawData() {
   if (!G.map || !G.map.getSource("regions")) return;
   const seq = ++drawSeq;
+  hideGlobeTip();
   const removeGrid = (id) => { if (G.map.getLayer(id)) G.map.removeLayer(id); if (G.map.getSource(id)) G.map.removeSource(id); };
   const show = $("#gShow").checked, monthly = show && G.monthly;
   const template = monthly && gibsTileTemplate(monthly, "default/");
@@ -644,8 +671,9 @@ async function drawData() {
     }
     if (G.map.getSource(monthlyId)) {
       note.hidden = true;
+      const legend = monthly.legend || monthly.layer;
       $("#gLegend").innerHTML = `<div class="lrow"><b>${t("globe.latestMonthlyLayer")}</b> · NASA GIBS</div><div class="lrow">${GV().name}</div>` +
-        `<div class="lrow"><a href="https://gibs.earthdata.nasa.gov/legends/${monthly.legend || monthly.layer}_H.svg" target="_blank" rel="noopener">${t("globe.colourKey")}</a></div>`;
+        `<img class="glegend-image" src="/static/vendor/gibs-legends/${legend}.png" width="420" height="95" alt="${esc(t("globe.colourKey") + " · " + GV().name)}">`;
       return;
     }
     note.textContent = layers.length ? t("globe.gibsRegionalFallback") : t("globe.gibsUnavailable");
@@ -693,7 +721,7 @@ async function drawData() {
   if (!grids.length) { $("#gLegend").innerHTML = ""; return; }
   const grad = Array.from({ length: 11 }, (_, k) => colorAt(stops, k / 10)).join(",");
   const unit = mode === "year" ? t("globe.unitVsAverage", { unit: v.units.replace(/ \(.*\)/, "") }) : v.trend_units;
-  $("#gLegend").innerHTML = `<div class="lrow"><b>${mode === "year" ? t("globe.annualComparison", { year }) : t("globe.trendPeriod", { start: v.years[0], end: v.years[1] })}</b> · ${v.name.replace(/ \(.*\)/, "")}</div>` +
+  $("#gLegend").innerHTML = `<div class="lrow"><b>${mode === "year" ? t("globe.annualComparison", { year }) : t("globe.trendPeriod", globePeriod(v.id))}</b> · ${v.name.replace(/ \(.*\)/, "")}</div>` +
     `<div class="lrow"><span>${fmt(-lim, 2)}</span><span class="bar" style="background:linear-gradient(90deg,${grad})"></span><span>+${fmt(lim, 2)} ${unit}</span></div>`;
 }
 function gridAt(ll) {
@@ -706,16 +734,22 @@ function gridAt(ll) {
   }
   return null;
 }
+let globeTipOpen = false;
+function hideGlobeTip() {
+  if (globeTipOpen) hideTip();
+  globeTipOpen = false;
+}
 function hover(e) {
-  if (G.drawing) { hideTip(); return; }
+  if (G.drawing || !globeHit(e)) { hideGlobeTip(); return; }
   const h = gridAt(e.lngLat);
-  if (!h) { hideTip(); return; }
+  if (!h) { hideGlobeTip(); return; }
   const v = GV(), x = h.g.vals[h.i][h.j];
   const html = x === null ? t("globe.tooFewData") :
     (!h.g.sig ? `<div class="thead">${h.g.year}</div><b>${x > 0 ? "+" : ""}${fmt(x)}</b> ${t("globe.unitVsAverage", { unit: v.units.replace(/ \(.*\)/, "") })}` :
       `<b>${x > 0 ? "+" : ""}${fmt(x)}</b> ${v.trend_units}<br><span class="muted">${pStr(h.g.p[h.i][h.j])} · ${h.g.sig[h.i][h.j] ? t("common.significant") : t("common.notSignificant")}</span>`);
   const r = G.map.getContainer().getBoundingClientRect();
   showTip(html, r.left + e.point.x, r.top + e.point.y);
+  globeTipOpen = true;
 }
 function clickCell(ll) {
   const h = gridAt(ll);
@@ -726,13 +760,19 @@ function clickCell(ll) {
 }
 
 // ---------------------------------------------------------------- selection, compute, result
+function clearGlobeAnalysis() {
+  G.lastAnalysis = null;
+  $("#gAnalysisActions").hidden = $("#gResilience").hidden = true;
+  $("#gChart").hidden = true;
+  resetSimilarAreas();
+}
+function syncGlobeAnalyse() {
+  $("#gGo").disabled = Boolean(G.computing || !$("#gModel").value);
+}
 function setSelection(b, final, preserveAnalysis = false) {
   G.sel = b;
   G.map.getSource("sel").setData({ type: "FeatureCollection", features: b ? [rectPoly(b)] : [] });
-  if (!preserveAnalysis && (!b || final)) {
-    G.lastAnalysis = null;
-    resetSimilarAreas();
-  }
+  if (!preserveAnalysis && (!b || final)) clearGlobeAnalysis();
   if (!final) return;
   const [w, s, e, n] = b;
   $("#gResult").hidden = false;
@@ -740,14 +780,19 @@ function setSelection(b, final, preserveAnalysis = false) {
   $("#gSelInfo").textContent = t("globe.selectionCoordinates", { south: coordinate(s), north: coordinate(n), west: coordinate(w), east: coordinate(e), width: coordinate(e - w), height: coordinate(n - s) });
   $("#gModel").innerHTML = CAT.variables.map((v) => {
     const L = CAT.compute_limits[v.source];
-    const tooBig = (e - w) > L.max_side_deg || (n - s) > L.max_side_deg || (e - w) * (n - s) > L.max_area_deg2;
-    return `<option value="${v.id}" ${v.id === G.var ? "selected" : ""} ${tooBig ? "disabled" : ""}>${v.name.replace(/ \(.*\)/, "")}${tooBig ? t("globe.tooLargeSuffix") : ""}</option>`;
+    const covered = CAT.regions.some((r) => available(v.id, r.id) && coversPlace(r.bbox, b));
+    const tooBig = !covered && ((e - w) > L.max_side_deg || (n - s) > L.max_side_deg || (e - w) * (n - s) > L.max_area_deg2);
+    const name = ["precip", "precip_gpcp"].includes(v.id) ? t(`globe.model.${v.id}`) : v.name.replace(/ \(.*\)/, "");
+    return `<option value="${v.id}" ${v.id === G.var && !tooBig ? "selected" : ""} ${tooBig ? "disabled" : ""}>${esc(name)}${tooBig ? t("globe.tooLargeSuffix") : ""}</option>`;
   }).join("");
+  syncGlobeAnalyse();
   $("#gOut").innerHTML = `<p class="ginfo">${t("globe.downloadNotice")}</p>`;
   $("#gProg").hidden = true;
   Plotly.purge("gChart");
   // phones: the result panel sits under the globe, so show that something opened there
-  if (PHONE() && $("#globe").classList.contains("active")) setTimeout(() => $("#gResult").scrollIntoView({ behavior: "smooth", block: "nearest" }), 350);
+  if (!preserveAnalysis && PHONE() && $("#globe").classList.contains("active")) $("#gResult").scrollIntoView({
+    behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start",
+  });
 }
 function legacyPowerBounds([w, s, e, n]) {
   const span = 2.02; // allow the legacy server to round the registered bounds to hundredths
@@ -761,14 +806,16 @@ function legacyPowerBounds([w, s, e, n]) {
 }
 async function runCompute() {
   const selection = G.sel, varId = $("#gModel").value, displayedVar = G.var;
-  if (!selection || !varId) return;
-  G.lastAnalysis = null;
-  resetSimilarAreas();
+  if (!selection || !varId || G.computing) return;
+  const period = globePeriod(varId), months = G.months;
+  clearGlobeAnalysis();
   const model = CAT.variables.find((v) => v.id === varId);
   const needsLegacyPadding = model.source === "power" && !CAT.compute_limits.power.pads_small_areas &&
     !CAT.regions.some((r) => available(varId, r.id) && coversPlace(r.bbox, selection));
   const requestBox = needsLegacyPadding ? legacyPowerBounds(selection) : selection;
-  $("#gGo").disabled = true; $("#gOut").innerHTML = "";
+  G.computing = $("#gModel").disabled = true;
+  syncGlobeAnalyse();
+  $("#gOut").innerHTML = "";
   $("#gPendingPlace").hidden = false;
   let message = t("globe.areaAnalysisUnavailable");
   try {
@@ -812,40 +859,67 @@ async function runCompute() {
       $("#gVar").value = varId;
       $("#gVar").dispatchEvent(new Event("change"));
     } else if (varId === G.var) loadLayers();
-    const a = await api("analysis", new URLSearchParams({ var: varId, region: j.region, bbox: bbox.join(",") }));
-    if (G.sel === selection) showResult(a, j.region);
+    const a = await api("analysis", new URLSearchParams({ var: varId, region: j.region, bbox: bbox.join(","), months, ...period }));
+    if (G.sel === selection) {
+      const current = globePeriod(varId);
+      if (period.start === current.start && period.end === current.end) showResult(a, j.region);
+      else $("#gOut").textContent = t("globe.periodChanged");
+    }
   } catch {
     $("#gProg").hidden = true;
     if (G.sel === selection) $("#gOut").innerHTML = `<p class="ginfo" role="status">${esc(message)}</p>`;
   } finally {
     $("#gPendingPlace").hidden = true;
-    $("#gGo").disabled = false;
+    G.computing = $("#gModel").disabled = false;
+    syncGlobeAnalyse();
   }
 }
 function showResult(a, region) {
   G.lastAnalysis = { raw: a._raw || a, region };
+  $("#gAnalysisActions").hidden = false;
+  $("#gResilience").hidden = !Resilience.canOpen(a);
   renderSimilarAreas();
   const r = a.result, ver = a.verdict, v = CAT.variables.find((x) => x.id === a.variable);
   $("#gOut").innerHTML = `<div class="verdict ${ver.code}"><h2>${ver.title}</h2></div>
     <div class="big">${r.slope > 0 ? "+" : ""}${fmt(r.slope)} <small>${a.trend_units}</small></div>
     <div class="ginfo">${pStr(r.p)} · ${a.start}–${a.end}</div>
-    <p class="ginfo"><span class="tag">${v.kind}</span>${v.product}</p>
-    <button id="gOpen" class="btn">${t("globe.fullAnalysis")}${ic("arrow")}</button>`;
+    <p class="ginfo"><span class="tag">${v.kind}</span>${v.product}</p>`;
   const s = a.series, x = s.dates.map((d) => d + "-15");
+  $("#gChart").hidden = false;
   plot("gChart", [
     { x, y: s.anomaly, type: "scatter", mode: "lines", line: { color: "#8aa4bf", width: 1 }, name: t("charts.month") },
     ...(s.running12 ? [{ x, y: s.running12, type: "scatter", mode: "lines", line: { color: "#5ea8ff", width: 2 }, name: t("charts.runningMean") }] : []),
     { x, y: s.fit, type: "scatter", mode: "lines", line: { color: "#ff7b5c", width: 2.5 }, name: t("charts.trend") },
   ], layoutBase({ showlegend: false, margin: { l: 36, r: 6, t: 4, b: 24 }, font: { size: 10, color: "#dfe7ef" },
     xaxis: { gridcolor: "#2a3542", linecolor: "#2a3542" }, yaxis: { gridcolor: "#2a3542", linecolor: "#2a3542", zerolinecolor: "#4b5a6a" } }));
-  $("#gOpen").onclick = () => {
-    Object.assign(state, { var: a.variable, region, start: a.start, end: a.end, months: ALL, bbox: a.bbox });
-    document.querySelector('.tab[data-tab="atlas"]').click();
-    syncControls(); refresh(true);
-  };
+  $("#gOpen").onclick = () => openInDetective({ var: a.variable, region, start: a.start, end: a.end,
+    months: a.months.join(",") === "1,2,12" ? "12,1,2" : a.months.join(","), bbox: a.bbox });
 }
 
 // ---------------------------------------------------------------- controls
+function globePeriod(variable) {
+  const [first, last] = CAT.variables.find((v) => v.id === variable).years;
+  return G.periods.get(variable) || { start: first, end: last };
+}
+function syncGlobePeriod() {
+  const [first, last] = GV().years, { start, end } = globePeriod(G.var);
+  const options = (lo, hi, selected) => Array.from({ length: hi - lo + 1 }, (_, i) => {
+    const year = lo + i;
+    return new Option(year, year, false, year === selected);
+  });
+  $("#gStart").replaceChildren(...options(first, end - MIN_PERIOD_SPAN, start));
+  $("#gEnd").replaceChildren(...options(start + MIN_PERIOD_SPAN, last, end));
+}
+function changeGlobePeriod() {
+  G.periods.set(G.var, { start: +$("#gStart").value, end: +$("#gEnd").value });
+  syncGlobePeriod();
+  if (G.lastAnalysis && G.lastAnalysis.raw.variable === G.var) {
+    clearGlobeAnalysis();
+    $("#gOut").textContent = t("globe.periodChanged");
+    Plotly.purge("gChart");
+  }
+  drawData();
+}
 function buildGlobeControls() {
   $("#gVar").innerHTML = CAT.variables.map((v) => `<option value="${v.id}">${v.name}</option>`).join("");
   $("#gVar").value = G.var;
@@ -862,6 +936,15 @@ function buildGlobeControls() {
     loadLayers();
   };
   $("#gWorld").onclick = () => selectGlobePlace("world");
+  $("#gRegionalTrends").onclick = () => {
+    selectGlobePlace("all");
+    $("#gStart").focus();
+  };
+  $("#gStart").onchange = $("#gEnd").onchange = changeGlobePeriod;
+  $("#gScroll").onclick = () => {
+    $("#gControls").focus({ preventScroll: true });
+    $("#gControls").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  };
   $$("#gMode .ibtn").forEach((c) => c.onclick = () => {
     G.mode = c.dataset.mode; $$("#gMode .ibtn").forEach((x) => { x.classList.toggle("on", x === c); x.setAttribute("aria-checked", x === c); });
     syncGlobeDisplay();
@@ -889,7 +972,14 @@ function buildGlobeControls() {
     if (G.drawing && PHONE()) $("#globeMap").scrollIntoView({ behavior: "smooth", block: "start" });
   };
   $("#gGo").onclick = runCompute;
+  $("#gModel").onchange = () => {
+    clearGlobeAnalysis();
+    $("#gOut").textContent = t("globe.downloadNotice");
+    Plotly.purge("gChart");
+    syncGlobeAnalyse();
+  };
   $("#gSimilarToggle").onclick = () => {
+    if (!similarReference()) return;
     if (similar.opened) { resetSimilarAreas(); return; }
     similar.opened = true;
     renderSimilarAreas();
@@ -915,11 +1005,14 @@ function buildGlobeControls() {
 }
 function syncGlobeDisplay() {
   const monthly = Boolean(G.monthly), show = $("#gShow").checked, imageryYear = Boolean(IMAGERY[G.imagery].time);
+  const annual = show && !monthly && G.mode === "year";
+  $("#gTrendPeriod").hidden = !show || monthly || G.mode !== "trend" || !G.layers.length;
+  $("#gRegionalTrends").hidden = !show || !monthly || !G.places.some((l) => l.region !== "world" && l.dataRegion !== null);
+  syncGlobePeriod();
   $("#gMode").hidden = monthly;
-  $("#gPlay").hidden = monthly;
+  $("#gPlay").hidden = !annual;
   $("#gFade").hidden = monthly || G.mode !== "trend";
-  $("#gYearRow").hidden = monthly && !imageryYear;
-  $("#gYearRow").classList.toggle("dim", !monthly && G.mode !== "year" && !imageryYear);
+  $("#gYearRow").hidden = !imageryYear && !annual;
   $("#gYear").setAttribute("aria-label", monthly ? t("globe.imageryYear") : t("common.year"));
   $$("#gMode .ibtn, #gFade, #gOpacity, #gPlay").forEach((el) => { el.disabled = !show; });
   $("#gYear").disabled = !show && !imageryYear;

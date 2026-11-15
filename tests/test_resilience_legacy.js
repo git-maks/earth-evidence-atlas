@@ -10,7 +10,7 @@ function setup(detail) {
   function $(selector) {
     if (!nodes[selector]) nodes[selector] = {
       href: "", dataset: {}, classList: { contains: () => true },
-      querySelectorAll: () => [], replaceChildren() {}, setAttribute() {},
+      querySelectorAll: () => [], closest: () => ({}), replaceChildren() {}, setAttribute() {},
       dispatchEvent(event) { report = event.detail.report; },
     };
     return nodes[selector];

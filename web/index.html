@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title data-i18n="app.name">Earth Evidence Atlas</title>
 <meta name="description" data-i18n-attrs="content:app.description" content="Pick NASA Earth data and a place, see how fast it changes, and test whether the trend holds.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Ccircle cx=%278%27 cy=%278%27 r=%277%27 fill=%27%230b5cad%27/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
 <link rel="preload" href="/static/fonts/nasalization.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="/static/vendor/leaflet.css">
 <link rel="stylesheet" href="/static/vendor/maplibre-gl.css">
@@ -24,13 +24,26 @@
     <button id="tab-resilience" class="tab" data-tab="resilience" role="tab" aria-controls="resilience" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-layers"/></svg><span data-i18n="navigation.resilience">Resilience</span></button>
     <button id="tab-about" class="tab" data-tab="about" role="tab" aria-controls="about" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-book"/></svg><span data-i18n="methods.methodsTitle">Methods</span></button>
   </div>
+  <button id="languageToggle" class="language-toggle" type="button" aria-expanded="false" aria-controls="languagePanel" data-i18n-attrs="aria-label:localisation.language;data-tip:localisation.language">
+    <svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-language"/></svg>
+  </button>
+  <aside id="languagePanel" class="language-panel" aria-labelledby="languageLabel" hidden>
+    <label id="languageLabel" for="languageSelect" data-i18n="localisation.language"></label>
+    <button id="languageClose" class="ibtn" type="button" data-i18n-attrs="aria-label:common.close;data-tip:common.close"><svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-close"/></svg></button>
+    <select id="languageSelect">
+      <option value="en" lang="en" data-i18n="localisation.languages.en"></option>
+      <option value="es" lang="es" data-i18n="localisation.languages.es"></option>
+      <option value="pl" lang="pl" data-i18n="localisation.languages.pl"></option>
+    </select>
+    <span id="languageStatus" role="status" aria-live="polite"></span>
+  </aside>
 </header>
 
 <main id="atlas-views">
 <div id="globe" class="panel globe-panel active" role="tabpanel" aria-labelledby="tab-globe">
   <canvas id="gStars" aria-hidden="true"></canvas>
   <div id="globeMap"></div>
-  <aside class="gpanel gleft" aria-label="Globe controls" data-i18n-attrs="aria-label:globe.controlsLabel">
+  <aside id="gControls" class="gpanel gleft" tabindex="-1" aria-label="Globe controls" data-i18n-attrs="aria-label:globe.controlsLabel">
     <label class="glabel" for="gVar"><span data-i18n="common.dataset">Dataset</span></label>
     <div class="row">
       <select id="gVar"></select>
@@ -45,6 +58,12 @@
       </div>
       <button id="gFade" class="ibtn on" aria-pressed="true" aria-label="Fade non-significant cells" data-tip="Fade non-significant cells" data-i18n-attrs="aria-label:globe.fadeNonSignificant;data-tip:globe.fadeNonSignificant"><svg class="ic"><use href="/static/icons.svg#i-filter"/></svg></button>
     </div>
+    <fieldset id="gTrendPeriod" class="gtrend-period" hidden>
+      <legend data-i18n="globe.analysisPeriod">Trend period</legend>
+      <label><span data-i18n="common.startYear">Start year</span><select id="gStart"></select></label>
+      <label><span data-i18n="common.endYear">End year</span><select id="gEnd"></select></label>
+    </fieldset>
+    <button id="gRegionalTrends" type="button" class="btn ghost" data-i18n="globe.regionalTrends" hidden>View trends in places</button>
     <div id="gYearRow" class="row">
       <button id="gPlay" class="ibtn" aria-label="Play years" data-tip="Play years" data-i18n-attrs="aria-label:globe.playYears;data-tip:globe.playYears"><svg class="ic"><use href="/static/icons.svg#i-play"/></svg></button>
       <input type="range" id="gYear" min="2001" max="2024" value="2024" aria-label="Year" data-i18n-attrs="aria-label:common.year">
@@ -80,9 +99,13 @@
     </div>
     <div id="gProg" class="gprog" hidden><div class="gbar"><div id="gProgBar"></div></div><p id="gProgMsg" class="ginfo"></p></div>
     <div id="gOut" class="result"></div>
-    <button id="gResilience" type="button" class="btn ghost" data-i18n="resilience.openBrief">Open in Resilience</button>
-    <section id="gSimilar" class="gsimilar" hidden aria-labelledby="gSimilarToggle">
+    <div id="gAnalysisActions" class="ganalysis-actions" hidden>
+      <button id="gOpen" type="button" class="btn"><span data-i18n="globe.fullAnalysis">Full analysis</span></button>
       <button id="gSimilarToggle" type="button" class="btn ghost" aria-controls="gSimilarOptions" aria-expanded="false" data-i18n="similar.title">Find similar areas</button>
+    </div>
+    <p id="gSimilarHint" class="ginfo" hidden></p>
+    <button id="gResilience" type="button" class="btn ghost" hidden data-i18n="resilience.openBrief">Open in Resilience</button>
+    <section id="gSimilar" class="gsimilar" hidden aria-labelledby="gSimilarToggle">
       <div id="gSimilarOptions" hidden>
         <form id="gSimilarForm" class="gsimilar-form">
           <label><span data-i18n="similar.limit">Maximum results</span><input id="gSimilarLimit" type="number" min="1" max="20" value="5" required></label>
@@ -96,9 +119,10 @@
         <ol id="gSimilarList" class="gmatch-list" aria-label="Similar areas" data-i18n-attrs="aria-label:similar.resultsLabel"></ol>
       </div>
     </section>
-    <div id="gChart" class="chart small"></div>
+    <div id="gChart" class="chart small" hidden></div>
   </aside>
   <div id="gLegend" class="gpanel glegend"></div>
+  <button id="gScroll" type="button" class="btn ghost gscroll"><span data-i18n="globe.controlsLabel">Globe controls</span><svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-arrow"/></svg></button>
 </div>
 
 <div id="atlas" class="panel" role="tabpanel" aria-labelledby="tab-atlas">
@@ -121,7 +145,7 @@
         <p id="regionStory" class="hint"></p>
         <label class="row ginline small" data-tip="Areas other visitors have analysed" data-i18n-attrs="data-tip:common.areasFromOthersHint"><span class="switch light"><input type="checkbox" id="showOthers"><span></span></span><span data-i18n="common.areasFromOthers">Areas from others</span></label>
         <p id="selInfo" class="hint"></p>
-        <div class="row"><button id="detectiveResilience" type="button" class="ghost" data-i18n="resilience.openBrief">Open in Resilience</button></div>
+        <button id="detectiveResilience" type="button" class="ghost" hidden data-i18n="resilience.openBrief">Open in Resilience</button>
       </div>
     </div>
     <div class="step">
@@ -133,7 +157,7 @@
           <span>–</span>
           <select id="end" aria-label="End year" data-i18n-attrs="aria-label:common.endYear"></select>
         </div>
-        <div class="period-range" id="periodRange" style="--panel: var(--accent)" role="group" aria-label="Analysis period timeline" data-i18n-attrs="aria-label:detective.periodTimeline">
+        <div class="period-range" id="periodRange" role="group" aria-label="Analysis period timeline" data-i18n-attrs="aria-label:detective.periodTimeline">
           <div class="period-track" aria-hidden="true"></div>
           <input type="range" id="startSlider" aria-label="Start of period" data-i18n-attrs="aria-label:detective.periodStart">
           <input type="range" id="endSlider" aria-label="End of period" data-i18n-attrs="aria-label:detective.periodEnd">
@@ -252,8 +276,8 @@
   <section id="resilience-scope" class="card resilience-controls" aria-label="Area and period" data-i18n-attrs="aria-label:resilience.scope">
     <div class="resilience-fields" aria-describedby="resilience-status">
       <label><span data-i18n="detective.place">Place</span><select id="resilience-area"></select></label>
-      <label><span data-i18n="common.startYear">Start year</span><select id="resilience-start" disabled></select></label>
-      <label><span data-i18n="common.endYear">End year</span><select id="resilience-end" disabled></select></label>
+      <label hidden><span data-i18n="common.startYear">Start year</span><select id="resilience-start" disabled></select></label>
+      <label hidden><span data-i18n="common.endYear">End year</span><select id="resilience-end" disabled></select></label>
       <label><span data-i18n="calendar.season">Season</span>
         <select id="resilience-months">
           <option value="1,2,3,4,5,6,7,8,9,10,11,12" data-i18n="calendar.allYear">All year</option>
@@ -316,20 +340,6 @@
 <footer class="foot">
   <span data-i18n="footer.data">NASA Space Apps Challenge 2026 · Data: NASA (MODIS, MERRA-2 via POWER, GISTEMP).</span>
 </footer>
-
-<button id="languageToggle" class="language-toggle" type="button" aria-expanded="false" aria-controls="languagePanel" data-i18n-attrs="aria-label:localisation.language;data-tip:localisation.language">
-  <svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-language"/></svg>
-</button>
-<aside id="languagePanel" class="language-panel" aria-labelledby="languageLabel" hidden>
-  <label id="languageLabel" for="languageSelect" data-i18n="localisation.language"></label>
-  <button id="languageClose" class="ibtn" type="button" data-i18n-attrs="aria-label:common.close;data-tip:common.close"><svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-close"/></svg></button>
-  <select id="languageSelect">
-    <option value="en" lang="en" data-i18n="localisation.languages.en"></option>
-    <option value="es" lang="es" data-i18n="localisation.languages.es"></option>
-    <option value="pl" lang="pl" data-i18n="localisation.languages.pl"></option>
-  </select>
-  <span id="languageStatus" role="status" aria-live="polite"></span>
-</aside>
 
 <div id="tip" class="tip" role="tooltip" hidden></div>
 

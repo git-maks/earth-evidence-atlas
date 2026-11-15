@@ -26,6 +26,10 @@ const Resilience = (() => {
     const entry = CAT.regions.find((r) => r.id === region);
     return entry ? entry.name : tr("unknownArea");
   };
+  function canOpen(analysis) {
+    return Boolean(analysis && Number.isFinite(analysis.result.slope) && analysis.verdict.code !== "insufficient_data" &&
+      CAT.regions.some((r) => coversPlace(r.bbox, analysis.bbox) && variables.some((v) => available(v, r.id))));
+  }
 
   function populatePlaces() {
     const built = Object.entries(CAT.available).filter(([, present]) => present).map(([key]) => key.split("/")[1]);
@@ -42,7 +46,7 @@ const Resilience = (() => {
     const options = (lo, hi, year) => Array.from({ length: hi - lo + 1 }, (_, i) => new Option(lo + i, lo + i, false, lo + i === year));
     get("start").replaceChildren(...(first ? options(first, last - MIN_PERIOD_SPAN, start) : []));
     get("end").replaceChildren(...(first ? options(first + MIN_PERIOD_SPAN, last, end) : []));
-    get("start").disabled = get("end").disabled = !first;
+    ["start", "end"].forEach((id) => { get(id).disabled = get(id).closest("label").hidden = !first; });
   }
 
   function populateMonths() {
@@ -398,9 +402,12 @@ const Resilience = (() => {
     };
     get("print").onclick = () => window.print();
     $("#gResilience").onclick = () => {
-      if (G.sel) openFrom({ region: G.lastAnalysis && G.lastAnalysis.region, bbox: [...G.sel] });
+      const completed = G.lastAnalysis;
+      if (completed && canOpen(completed.raw)) openFrom({ region: completed.region, bbox: completed.raw.bbox }, completed.raw.months.join(","));
     };
-    $("#detectiveResilience").onclick = () => openFrom({ region: state.region, bbox: state.bbox }, state.months);
+    $("#detectiveResilience").onclick = () => {
+      if (lastAnalysisQuery === query(true) && canOpen(lastAnalysis)) openFrom({ region: state.region, bbox: state.bbox }, state.months);
+    };
     window.addEventListener("beforeprint", () => {
       if (!$("#resilience").classList.contains("active")) return;
       closedOnPrint = $$("#resilience details:not([open])");
@@ -413,5 +420,5 @@ const Resilience = (() => {
     localise();
   }
 
-  return { enter, init, localise, restore };
+  return { canOpen, enter, init, localise, restore };
 })();

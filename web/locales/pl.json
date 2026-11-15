@@ -247,6 +247,13 @@
     }
   },
   "globe": {
+    "analysisPeriod": "Okres trendu",
+    "regionalTrends": "Zobacz trendy w regionach",
+    "periodChanged": "Przeanalizuj ponownie wybrane lata.",
+    "model": {
+      "precip": "Opad (NASA POWER)",
+      "precip_gpcp": "Opad (GPCP)"
+    },
     "controlsLabel": "Sterowanie globem",
     "aboutDataset": "O tym zbiorze danych",
     "showDataHint": "Pokaż dane na globie",
@@ -870,6 +877,7 @@
     "loadError": "Nie udało się wczytać języka. Spróbuj ponownie."
   },
   "similar": {
+    "requiresGlobalGrid": "Wymaga globalnej siatki trendów. Wybierz GISTEMP lub GPCP.",
     "title": "Znajdź podobne obszary",
     "limit": "Maksymalna liczba wyników",
     "tolerance": "Maksymalna różnica trendu",

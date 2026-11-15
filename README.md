@@ -205,6 +205,7 @@ Dzięki temu przypadek „opad MERRA-2 w Amazonii do weryfikacji” jest rozstrz
 
 - Logo w nagłówku jest pisane fontem **Nasalization** (Ray Larabie, freeware 1997; plik `web/fonts/nasalization.ttf`, skopiowany z załącznika Mai). Wzdłuż krawędzi liter pojawia się jedna iskierka naraz, w losowym miejscu. Przy włączonym w systemie ograniczeniu animacji (`prefers-reduced-motion`) iskierka jest wyłączona.
 - Ikony są w jednym pliku `web/icons.svg` (sprite z elementami `<symbol id="i-…">`). Ikony dostarczył zespół. Żeby podmienić ikonę, wklej nowy SVG do środka `<symbol>` i zostaw jego `id`. Kolor ikony bierze się z `currentColor`.
+- Favicon globu z książką to własny SVG projektu. Skale barw miesięcznych warstw Globe pochodzą z [NASA EOSDIS GIBS](https://gibs.earthdata.nasa.gov/legends/) i są osadzone jako oficjalne obrazy PNG z oznaczeniem „NASA GIBS”.
 - Pokazywanie danych na globie włącza i wyłącza przełącznik, a nie ikona. Na zakładce Globe nie ma stopki; na pozostałych stopka ma 11 px.
 - Jeden styl dymków (`#tip`) obsługuje glob, mapę Leaflet, wykresy Plotly (ich własne dymki i pasek narzędzi są wyłączone) oraz przyciski-ikony (atrybut `data-tip`).
 - Kontrast tekstu jest sprawdzany według progu WCAG AA (4.5:1) we wszystkich zakładkach, w trybie jasnym i ciemnym.

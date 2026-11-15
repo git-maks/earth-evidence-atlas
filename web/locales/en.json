@@ -247,6 +247,13 @@
     }
   },
   "globe": {
+    "analysisPeriod": "Trend period",
+    "regionalTrends": "View trends in places",
+    "periodChanged": "Analyse again for the selected years.",
+    "model": {
+      "precip": "Precipitation (NASA POWER)",
+      "precip_gpcp": "Precipitation (GPCP)"
+    },
     "controlsLabel": "Globe controls",
     "aboutDataset": "About this dataset",
     "showDataHint": "Show data on the globe",
@@ -870,6 +877,7 @@
     "loadError": "Could not load the language. Please try again."
   },
   "similar": {
+    "requiresGlobalGrid": "Requires a global trend grid. Choose GISTEMP or GPCP.",
     "title": "Find similar areas",
     "limit": "Maximum results",
     "tolerance": "Maximum trend difference",
