@@ -12,6 +12,7 @@ Otwórz `earth-evidence-atlas.html` w przeglądarce. To samodzielny plik: font, 
 - **D / Details & sources** – pełna zgodność z zadaniem, opcjonalne sugestie, inwentarz funkcji, źródła i ograniczenia, wyniki oraz ścieżka demonstracji.
 - **Reading view** – wszystkie slajdy, z układem do czytania na telefonie.
 - Na slajdzie 4 przyciski przełączają trzy zapisane przykłady: pamięć szeregu, punkty odstające i wybór sezonu. Druk przywraca przykład z pamięcią szeregu.
+- Na slajdzie 7 kliknij ramki **Add photo**, aby dodać trzy zdjęcia zespołu. Imiona i role edytujesz kliknięciem. **Save with photos** pobiera samodzielny HTML ze zdjęciami i podpisami; otwórz pobrany plik, aby korzystać z zapisanej wersji. Po zmianach możesz też ponownie wydrukować PDF.
 - **Print / PDF** – druk siedmiu slajdów. Panele szczegółowe i notatki nie dodają stron do PDF.
 
 ## Co zawiera materiał
@@ -22,7 +23,7 @@ Otwórz `earth-evidence-atlas.html` w przeglądarce. To samodzielny plik: font, 
 4. Laboratorium fałszywych alarmów, wpływ dwóch punktów odstających oraz pomocniczy, jawnie eksploracyjny przykład MODIS.
 5. Siedem zbiorów NASA i ich pochodzenie.
 6. Dodatkowe działające funkcje: glob, obrazy historyczne, pobieranie obszarów na żądanie, porównania, eksport, zapis miejsc, języki i widoki mobilne.
-7. Potencjalny wpływ, działający publiczny prototyp i kolejne kroki walidacji.
+7. Trzy zasady wiarygodnej analizy trendu, miejsca na zdjęcia i podpisy trzech osób z zespołu oraz kolejne kroki walidacji. Adres prototypu pozostaje w stopce.
 
 Rozwijany panel zawiera także pełny dostarczony tekst zadania. Wskazuje, które sugestie są opcjonalne i które produkty oraz funkcje nie są obecnie zaimplementowane. Nie przedstawia planów jako gotowych możliwości.
 

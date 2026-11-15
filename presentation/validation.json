@@ -10,12 +10,17 @@
     "data and resource references",
     "Polish presenter notes",
     "evidence download equality",
-    "mobile reading mode"
+    "mobile reading mode",
+    "team photo upload",
+    "editable team names and roles",
+    "saved HTML retains embedded photos and captions",
+    "team slide mobile reading at 390 px"
   ],
-  "project_tests": "43 passed; one existing Starlette/httpx deprecation warning",
+  "project_tests": "48 passed; two dependency deprecation warnings (Starlette/httpx and Pydantic config)",
   "artifacts_sha256": {
-    "earth-evidence-atlas.html": "9c538efb4b85440410a4a136aa0a8db209f3280d41b7ecc626e6980ed641112a",
-    "earth-evidence-atlas.pdf": "da98af30879d0957f39f08f806d5b3bf47801d2cd5bc816d7036f63f0fcdd365",
+    "earth-evidence-atlas.html": "830b295e0cff4ffbcc3fb3277c53fa4127d0ddda000c4adf37a92a33f1036d91",
+    "earth-evidence-atlas.pdf": "8942a2c8f1e4c345952079fff4687af56ec3c03404cee392246dadeb2b74a44f",
     "evidence.json": "b04c8b48b551d9f7391220020913dfebf6911be61e6788bf2d502d50a5b31d77"
-  }
+  },
+  "slides_1_to_6_unchanged": "passed: template and generated slide HTML are byte-identical; rendered PDF pages 1–6 are pixel-identical at 1440 px"
 }
