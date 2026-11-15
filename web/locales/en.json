@@ -268,9 +268,9 @@
     "otherPeriodsAgree": "Other periods agree",
     "confidenceRange": "95% range {low} to {high} · {start}–{end} · {season}",
     "pValue": "p-value",
-    "pValueHint": "Corrected for month-to-month memory",
+    "pValueHint": "Stricter of the month-to-month and year-to-year memory corrections",
     "mannKendallP": "Mann–Kendall p",
-    "mannKendallHint": "Rank-based test, robust to outliers",
+    "mannKendallHint": "Rank-based test, robust to outliers, corrected for memory",
     "senSlope": "Sen slope",
     "senSlopeHint": "Median of all pairwise slopes",
     "effectiveN": "n / effective n",
@@ -286,7 +286,9 @@
     "typicalYear": "Typical year",
     "basemapAttribution": "Basemap: {source} Blue Marble",
     "significantInMerra": "Significant in MERRA-2",
-    "precipitationSource": "Read the MERRA-2 assessment."
+    "precipitationSource": "Read the MERRA-2 assessment.",
+    "otherPeriodsSignificant": "Long periods significant",
+    "otherPeriodsSignificantHint": "Start/end periods covering at least three quarters of this one that are also significant"
   },
   "charts": {
     "month": "Month",
@@ -295,8 +297,8 @@
     "confidenceRange": "95% range",
     "anomalyAxis": "Anomaly ({unit})",
     "minimumMatrixPeriod": "Pick at least 10 years to compare periods.",
-    "matrixNote": "Dot = significant. Periods of {minYears}+ years. Mixed colours = depends on the period.",
-    "matrixNoteWithStep": "Dot = significant. Periods of {minYears}+ years, every {step} years. Mixed colours = depends on the period."
+    "matrixNote": "Dot = significant. Periods of {minYears}+ years. Mixed colours = depends on the period. Squares overlap, so they are not independent tests.",
+    "matrixNoteWithStep": "Dot = significant. Periods of {minYears}+ years, every {step} years. Mixed colours = depends on the period. Squares overlap, so they are not independent tests."
   },
   "lab": {
     "banner": "Simulation with synthetic data",
@@ -352,7 +354,7 @@
     "gridYearsColumn": "Grid / years",
     "citationLicenceColumn": "Citation & licence",
     "methodsTitle": "Methods",
-    "references": "References: Santer B.D. et al. (2000) J. Geophys. Res. 105, 7337–7356 · Hirsch R.M., Slack J.R., Smith R.A. (1982) Water Resour. Res. 18, 107–121 · Sen P.K. (1968) JASA 63, 1379–1389 · Benjamini Y., Hochberg Y. (1995) JRSS-B 57, 289–300 · Wilks D.S. (2016) BAMS 97, 2263–2273.",
+    "references": "References: Santer B.D. et al. (2000) J. Geophys. Res. 105, 7337–7356 · Hirsch R.M., Slack J.R., Smith R.A. (1982) Water Resour. Res. 18, 107–121 · Sen P.K. (1968) JASA 63, 1379–1389 · Benjamini Y., Hochberg Y. (1995) JRSS-B 57, 289–300 · Wilks D.S. (2016) BAMS 97, 2263–2273 · Hirsch R.M., Slack J.R. (1984) Water Resour. Res. 20, 727–732 · Hamed K.H., Rao A.R. (1998) J. Hydrol. 204, 182–196 · Marriott F.H.C., Pope J.A. (1954) Biometrika 41, 390–402 · Berger R.L. (1982) Technometrics 24, 295–300.",
     "limitsTitle": "What the tool will not tell you",
     "limitsDescription": "A trend is not a cause. The tool never says “the climate is not changing” or “humans caused this”: it reports what this series, place and period can and cannot show.",
     "notes": {
@@ -366,11 +368,11 @@
       },
       "uncertainty": {
         "label": "uncertainty",
-        "text": "95% confidence interval with AR(1) effective sample size correction (Santer et al. 2000)."
+        "text": "Two memory corrections: month to month (AR(1) for the actual sampling, bias-corrected; Santer et al. 2000) and year to year (the same test on yearly means). The p-value is the larger of the two and the 95% interval covers both, so a trend counts only if both agree."
       },
       "cross_check": {
         "label": "cross check",
-        "text": "Seasonal Mann–Kendall test and seasonal Sen slope (Hirsch et al. 1982)."
+        "text": "Seasonal Mann–Kendall with the Hirsch & Slack (1984) correction for dependent months, and Mann–Kendall on yearly means with the Hamed & Rao (1998) correction; the larger p is shown. Seasonal Sen slope."
       },
       "map_multiple_testing": {
         "label": "map multiple testing",
@@ -383,6 +385,14 @@
       "minimum_data": {
         "label": "minimum data",
         "text": "A trend is computed only if at least {percent}% of the selected months are valid."
+      },
+      "calibration": {
+        "label": "calibration",
+        "text": "Checked on synthetic series without a trend: with month-to-month memory up to 0.9, seasons and gaps, at most about 6% are called significant (the target is 5%). Slow decade-long swings remain hard: 5–12% instead of 12–39% before this correction."
+      },
+      "period_choice": {
+        "label": "choice of period",
+        "text": "The map correction covers grid cells, not the choice of period, season or variable: the more combinations you try, the more likely one looks significant by chance. The squares in “Does it hold?” overlap, so they are not independent repeats."
       }
     }
   },
@@ -404,8 +414,12 @@
     },
     "trend_detected": {
       "title": "Trend detected",
-      "agree": "Significant at 5%, corrected for autocorrelation. Mann–Kendall agrees.",
-      "disagree": "Significant at 5%, corrected for autocorrelation. Mann–Kendall does not confirm it – check outliers."
+      "agree": "Significant at 5% after correcting for memory in the data. A rank-based test (Mann–Kendall) gives the same result.",
+      "disagree": "Significant at 5% after correcting for memory in the data. The rank-based Mann–Kendall test does not reach 5% – check outliers and the period."
+    },
+    "significance_depends_on_period": {
+      "title": "Direction holds, significance varies",
+      "text": "Significant here, and most other start/end years point the same way, but fewer than half of the long periods (at least three quarters of this one) are significant. The result depends on the exact start and end years."
     }
   },
   "answers": {
@@ -415,7 +429,8 @@
       "depends_on_period": "It depends on the period.",
       "comparisonAgree": "Yes – they agree.",
       "comparisonPartial": "Partly.",
-      "comparisonDisagree": "No – they disagree."
+      "comparisonDisagree": "No – they disagree.",
+      "significance_depends_on_period": "Same direction, but not always significant."
     },
     "places": {
       "selectedArea": "the selected area",
@@ -439,15 +454,17 @@
     "fastestWarming": "Fastest warming: around {latitude}°{latitudeDirection}, {longitude}°{longitudeDirection}, {slope} {unit}.",
     "confidence": {
       "periods": "{agreeing} of {total} other start/end periods give the same direction",
-      "mkAgrees": "the rank-based Mann–Kendall test agrees",
-      "mkDisagrees": "the rank-based Mann–Kendall test does not confirm it",
-      "summary": "How sure: {details}."
+      "mkAgrees": "a rank-based test (Mann–Kendall) gives the same result",
+      "mkDisagrees": "the rank-based Mann–Kendall test does not reach 5%",
+      "summary": "How sure: {details}.",
+      "periodsWithSignificant": "{agreeing} of {total} other start/end periods give the same direction, {significant} of them also significant"
     },
     "how": {
       "trend": "Trend {slope} {unit}, 95% range {low} to {high}.",
       "autocorrelation": "{pValue} after correcting for month-to-month memory (effective n ≈ {effective} of {total} months).",
-      "rankTest": "Mann–Kendall {pValue}; Sen slope {slope}.",
-      "anomalies": "Monthly values minus the usual value for each calendar month; {percent}% valid data."
+      "rankTest": "Mann–Kendall {pValue}, also corrected for memory; Sen slope {slope}.",
+      "anomalies": "Monthly values minus the usual value for each calendar month; {percent}% valid data.",
+      "autocorrelationTwoScales": "{pValue}, the stricter of two memory corrections: month to month (effective n ≈ {effective} of {total} months) and year to year ({years} yearly means)."
     },
     "note": "Built from the numbers on this page by fixed rules; no AI text generation.",
     "comparison": {
@@ -518,7 +535,9 @@
     "merraLess": "MERRA-2 suggests less rainfall. Needs confirmation.",
     "merraMore": "MERRA-2 suggests more rainfall. Needs confirmation.",
     "merraEstimate": "Estimated MERRA-2 rainfall trend: {slope} mm/day per decade ({start}–{end}, {season}).",
-    "merraCaution": "Published assessments document breaks in corrected MERRA-2 rainfall in South America. Check a second dataset for the same area, season and period."
+    "merraCaution": "Published assessments document breaks in corrected MERRA-2 rainfall in South America. Check a second dataset for the same area, season and period.",
+    "significanceDependency": "The direction holds in {agreeing} of {total} other start/end periods, but only {significant} of the {long} periods covering at least three quarters of this one are significant, so the result depends on the exact start and end years.",
+    "shortRecord": "Short record (under 15 years): slow natural swings lasting several years can look like a trend over a period this short."
   },
   "errors": {
     "analysisFailed": "Could not analyse: {message}",

@@ -40,23 +40,70 @@ def test_recovers_known_slope_with_seasonality_and_gaps():
 
 
 def test_false_positive_rate_under_autocorrelation():
-    """AR(1) noise without trend: naive OLS over-rejects, corrected test should be near 5%."""
+    """AR(1) noise without trend: naive OLS over-rejects, the corrected test stays near 5%."""
     rng = np.random.default_rng(2)
     t = S.decimal_years(TIMES)
-    Y = ar1(rng, t.size, 0.6, 1.0, 2000)
-    o = S.ols_trend(t, Y)
-    rate = (o["p"] < 0.05).mean()
-    naive = (2 * st.t.sf(np.abs(o["slope"] / o["se"]), o["n"] - 2) < 0.05).mean()
-    assert naive > 0.15
-    assert rate < 0.09
+    for phi in (0.3, 0.6, 0.9):
+        Y = ar1(rng, t.size, phi, 1.0, 1500)
+        o = S.trend_test(t, Y)
+        naive = (2 * st.t.sf(np.abs(o["slope"] / o["se"]), o["n"] - 2) < 0.05).mean()
+        assert naive > 0.1, phi
+        assert (o["p"] < 0.05).mean() < 0.07, phi
+        assert (o["p_month"] < 0.05).mean() < 0.08, phi   # each scale is calibrated on its own
+
+
+def test_seasons_and_gaps_keep_the_false_alarm_rate():
+    """Summer-only months and 20% random gaps: memory is estimated from pairs really one month apart."""
+    rng = np.random.default_rng(5)
+    keep = np.isin(S.month_of(TIMES), [5, 6, 7])          # Jun–Aug
+    t = S.decimal_years(TIMES)[keep]
+    Y = ar1(rng, TIMES.size, 0.7, 1.0, 1500)[keep]
+    Y[rng.random(Y.shape) < 0.2] = np.nan
+    o = S.trend_test(t, Y)
+    assert (o["p"] < 0.05).mean() < 0.07
+
+
+def test_slow_variability_is_caught_by_the_yearly_scale():
+    """Fast AR(1) plus a slow decade-scale component: a month-to-month correction alone is fooled
+    often; the yearly scale removes most of these false alarms (the residual is a known limit)."""
+    rng = np.random.default_rng(6)
+    t = S.decimal_years(TIMES)
+    fast = ar1(rng, t.size, 0.5, np.sqrt(1 - 0.5 ** 2), 1500)
+    slow = ar1(rng, t.size, 0.97, np.sqrt(1 - 0.97 ** 2), 1500)
+    Y = np.sqrt(0.8) * fast + np.sqrt(0.2) * slow
+    o = S.trend_test(t, Y)
+    month_only, both = (o["p_month"] < 0.05).mean(), (o["p"] < 0.05).mean()
+    assert month_only > 0.2 and both < 0.16 and both < month_only / 2
+
+
+def test_variance_inflation_matches_ar1_theory_and_bias_correction():
+    """Complete monthly series: exact inflation -> (1 + rho)/(1 - rho); bias-corrected rho is unbiased."""
+    t = S.decimal_years(pd.date_range("1981-01-01", "2025-12-01", freq="MS").values)
+    w = (t - t.mean()) / ((t - t.mean()) ** 2).sum()
+    v = S._slope_variance_inflation(S.month_index(t), w[:, None], np.array([0.6]))[0]
+    assert abs(v / (1.6 / 0.4) - 1) < 0.02
+    rng = np.random.default_rng(7)
+    o = S.ols_trend(S.decimal_years(TIMES), ar1(rng, TIMES.size, 0.6, 1.0, 2000))
+    assert abs(o["rho"].mean() - 0.6) < 0.015 and o["r1"].mean() < o["rho"].mean()
 
 
 def test_seasonal_mk_null_rate():
+    """Without the dependence correction the seasonal Mann–Kendall test called ~39% of trendless AR(1)
+    series (phi = 0.7) significant. Both corrected scales must stay near 5% with and without memory."""
     rng = np.random.default_rng(3)
     t = S.decimal_years(TIMES)
-    Y = rng.normal(0, 1, (t.size, 1000))
-    mk = S.seasonal_mann_kendall(np.floor(t).astype(int), S.month_of(TIMES), Y)
-    assert 0.02 < (mk["p"] < 0.05).mean() < 0.08
+    white = S.seasonal_mann_kendall(np.floor(t).astype(int), S.month_of(TIMES), rng.normal(0, 1, (t.size, 600)))
+    assert 0.02 < (white["p"] < 0.05).mean() < 0.08
+    for phi in (0.3, 0.7, 0.9):
+        mk = S.mann_kendall_test(t, ar1(rng, t.size, phi, 1.0, 600))
+        assert (mk["p"] < 0.05).mean() < 0.08, phi
+
+
+def test_mk_detects_a_real_trend():
+    rng = np.random.default_rng(8)
+    t = S.decimal_years(TIMES)
+    Y = ar1(rng, t.size, 0.3, 1.0, 200) + 0.08 * (t - t.mean())[:, None]
+    assert (S.mann_kendall_test(t, Y)["p"] < 0.05).mean() > 0.9
 
 
 def test_bh_fdr():
@@ -85,6 +132,10 @@ def test_window_matrix_and_verdict():
     flat = rng.normal(0, 1, t.size)
     v2 = S.verdict(S.analyse_series(TIMES, flat), None)
     assert v2["code"] in ("ci_includes_zero", "trend_detected")
+    # same direction everywhere but rarely significant -> the verdict says so instead of "trend detected"
+    weak = dict(mx, cells=[dict(c, p=0.5) for c in mx["cells"]])
+    assert S.verdict(r, weak)["code"] == "significance_depends_on_period"
+    assert S.verdict(dict(r, n_years=12), mx)["short_record"] is True
 
 
 def test_prune_custom_regions(tmp_path, monkeypatch):
@@ -108,3 +159,16 @@ def test_prune_custom_regions(tmp_path, monkeypatch):
     assert sorted(dropped) == ["c_mid", "c_old"]
     assert list(json.loads(config.CUSTOM_FILE.read_text())) == ["c_new"]
     assert sorted(p.name for p in (tmp_path / "cubes").iterdir()) == ["ndvi__c_new.nc", "ndvi__central_europe.nc"]
+
+
+def test_inflation_filter_and_recursion_paths_agree():
+    """The per-column linear-filter path (single series) and the vectorised recursion (maps) are identical."""
+    rng = np.random.default_rng(9)
+    keep = np.isin(S.month_of(TIMES), [11, 0, 1])          # Dec–Feb: irregular sampling steps
+    k = S.month_index(S.decimal_years(TIMES)[keep])
+    W = rng.normal(size=(k.size, 70))
+    W[rng.random(W.shape) < 0.2] = 0.0
+    rho = rng.uniform(0, 0.95, 70)
+    many = S._slope_variance_inflation(k, W, rho)
+    one = np.array([S._slope_variance_inflation(k, W[:, [c]], rho[[c]])[0] for c in range(70)])
+    assert np.allclose(many, one, rtol=1e-12)

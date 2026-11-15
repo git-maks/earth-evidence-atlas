@@ -478,7 +478,9 @@ function answerLoading() {
 }
 function renderCard(a) {
   const r = a.result, v = V(), ver = a.verdict;
-  const rob = ver.robustness ? `<div><span>${t("detective.otherPeriodsAgree")}</span>${ver.robustness.same_sign} / ${ver.robustness.windows}</div>` : "";
+  // direction stability and significance stability are separate facts (overlapping windows, not repeats)
+  const rob = ver.robustness ? `<div><span>${t("detective.otherPeriodsAgree")}</span>${ver.robustness.same_sign} / ${ver.robustness.windows}</div>` +
+    (ver.robustness.long_windows != null ? `<div data-tip="${esc(t("detective.otherPeriodsSignificantHint"))}"><span>${t("detective.otherPeriodsSignificant")}</span>${ver.robustness.long_significant} / ${ver.robustness.long_windows}</div>` : "") : "";
   const season = { [ALL]: t("calendar.allYear"), "12,1,2": t("calendar.seasons.djf.label"), "3,4,5": t("calendar.seasons.mam.label"), "6,7,8": t("calendar.seasons.jja.label"), "9,10,11": t("calendar.seasons.son.label") }[state.months] || t("calendar.selectedMonths");
   $("#card").innerHTML = `
     <div class="verdict ${ver.code}"><h2>${a.answer.source_url && ver.code === "trend_detected" ? t("detective.significantInMerra") : ver.title}</h2><p>${ver.text}</p></div>

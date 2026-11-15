@@ -268,9 +268,9 @@
     "otherPeriodsAgree": "Zgodność innych okresów",
     "confidenceRange": "Przedział 95%: od {low} do {high} · {start}–{end} · {season}",
     "pValue": "Wartość p",
-    "pValueHint": "Z korektą zależności między kolejnymi miesiącami",
+    "pValueHint": "Surowsza z korekt pamięci danych: między miesiącami i między latami",
     "mannKendallP": "p Manna–Kendalla",
-    "mannKendallHint": "Test oparty na rangach, odporny na wartości odstające",
+    "mannKendallHint": "Test oparty na rangach, odporny na wartości odstające, z korektą pamięci danych",
     "senSlope": "Nachylenie Sena",
     "senSlopeHint": "Mediana nachyleń między wszystkimi parami punktów",
     "effectiveN": "n / efektywne n",
@@ -286,7 +286,9 @@
     "typicalYear": "Typowy rok",
     "basemapAttribution": "Mapa podkładowa: {source} Blue Marble",
     "significantInMerra": "Istotny trend w MERRA-2",
-    "precipitationSource": "Przeczytaj ocenę MERRA-2."
+    "precipitationSource": "Przeczytaj ocenę MERRA-2.",
+    "otherPeriodsSignificant": "Istotność w długich okresach",
+    "otherPeriodsSignificantHint": "Okresy obejmujące co najmniej trzy czwarte tego okresu, w których trend też jest istotny"
   },
   "charts": {
     "month": "Miesiąc",
@@ -295,8 +297,8 @@
     "confidenceRange": "Przedział 95%",
     "anomalyAxis": "Anomalia ({unit})",
     "minimumMatrixPeriod": "Wybierz co najmniej 10 lat, aby porównać okresy.",
-    "matrixNote": "Kropka = istotny trend. Okresy co najmniej {minYears}-letnie. Różne kolory = wynik zależy od okresu.",
-    "matrixNoteWithStep": "Kropka = istotny trend. Okresy co najmniej {minYears}-letnie, co {step} lat. Różne kolory = wynik zależy od okresu."
+    "matrixNote": "Kropka = istotny trend. Okresy co najmniej {minYears}-letnie. Różne kolory = wynik zależy od okresu. Kwadraty nakładają się, więc nie są niezależnymi testami.",
+    "matrixNoteWithStep": "Kropka = istotny trend. Okresy co najmniej {minYears}-letnie, co {step} lat. Różne kolory = wynik zależy od okresu. Kwadraty nakładają się, więc nie są niezależnymi testami."
   },
   "lab": {
     "banner": "Symulacja na danych syntetycznych",
@@ -352,7 +354,7 @@
     "gridYearsColumn": "Siatka / lata",
     "citationLicenceColumn": "Źródło i licencja",
     "methodsTitle": "Metody",
-    "references": "Bibliografia: Santer B.D. et al. (2000) J. Geophys. Res. 105, 7337–7356 · Hirsch R.M., Slack J.R., Smith R.A. (1982) Water Resour. Res. 18, 107–121 · Sen P.K. (1968) JASA 63, 1379–1389 · Benjamini Y., Hochberg Y. (1995) JRSS-B 57, 289–300 · Wilks D.S. (2016) BAMS 97, 2263–2273.",
+    "references": "Bibliografia: Santer B.D. et al. (2000) J. Geophys. Res. 105, 7337–7356 · Hirsch R.M., Slack J.R., Smith R.A. (1982) Water Resour. Res. 18, 107–121 · Sen P.K. (1968) JASA 63, 1379–1389 · Benjamini Y., Hochberg Y. (1995) JRSS-B 57, 289–300 · Wilks D.S. (2016) BAMS 97, 2263–2273 · Hirsch R.M., Slack J.R. (1984) Water Resour. Res. 20, 727–732 · Hamed K.H., Rao A.R. (1998) J. Hydrol. 204, 182–196 · Marriott F.H.C., Pope J.A. (1954) Biometrika 41, 390–402 · Berger R.L. (1982) Technometrics 24, 295–300.",
     "limitsTitle": "Czego narzędzie nie wyjaśni",
     "limitsDescription": "Trend nie wskazuje przyczyny. Narzędzie nigdy nie stwierdza, że „klimat się nie zmienia” ani że „spowodowali to ludzie”: pokazuje, co można, a czego nie można wywnioskować z tej serii danych dla wybranego miejsca i okresu.",
     "notes": {
@@ -366,11 +368,11 @@
       },
       "uncertainty": {
         "label": "niepewność",
-        "text": "95-procentowy przedział ufności z korektą efektywnej liczebności próby AR(1) (Santer i in. 2000)."
+        "text": "Dwie korekty pamięci danych: między miesiącami (AR(1) dla rzeczywistego próbkowania, z korektą obciążenia; Santer i in. 2000) i między latami (ten sam test na średnich rocznych). Podajemy większe z dwóch p, a przedział 95% obejmuje oba przedziały, więc trend liczy się tylko wtedy, gdy oba testy się zgadzają."
       },
       "cross_check": {
         "label": "sprawdzenie inną metodą",
-        "text": "Sezonowy test Manna–Kendalla i sezonowe nachylenie Sena (Hirsch i in. 1982)."
+        "text": "Sezonowy test Manna–Kendalla z korektą Hirscha i Slacka (1984) dla zależnych miesięcy oraz test Manna–Kendalla na średnich rocznych z korektą Hameda i Rao (1998); pokazujemy większe p. Sezonowe nachylenie Sena."
       },
       "map_multiple_testing": {
         "label": "testy wielokrotne na mapie",
@@ -383,6 +385,14 @@
       "minimum_data": {
         "label": "minimalna ilość danych",
         "text": "Trend jest obliczany tylko wtedy, gdy co najmniej {percent}% wybranych miesięcy ma poprawne dane."
+      },
+      "calibration": {
+        "label": "kalibracja",
+        "text": "Sprawdzone na syntetycznych szeregach bez trendu: przy pamięci między miesiącami do 0,9, z sezonami i lukami, najwyżej ok. 6% wychodzi istotnych (cel to 5%). Powolne wahania trwające dekady pozostają trudne: 5–12% zamiast 12–39% przed tą korektą."
+      },
+      "period_choice": {
+        "label": "wybór okresu",
+        "text": "Korekta mapy obejmuje komórki siatki, a nie wybór okresu, sezonu czy zmiennej: im więcej kombinacji sprawdzisz, tym większa szansa, że któraś przypadkiem wyjdzie istotna. Kwadraty w „Czy trend się utrzymuje?” nakładają się, więc nie są niezależnymi powtórzeniami."
       }
     }
   },
@@ -404,8 +414,12 @@
     },
     "trend_detected": {
       "title": "Wykryto trend",
-      "agree": "Istotny na poziomie 5%, z korektą autokorelacji. Test Manna–Kendalla potwierdza wynik.",
-      "disagree": "Istotny na poziomie 5%, z korektą autokorelacji. Test Manna–Kendalla nie potwierdza wyniku; sprawdź wartości odstające."
+      "agree": "Istotny na poziomie 5% po korekcie pamięci danych. Test oparty na rangach (Mann–Kendall) daje ten sam wynik.",
+      "disagree": "Istotny na poziomie 5% po korekcie pamięci danych. Test Manna–Kendalla oparty na rangach nie osiąga 5% – sprawdź wartości odstające i okres."
+    },
+    "significance_depends_on_period": {
+      "title": "Kierunek stały, istotność zmienna",
+      "text": "Tutaj trend jest istotny i większość innych par lat początkowego i końcowego wskazuje ten sam kierunek, ale mniej niż połowa długich okresów (co najmniej trzy czwarte tego okresu) jest istotna. Wynik zależy od dokładnego wyboru lat początkowego i końcowego."
     }
   },
   "answers": {
@@ -415,7 +429,8 @@
       "depends_on_period": "To zależy od okresu.",
       "comparisonAgree": "Tak – wyniki są zgodne.",
       "comparisonPartial": "Częściowo.",
-      "comparisonDisagree": "Nie – wyniki są rozbieżne."
+      "comparisonDisagree": "Nie – wyniki są rozbieżne.",
+      "significance_depends_on_period": "Ten sam kierunek, ale nie zawsze istotny."
     },
     "places": {
       "selectedArea": "wybrany obszar",
@@ -439,15 +454,17 @@
     "fastestWarming": "Najszybsze ocieplenie: okolice {latitude}°{latitudeDirection}, {longitude}°{longitudeDirection}, {slope} {unit}.",
     "confidence": {
       "periods": "{agreeing} z {total} innych okresów wskazuje ten sam kierunek",
-      "mkAgrees": "test Manna–Kendalla oparty na rangach potwierdza wynik",
-      "mkDisagrees": "test Manna–Kendalla oparty na rangach nie potwierdza wyniku",
-      "summary": "Pewność wyniku: {details}."
+      "mkAgrees": "test oparty na rangach (Mann–Kendall) daje ten sam wynik",
+      "mkDisagrees": "test Manna–Kendalla oparty na rangach nie osiąga 5%",
+      "summary": "Pewność wyniku: {details}.",
+      "periodsWithSignificant": "{agreeing} z {total} innych okresów wskazuje ten sam kierunek, w tym {significant} istotnie"
     },
     "how": {
       "trend": "Trend: {slope} {unit}, przedział 95%: od {low} do {high}.",
       "autocorrelation": "{pValue} po korekcie zależności między kolejnymi miesiącami (efektywne n ≈ {effective} z {total} miesięcy).",
-      "rankTest": "Mann–Kendall: {pValue}; nachylenie Sena: {slope}.",
-      "anomalies": "Wartości miesięczne pomniejszone o typową wartość dla danego miesiąca kalendarzowego; {percent}% poprawnych danych."
+      "rankTest": "Mann–Kendall: {pValue}, również z korektą pamięci danych; nachylenie Sena: {slope}.",
+      "anomalies": "Wartości miesięczne pomniejszone o typową wartość dla danego miesiąca kalendarzowego; {percent}% poprawnych danych.",
+      "autocorrelationTwoScales": "{pValue}, surowsza z dwóch korekt pamięci danych: między miesiącami (efektywne n ≈ {effective} z {total} miesięcy) i między latami ({years} średnich rocznych)."
     },
     "note": "Odpowiedź powstała z liczb na tej stronie według stałych reguł; bez generowania tekstu przez AI.",
     "comparison": {
@@ -518,7 +535,9 @@
     "merraLess": "MERRA-2 wskazuje spadek opadów. Wynik wymaga potwierdzenia.",
     "merraMore": "MERRA-2 wskazuje wzrost opadów. Wynik wymaga potwierdzenia.",
     "merraEstimate": "Oszacowany trend opadów w MERRA-2: {slope} mm/dzień na dekadę ({start}–{end}, {season}).",
-    "merraCaution": "W publikacjach opisano nieciągłości skorygowanych opadów MERRA-2 w Ameryce Południowej. Sprawdź drugi zbiór dla tego samego obszaru, sezonu i okresu."
+    "merraCaution": "W publikacjach opisano nieciągłości skorygowanych opadów MERRA-2 w Ameryce Południowej. Sprawdź drugi zbiór dla tego samego obszaru, sezonu i okresu.",
+    "significanceDependency": "Kierunek utrzymuje się w {agreeing} z {total} innych okresów, ale tylko {significant} z {long} okresów obejmujących co najmniej trzy czwarte tego okresu jest istotnych, więc wynik zależy od dokładnego wyboru lat początkowego i końcowego.",
+    "shortRecord": "Krótki zapis (poniżej 15 lat): powolne naturalne wahania trwające kilka lat mogą w tak krótkim okresie wyglądać jak trend."
   },
   "errors": {
     "analysisFailed": "Nie udało się przeprowadzić analizy: {message}",

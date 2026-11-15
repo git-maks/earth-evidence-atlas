@@ -33,7 +33,7 @@ Pełna przebudowa danych (ok. 10 min, bez logowania; kostki już są w `data/cub
 cd /storage/home/moai/nasaapps && .venv/bin/python -m scripts.build_data --force
 ```
 
-Testy (31 zielonych):
+Testy (54 zielone, w tym kalibracja testów trendu na danych syntetycznych):
 
 ```bash
 cd /storage/home/moai/nasaapps && .venv/bin/python -m pytest -q tests
@@ -47,7 +47,7 @@ Instalacja od zera: `uv venv .venv --python 3.11 && uv pip install -r requiremen
 | --- | --- | --- |
 | Katalog | [atlas/config.py](atlas/config.py) | 6 zmiennych (pytanie dla ucznia, definicja, jednostki, cytowanie, licencja, zastrzeżenia) i 4 regiony |
 | Dane | [atlas/sources/](atlas/sources/) | Adaptery: MODIS przez Planetary Computer, NASA POWER, GISTEMP. Wyjście: kostki NetCDF `(time, lat, lon)` z metadanymi pochodzenia |
-| Statystyka | [atlas/stats.py](atlas/stats.py) | Deseasonalizacja, OLS z korektą AR(1) (Santer 2000), sezonowy Mann–Kendall i Sen, FDR Benjamini–Hochberg, średnia ważona cos(lat), macierz okien, werdykt |
+| Statystyka | [atlas/stats.py](atlas/stats.py) | Deseasonalizacja, OLS z korektą pamięci danych w dwóch skalach (miesiąc do miesiąca i rok do roku, test przecięcia–sumy), Mann–Kendall z korektami Hirscha–Slacka i Hameda–Rao, Sen, FDR Benjamini–Hochberg, średnia ważona cos(lat), macierz okien, werdykt. Szczegóły i kalibracja: sekcja „Metody statystyczne i kalibracja” |
 | API | [atlas/api.py](atlas/api.py) | `/api/catalog`, `/api/analysis`, `/api/map`, `/api/export.csv`, `/api/export.json`, `/api/simulate`, `/api/simulate_many` |
 | Frontend | [web/](web/) | Vanilla JS + Leaflet + Plotly, bez kroku budowania. Podkład mapy: NASA GIBS Blue Marble. Stan analizy zapisany w URL (`#var=…&region=…`) |
 | Testy | [tests/](tests/) | Walidacja statystyki na danych syntetycznych (m.in. odsetek fałszywych alarmów przy autokorelacji) i smoke testy API na wszystkich kostkach |
@@ -72,6 +72,8 @@ Regiony: `central_europe` (14–24°E, 49–55°N), `nw_india` (72–78°E, 26�
 
 Domyślny okres zmiennej, cały region, 95% CI, p z korektą autokorelacji:
 
+> **Aktualizacja 15.11 (kalibracja testów):** liczby poniżej policzono starą, zbyt liberalną metodą. Nachylenia się nie zmieniły, ale przedziały są szersze, a niektóre werdykty łagodniejsze. Najważniejsze zmiany: T2M Europa Środkowa +0,51 °C/dekadę, CI **[0,25; 0,77]** (wcześniej [0,35; 0,67]), werdykt nadal „Trend detected”. LST NW Indie i LST Europa Środkowa mają teraz werdykt **„Direction holds, significance varies”**. GISTEMP: CI [0,132; 0,192], 12 602 z 15 914 komórek po FDR. Pełne porównanie: sekcja „Metody statystyczne i kalibracja”.
+
 - **NW Indie: „zieleń a woda”.** NDVI rośnie o +0,036/dekadę [0,028; 0,043]. Dzienna LST *spada* o −0,72 °C/dekadę [−1,10; −0,35] (2001–2024), a letnia T2M w MERRA-2 o −0,32 °C/dekadę. To spójne z opisywanym w literaturze chłodzeniem przez nawadnianie, ale **nie jest to wniosek przyczynowy**. Wilgotność gleby w MERRA-2 rośnie, ale model nie zna poboru wód podziemnych, więc to dobra lekcja ograniczeń modelu. GRACE (P1) mógłby pokazać kontrast.
 - **Amazonia, łuk wylesiania.** Dzienna LST latem +0,58 °C/dekadę, a mapa pokazuje wyraźne ogniska zgodne z wylesianiem. NDVI w JJA spada o −0,022/dekadę. Wilgotność gleby spada.
 - **Europa Środkowa: „czy wniosek się trzyma”.** NDVI całoroczny jest istotny (+0,034), ale w samym lecie JJA przedział obejmuje zero. Do tego Sen 0,018 vs OLS 0,034, więc trend prawdopodobnie napędzają zimowe miesiące (śnieg). To dobry przykład na lekcję o sezonach. LST +0,88 °C/dekadę, T2M +0,51 °C/dekadę (1981–2025). Opad: brak wykrywalnego trendu.
@@ -93,11 +95,57 @@ Wartości w °C/dekadę. Wniosek: ochłodzenie w NW Indiach jest **nieistotne do
 
 - MODIS jest czytany z overview COG (ok. 4 km) **bez warstwy QA** (`pixel_reliability` / `QC_Day`). Odrzucane są tylko wartości spoza zakresu. Następny krok to wczytanie QA na tym samym poziomie overview i maskowanie.
 - Wartość miesięczna MODIS to średnia kompozytów zaczynających się w danym miesiącu (granice miesięcy są przybliżone).
-- Korekta Santera jest lekko liberalna dla krótkich serii: przy 10 latach i φ = 0,7 daje ok. 7% fałszywych alarmów zamiast 5%. Laboratorium pokazuje to uczciwie.
+- Testy trendu są skalibrowane (sekcja niżej), ale **powolnych naturalnych wahań trwających dekady nie da się w pełni odróżnić od trendu na podstawie jednego krótkiego zapisu**: w najtrudniejszym scenariuszu syntetycznym fałszywe alarmy spadły z 12–39% do 5–12%, a nie do 5%. Dla okresów krótszych niż 15 lat odpowiedź pokazuje osobne ostrzeżenie.
 - Klimatologia do anomalii liczona jest z wybranego okresu, a nie ze stałej bazy 2001–2020.
 - Brak GPU: obliczenia numpy trwają poniżej 0,1 s na zapytanie dla obecnych siatek, więc GPU nie jest jeszcze potrzebne.
 - Rysowanie prostokąta i klik w komórkę analizują tylko obszar wewnątrz zbudowanego regionu. Dowolnych regionów (pobieranie na żądanie) jeszcze nie ma.
 - Frontend jest po angielsku (wymóg zgłoszenia). Nie testowano dostępności czytnikiem ekranu.
+
+## Metody statystyczne i kalibracja (15.11)
+
+**Problem, który usunęliśmy.** Poprzedni sezonowy test Manna–Kendalla sumował wariancje miesięcy tak, jakby były niezależne. Przy pamięci danych (φ = 0,7) uznawał za istotne ok. 39% szeregów **bez trendu**. Zdanie „Mann–Kendall agrees” nie było więc niezależnym potwierdzeniem. Stary OLS z korektą Santera dawał 6–8% przy szumie AR(1), ale **12–39%** przy powolnych wahaniach trwających lata, bo patrzył tylko na pamięć z miesiąca na miesiąc.
+
+**Obecna metoda** ([atlas/stats.py](atlas/stats.py)):
+
+1. **OLS na anomaliach** (bez zmian: nachylenie, wykres, jednostki).
+2. **Pamięć z miesiąca na miesiąc:** AR(1), ale korelację liczymy tylko z par naprawdę odległych o jeden miesiąc. Ma to znaczenie przy sezonach (np. JJA: sierpień → czerwiec to 10 miesięcy) i lukach. Korelacja ma poprawkę obciążenia dla krótkich szeregów po usunięciu trendu: E[r] ≈ ρ − (2 + 4ρ)/n (Marriott i Pope 1954; współczynniki sprawdziliśmy Monte Carlo). Wariancję nachylenia liczymy dokładnie dla rzeczywistego układu próbek (forma kwadratowa Σ wᵢwⱼρ^|kᵢ−kⱼ|). Dla pełnego szeregu daje to wzór Santera i in. (2000).
+3. **Pamięć z roku na rok:** ten sam test na średnich sezonowo-rocznych. Grudzień w DJF należy do zimy następnego roku. Ten test wyłapuje powolną zmienność, której AR(1) miesięczny nie widzi.
+4. **Łączenie (test przecięcia–sumy, Berger 1982):** p = większe z dwóch p, przedział 95% = suma obu przedziałów. „Istotne” oznacza istotne w obu skalach.
+5. **Test rangowy:** sezonowy Mann–Kendall z korektą Hirscha i Slacka (1984) między miesiącami (z wersją dla braków danych) oraz Mann–Kendall na średnich rocznych z korektą Hameda i Rao (1998). Podajemy większe p. Sen slope bez zmian.
+6. **Werdykt rozdziela trzy fakty:** istotność w tym okresie, stabilność kierunku (≥ 80% okien) i stabilność istotności. Tę ostatnią liczymy tylko na **długich oknach**, czyli ≥ 3/4 badanego okresu, bo krótkie okna mają małą moc nawet przy prawdziwym trendzie. Nowy kod: `significance_depends_on_period`. Okna się nakładają, więc nie są niezależnymi powtórzeniami. Mówi o tym UI i zakładka Methods.
+7. Mapy, macierz okien i laboratorium używają tej samej procedury co wynik główny.
+
+**Kalibracja (Monte Carlo, 1000 szeregów bez trendu na scenariusz, błąd ok. ±0,7 pp).** Scenariusze: AR(1) φ ∈ {0; 0,3; 0,6; 0,9}, 10/24/45 lat, cały rok/JJA/DJF, 0% lub 20% luk, zmienna wariancja w ciągu roku.
+
+| Test | Odsetek fałszywych alarmów (cel 5%) |
+| --- | --- |
+| Stary sezonowy Mann–Kendall | 2–67% (39% przy φ = 0,7) |
+| Stary OLS + Santer | 3–9% |
+| **Nowy OLS (dwie skale)** | **1,6–5,0%**, wyjątkowo 6,5% (10 lat, φ = 0,9, 20% luk) |
+| **Nowy Mann–Kendall (dwie skale)** | **0,5–6,6%** |
+| Powolne wahania (AR(1) + składnik φ = 0,97): stary OLS → nowy | 12–39% → 5–12% |
+
+Koszt: mniejsza moc. Przy φ = 0,6, 24 latach i trendzie 0,4 σ/dekadę wykrywalność spada z ok. 63% do ok. 50%. To uczciwa cena: krótki szereg z pamięcią niesie mniej niezależnej informacji. Testy kalibracji są w [tests/test_stats.py](tests/test_stats.py) i przechodzą przy każdym `pytest`.
+
+**Zmiany na prawdziwych danych** (domyślny okres, cały region):
+
+| Przypadek | Było | Jest |
+| --- | --- | --- |
+| T2M Europa Środkowa 1981–2025 | +0,51 [0,35; 0,67], trend | +0,51 [0,25; 0,77], p = 0,0004, trend |
+| LST NW Indie 2001–2024 | −0,72 [−1,10; −0,35], trend | −0,72 [−1,22; −0,22], p = 0,008, *kierunek stały, istotność zależy od okresu* (12 z 28 długich okien) |
+| LST Europa Środkowa 2001–2024 | +0,88, p = 0,001, trend | +0,88, p = 0,034, *istotność zależy od okresu* (7 z 28) |
+| LST Amazonia JJA | +0,58, p < 0,001 | +0,58 [0,16; 1,01], p = 0,013, trend |
+| Wilgotność gleby NW Indie | p = 0,0004 | p = 0,026, trend |
+| NDVI Europa Środkowa JJA | p = 0,066, brak trendu | p = 0,26, brak trendu |
+| GISTEMP świat 1951–2025 | [0,149; 0,176], 13 756 komórek FDR | [0,132; 0,192], 12 602 komórek FDR |
+| NDVI Amazonia, mapa | 2 461 z 6 000 komórek FDR | 611 z 6 000 |
+| Laboratorium: 200 szeregów, 10 lat, φ = 0,7 | naiwny 83, skorygowany 14 | naiwny 83, skorygowany 5 |
+
+Dryf Terra/Aqua (LST, °C/dekadę) nowymi testami: NW Indie Terra 2003–2021 −0,29 (p = 0,23), 2003–2024 −0,70 (p = 0,048); Aqua −0,38 (p = 0,16) i −0,52 (p = 0,019). Europa Środkowa Terra +1,10 (p = 0,08) i +0,90 (p = 0,07); Aqua +1,10 (p = 0,08) i +1,08 (p = 0,022). Amazonia we wszystkich czterech wariantach p ≤ 0,006. Wniosek: odporna jest tylko Amazonia. W NW Indiach i w Europie Środkowej (LST) kierunek się zgadza, ale istotność zależy od okresu i satelity.
+
+**Do zrobienia przez właściciela prezentacji (`presentation/`, Maja / Codex):** slajd z przykładem T2M ma stałe zdanie „Mann–Kendall agrees.” oraz liczby ze starej metody (CI [0,352; 0,667], 81 istotnych okien, laboratorium 83/14). Trzeba odświeżyć `evidence.json` z API po restarcie serwera i przebudować deck. Nie zmieniałem plików w `presentation/`.
+
+**Literatura:** Santer i in. (2000) JGR 105, 7337–7356 · Marriott i Pope (1954) Biometrika 41, 390–402 · Hirsch, Slack i Smith (1982) WRR 18, 107–121 · Hirsch i Slack (1984) WRR 20, 727–732 · Hamed i Rao (1998) J. Hydrol. 204, 182–196 · Berger (1982) Technometrics 24, 295–300 · Sen (1968) JASA 63, 1379–1389 · Benjamini i Hochberg (1995) JRSS-B 57, 289–300 · Wilks (2016) BAMS 97, 2263–2273. Kontekst: Noguchi, Gel i Duguay (2011) J. Hydrol. 410, 150–161 (bootstrap dla testów trendu; rozważany wariant, w naszych symulacjach nie poprawiał kalibracji względem metody analitycznej) · Collaud Coen i in. (2020) AMT 13, 6945–6964 (wpływ prewhiteningu i ziarnistości czasu na test MK).
 
 ## Czego jeszcze potrzebujemy (propozycja kolejności)
 
@@ -133,7 +181,7 @@ Wartości w °C/dekadę. Wniosek: ochłodzenie w NW Indiach jest **nieistotne do
   - zdanie z wynikiem: kierunek, tempo zmiany, okres i pora roku,
   - całkowitą zmianę w porównaniu z typowymi wahaniami rok do roku (i jako % zwykłego poziomu przy NDVI, opadzie i wilgotności gleby),
   - udział komórek mapy, które rosną, maleją i mają istotny trend,
-  - pewność wyniku: ile innych okresów daje ten sam kierunek i czy test Manna–Kendalla potwierdza trend,
+  - pewność wyniku: ile innych okresów daje ten sam kierunek, ile z nich jest też istotnych i czy test rangowy (Mann–Kendall z korektą pamięci danych) daje ten sam wynik,
   - jedno najważniejsze zastrzeżenie do źródła danych,
   - rozwijane „How we know” z liczbami.
 - Pytanie o drugiego satelitę (Aqua) porównuje wynik z Terrą dla tego samego obszaru i okresu.

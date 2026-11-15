@@ -64,6 +64,8 @@ def _headline(ph: dict, code: str, slope: float, rob: dict | None) -> str:
         return "We can't tell yet."
     if code == "depends_on_period":
         return "It depends on the period."
+    if code == "significance_depends_on_period":
+        return "Same direction, but not always significant."
     if ph.get("fastest"):
         return "Warming." if slope > 0 else "Cooling."
     if ph.get("yes_if_up") is not None:
@@ -97,6 +99,12 @@ def _main_sentence(ph: dict, code: str, a: dict, where: str, units: str) -> str:
         rob = a["verdict"].get("robustness") or {}
         core += (f" But only {rob.get('same_sign', '?')} of {rob.get('windows', '?')} other start/end periods "
                  f"point the same way, so the direction is not settled.")
+    if code == "significance_depends_on_period":
+        rob = a["verdict"].get("robustness") or {}
+        core += (f" The direction holds in {rob.get('same_sign', '?')} of {rob.get('windows', '?')} other start/end "
+                 f"periods, but only {rob.get('long_significant', '?')} of the {rob.get('long_windows', '?')} periods "
+                 f"covering at least three quarters of this one are significant, so the result depends on the exact "
+                 f"start and end years.")
     return core
 
 
@@ -152,11 +160,25 @@ def _confidence_sentence(a: dict) -> str | None:
     bits = []
     rob = ver.get("robustness")
     if rob:
-        bits.append(f"{rob['same_sign']} of {rob['windows']} other start/end periods give the same direction")
-    if r.get("mk_p") is not None and r.get("p") is not None and ver["code"] in ("trend_detected", "depends_on_period"):
-        bits.append("the rank-based Mann–Kendall test agrees" if r["mk_p"] < 0.05 else
-                    "the rank-based Mann–Kendall test does not confirm it")
+        if rob.get("same_sign_significant") is not None:
+            bits.append(f"{rob['same_sign']} of {rob['windows']} other start/end periods give the same direction, "
+                        f"{rob['same_sign_significant']} of them also significant")
+        else:
+            bits.append(f"{rob['same_sign']} of {rob['windows']} other start/end periods give the same direction")
+    if r.get("mk_p") is not None and r.get("p") is not None and ver["code"] in SIGNIFICANT_CODES:
+        bits.append("a rank-based test (Mann–Kendall) gives the same result" if r["mk_p"] < 0.05 else
+                    "the rank-based Mann–Kendall test does not reach 5%")
     return ("How sure: " + "; ".join(bits) + ".") if bits else None
+
+
+SIGNIFICANT_CODES = ("trend_detected", "depends_on_period", "significance_depends_on_period")
+SHORT_RECORD = ("Short record (under 15 years): slow natural swings lasting several years can look like a trend "
+                "over a period this short.")
+
+
+def _significant(a: dict) -> bool:
+    p = a.get("result", {}).get("p")
+    return a.get("verdict", {}).get("code") in SIGNIFICANT_CODES and p is not None and p < 0.05
 
 
 def p_text(p: float | None) -> str:
@@ -168,10 +190,15 @@ def p_text(p: float | None) -> str:
 def _how(a: dict) -> list[str]:
     r = a["result"]
     n_eff = round(r["n_eff"]) if r.get("n_eff") is not None and math.isfinite(r["n_eff"]) else "?"
+    n_year = r.get("n_year")
+    memory = (f"{p_text(r['p'])}, the stricter of two memory corrections: month to month (effective n ≈ {n_eff} "
+              f"of {r['n']} months) and year to year ({n_year} yearly means)."
+              if n_year and r.get("p_year") is not None and math.isfinite(r["p_year"]) else
+              f"{p_text(r['p'])} after correcting for month-to-month memory (effective n ≈ {n_eff} of {r['n']} months).")
     return [
         f"Trend {num(r['slope'])} {a['trend_units']}, 95% range {num(r['ci_low'])} to {num(r['ci_high'])}.",
-        f"{p_text(r['p'])} after correcting for month-to-month memory (effective n ≈ {n_eff} of {r['n']} months).",
-        f"Mann–Kendall {p_text(r['mk_p'])}; Sen slope {num(r['sen_slope'])}.",
+        memory,
+        f"Mann–Kendall {p_text(r['mk_p'])}, also corrected for memory; Sen slope {num(r['sen_slope'])}.",
         f"Monthly values minus the usual value for each calendar month; {round(100 * r['valid_fraction'])}% valid data.",
     ]
 
@@ -193,10 +220,12 @@ def build(var: dict, region_name: str, a: dict, trend_map: dict | None = None, c
                       _confidence_sentence(a)):
             if extra:
                 lines.append(extra)
+        if a["verdict"].get("short_record"):
+            lines.append(SHORT_RECORD)
     if compare and compare_var and compare.get("result", {}).get("slope") is not None:
-        cr, cv = compare["result"], compare["verdict"]["code"]
+        cr = compare["result"]
         same_dir = np.sign(cr["slope"]) == np.sign(slope)
-        both_sig = cv == "trend_detected" and code == "trend_detected"
+        both_sig = _significant(compare) and _significant(a)
         verdict = ("They agree: same direction, both significant." if same_dir and both_sig else
                    "Same direction, but not both significant." if same_dir else
                    "They disagree on the direction – treat the result with care.")

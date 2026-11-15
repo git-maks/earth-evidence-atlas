@@ -59,9 +59,19 @@ app.add_middleware(GZipMiddleware, minimum_size=2000)
 METHOD_NOTE = {
     "deseasonalisation": "Each calendar month's mean over the selected period is subtracted (anomalies).",
     "trend": "Ordinary least squares slope of the anomalies, reported per decade.",
-    "uncertainty": "95% confidence interval with AR(1) effective sample size correction (Santer et al. 2000).",
-    "cross_check": "Seasonal Mann–Kendall test and seasonal Sen slope (Hirsch et al. 1982).",
+    "uncertainty": ("Two memory corrections: month to month (AR(1) for the actual sampling, bias-corrected; "
+                    "Santer et al. 2000) and year to year (the same test on yearly means). The p-value is the "
+                    "larger of the two and the 95% interval covers both, so a trend counts only if both agree."),
+    "cross_check": ("Seasonal Mann–Kendall with the Hirsch & Slack (1984) correction for dependent months, and "
+                    "Mann–Kendall on yearly means with the Hamed & Rao (1998) correction; the larger p is shown. "
+                    "Seasonal Sen slope."),
+    "calibration": ("Checked on synthetic series without a trend: with month-to-month memory up to 0.9, seasons "
+                    "and gaps, at most about 6% are called significant (the target is 5%). Slow decade-long swings "
+                    "remain hard: 5–12% instead of 12–39% before this correction."),
     "map_multiple_testing": "Benjamini–Hochberg false discovery rate across map cells, q = 0.05 (Wilks 2016).",
+    "period_choice": ("The map correction covers grid cells, not the choice of period, season or variable: the "
+                      "more combinations you try, the more likely one looks significant by chance. The squares in "
+                      "“Does it hold?” overlap, so they are not independent repeats."),
     "regional_mean": "cos(latitude)-weighted mean of cell anomalies; months with < 50% area coverage are dropped.",
     "minimum_data": f"A trend is computed only if at least {int(S.MIN_FRACTION*100)}% of the selected months are valid.",
 }
@@ -195,8 +205,10 @@ def _analysis(var, region, start, end, months_t, bbox_t, min_len):
         series=dict(dates=[str(d)[:7] for d in times], anomaly=res["anomaly"], fit=fit,
                     running12=run, coverage=cover, absolute=absmean, t=t, t_mean=tm),
         seasonal_cycle=clim,
-        result={k: res[k] for k in ("slope", "ci_low", "ci_high", "p", "n", "n_eff", "r1",
-                                      "mk_p", "mk_z", "sen_slope", "valid_fraction")},
+        result={k: res[k] for k in ("slope", "ci_low", "ci_high", "p", "p_month", "p_year", "binding",
+                                      "n", "n_eff", "n_year", "n_eff_year", "n_years", "r1", "rho", "rho_year",
+                                      "mk_p", "mk_p_seasonal", "mk_p_year", "mk_z", "sen_slope",
+                                      "valid_fraction")},
         trend_units=VARIABLES[var].trend_units, units=VARIABLES[var].units,
         verdict=ver, matrix=mx, methods=METHOD_NOTE, provenance=provenance(var, region),
     )
@@ -226,7 +238,7 @@ def _answer(a, months_t, bbox_t, min_len):
                 answer["source_url"] = "https://doi.org/10.1175/JCLI-D-16-0570.1"
                 answer["caveat"] = ("Published assessments document breaks in corrected MERRA-2 rainfall in South America. "
                                     "Check a second dataset for the same area, season and period.")
-                if answer["code"] in ("trend_detected", "depends_on_period"):
+                if answer["code"] in ("trend_detected", "depends_on_period", "significance_depends_on_period"):
                     trend = a["result"]["slope"]
                     answer["lines"][0] = (f"Estimated MERRA-2 rainfall trend: {answers.num(trend)} "
                                           f"mm/day per decade ({a['start']}–{a['end']}, {answers.season_text(a['months'])}).")
@@ -256,7 +268,7 @@ def _map(var, region, start, end, months_t, q):
     A = S.deseasonalise(Y, S.month_of(da.time.values))
     valid = np.isfinite(A).mean(0)
     A[:, valid < S.MIN_FRACTION] = np.nan
-    o = S.ols_trend(S.decimal_years(da.time.values), A)
+    o = S.trend_test(S.decimal_years(da.time.values), A)   # same two-scale test as the headline result
     slope = o["slope"] * 10
     p = np.where(valid >= S.MIN_FRACTION, o["p"], np.nan)
     sig, thr = S.bh_fdr(p, q)
@@ -331,7 +343,7 @@ def simulate(seed: int = 7, years: int = Query(12, ge=5, le=60), phi: float = Qu
         x[halfway:] += 5 * sigma
     times = pd.date_range("2001-01-01", periods=n, freq="MS").values
     t = S.decimal_years(times)
-    o = S.ols_trend(t, x)
+    o = S.trend_test(t, x)   # the app's own two-scale memory correction
     naive_p = float(2 * st.t.sf(abs(o["slope"][0] / o["se"][0]), n - 2))
     result = dict(label="SIMULATION – not satellite observations", seed=seed, years=years, phi=phi,
                   sigma=sigma, true_trend=0.0, dates=[str(d)[:7] for d in times], values=x,
@@ -343,7 +355,7 @@ def simulate(seed: int = 7, years: int = Query(12, ge=5, le=60), phi: float = Qu
         result["segments"] = []
         for section in (slice(0, halfway), slice(halfway, n)):
             seg_t = t[section]
-            fit = S.ols_trend(seg_t, x[section])
+            fit = S.trend_test(seg_t, x[section])
             result["segments"].append(dict(
                 dates=result["dates"][section], fit=fit["intercept"][0] + fit["slope"][0] * seg_t,
                 slope=10 * fit["slope"][0], p=fit["p"][0],
@@ -365,7 +377,7 @@ def simulate_many(runs: int = Query(200, ge=10, le=5000), years: int = Query(12,
     for i in range(1, n):
         x[i] = phi * x[i - 1] + e[i]
     t = S.decimal_years(pd.date_range("2001-01-01", periods=n, freq="MS").values)
-    o = S.ols_trend(t, x)
+    o = S.trend_test(t, x)
     naive_p = 2 * st.t.sf(np.abs(o["slope"] / o["se"]), n - 2)
     naive = int((naive_p < 0.05).sum())
     corrected = int((o["p"] < 0.05).sum())

@@ -20,7 +20,8 @@ def test_analysis_and_map(var, region):
     assert a.status_code == 200, a.text
     j = a.json()
     assert j["result"]["ci_low"] <= j["result"]["slope"] <= j["result"]["ci_high"]
-    assert j["verdict"]["code"] in {"trend_detected", "ci_includes_zero", "depends_on_period", "insufficient_data"}
+    assert j["verdict"]["code"] in {"trend_detected", "ci_includes_zero", "depends_on_period",
+                                    "significance_depends_on_period", "insufficient_data"}
     m = c.get("/api/map", params=dict(var=var, region=region)).json()
     assert m["summary"]["significant_fdr"] <= m["summary"]["cells_with_trend"]
 

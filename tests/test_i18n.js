@@ -30,7 +30,8 @@ async function runtime(preferred, failLanguage) {
     const { api } = await runtime(language);
     assert.strictEqual(api.language, language);
     assert.strictEqual(api.text("A user's custom Mann–Kendall area"), "A user's custom Mann–Kendall area");
-    assert(!api.text("How sure: 20 of 40 other start/end periods give the same direction; the rank-based Mann–Kendall test agrees.").includes("the rank-based"));
+    assert(!api.text("How sure: 20 of 40 other start/end periods give the same direction, 12 of them also significant; a rank-based test (Mann–Kendall) gives the same result.").includes("rank-based test"));
+    assert(!api.text("How sure: 20 of 40 other start/end periods give the same direction; the rank-based Mann–Kendall test does not reach 5%.").includes("the rank-based"));
     const distribution = api.text("Across the map, 98% of grid cells went up and 2% went down; 86% show a significant trend after correcting for many tests. Fastest warming: around 81°N, 73°E, +0.616 °C per decade.");
     assert(!/Across the map|Fastest warming|show a significant/.test(distribution), distribution);
     assert(!api.html("errors.analysisFailed", { message: '<img src=x onerror="alert(1)">' }).includes("<img"));
@@ -41,7 +42,7 @@ async function runtime(preferred, failLanguage) {
       assert.strictEqual(JSON.stringify(result.series), JSON.stringify(raw.series));
       assert.strictEqual(JSON.stringify(raw), before, "source response was mutated");
       for (const line of result.answer.lines.concat(result.answer.how, result.answer.headline, result.answer.caveat, result.answer.note)) {
-        assert(!/\{[A-Za-z]+\}|per decade|the rank-based|same direction|of grid cells|usual level|valid data|no AI|in the selected area|months|the same area|They agree|They disagree|but not both|Over \d+ years/.test(line), `${language}: ${line}`);
+        assert(!/\{[A-Za-z]+\}|per decade|the rank-based|same direction|of grid cells|usual level|valid data|no AI|in the selected area|months|the same area|They agree|They disagree|but not both|Over \d+ years|yearly means|Short record|Same direction|also corrected/.test(line), `${language}: ${line}`);
       }
       assert.notStrictEqual(result.answer.headline, raw.answer.headline);
     }

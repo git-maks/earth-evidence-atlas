@@ -268,9 +268,9 @@
     "otherPeriodsAgree": "Otros períodos coinciden",
     "confidenceRange": "Intervalo del 95% de {low} a {high} · {start}–{end} · {season}",
     "pValue": "Valor p",
-    "pValueHint": "Corregido por la persistencia de un mes a otro",
+    "pValueHint": "La más estricta de las correcciones por persistencia mensual y anual",
     "mannKendallP": "Valor p de Mann–Kendall",
-    "mannKendallHint": "Prueba basada en rangos, resistente a valores atípicos",
+    "mannKendallHint": "Prueba basada en rangos, resistente a valores atípicos y corregida por persistencia",
     "senSlope": "Pendiente de Sen",
     "senSlopeHint": "Mediana de las pendientes entre todos los pares de puntos",
     "effectiveN": "n / n efectivo",
@@ -286,7 +286,9 @@
     "typicalYear": "Año típico",
     "basemapAttribution": "Mapa base: {source} Blue Marble",
     "significantInMerra": "Significativa en MERRA-2",
-    "precipitationSource": "Lee la evaluación de MERRA-2."
+    "precipitationSource": "Lee la evaluación de MERRA-2.",
+    "otherPeriodsSignificant": "Períodos largos significativos",
+    "otherPeriodsSignificantHint": "Períodos que abarcan al menos tres cuartas partes de este y que también son significativos"
   },
   "charts": {
     "month": "Mes",
@@ -295,8 +297,8 @@
     "confidenceRange": "Intervalo del 95%",
     "anomalyAxis": "Anomalía ({unit})",
     "minimumMatrixPeriod": "Elige al menos 10 años para comparar períodos.",
-    "matrixNote": "Punto = tendencia significativa. Períodos de {minYears} años o más. Colores distintos = depende del período.",
-    "matrixNoteWithStep": "Punto = tendencia significativa. Períodos de {minYears} años o más, cada {step} años. Colores distintos = depende del período."
+    "matrixNote": "Punto = tendencia significativa. Períodos de {minYears} años o más. Colores distintos = depende del período. Los cuadros se solapan, así que no son pruebas independientes.",
+    "matrixNoteWithStep": "Punto = tendencia significativa. Períodos de {minYears} años o más, cada {step} años. Colores distintos = depende del período. Los cuadros se solapan, así que no son pruebas independientes."
   },
   "lab": {
     "banner": "Simulación con datos sintéticos",
@@ -352,7 +354,7 @@
     "gridYearsColumn": "Cuadrícula / años",
     "citationLicenceColumn": "Referencia y licencia",
     "methodsTitle": "Métodos",
-    "references": "Referencias: Santer B.D. et al. (2000) J. Geophys. Res. 105, 7337–7356 · Hirsch R.M., Slack J.R., Smith R.A. (1982) Water Resour. Res. 18, 107–121 · Sen P.K. (1968) JASA 63, 1379–1389 · Benjamini Y., Hochberg Y. (1995) JRSS-B 57, 289–300 · Wilks D.S. (2016) BAMS 97, 2263–2273.",
+    "references": "Referencias: Santer B.D. et al. (2000) J. Geophys. Res. 105, 7337–7356 · Hirsch R.M., Slack J.R., Smith R.A. (1982) Water Resour. Res. 18, 107–121 · Sen P.K. (1968) JASA 63, 1379–1389 · Benjamini Y., Hochberg Y. (1995) JRSS-B 57, 289–300 · Wilks D.S. (2016) BAMS 97, 2263–2273 · Hirsch R.M., Slack J.R. (1984) Water Resour. Res. 20, 727–732 · Hamed K.H., Rao A.R. (1998) J. Hydrol. 204, 182–196 · Marriott F.H.C., Pope J.A. (1954) Biometrika 41, 390–402 · Berger R.L. (1982) Technometrics 24, 295–300.",
     "limitsTitle": "Qué no te dirá la herramienta",
     "limitsDescription": "Una tendencia no demuestra una causa. La herramienta nunca afirma que «el clima no está cambiando» ni que «los seres humanos causaron esto»: indica qué se puede y qué no se puede concluir a partir de esta serie, lugar y período.",
     "notes": {
@@ -366,11 +368,11 @@
       },
       "uncertainty": {
         "label": "incertidumbre",
-        "text": "Intervalo de confianza del 95% con corrección del tamaño muestral efectivo mediante AR(1) (Santer et al. 2000)."
+        "text": "Dos correcciones por persistencia: de un mes a otro (AR(1) para el muestreo real, con corrección del sesgo; Santer et al. 2000) y de un año a otro (la misma prueba con medias anuales). El valor p es el mayor de los dos y el intervalo del 95% abarca ambos, de modo que una tendencia solo cuenta si ambas pruebas coinciden."
       },
       "cross_check": {
         "label": "comprobación independiente",
-        "text": "Prueba estacional de Mann–Kendall y pendiente estacional de Sen (Hirsch et al. 1982)."
+        "text": "Mann–Kendall estacional con la corrección de Hirsch y Slack (1984) para meses dependientes, y Mann–Kendall sobre medias anuales con la corrección de Hamed y Rao (1998); se muestra el mayor valor p. Pendiente estacional de Sen."
       },
       "map_multiple_testing": {
         "label": "pruebas múltiples en el mapa",
@@ -383,6 +385,14 @@
       "minimum_data": {
         "label": "datos mínimos",
         "text": "Solo se calcula una tendencia si al menos el {percent}% de los meses seleccionados tienen datos válidos."
+      },
+      "calibration": {
+        "label": "calibración",
+        "text": "Comprobado con series sintéticas sin tendencia: con persistencia de un mes a otro de hasta 0,9, estaciones y huecos, como máximo un 6% aproximadamente resulta significativo (el objetivo es el 5%). Las oscilaciones lentas de escala decenal siguen siendo difíciles: 5–12% en lugar del 12–39% antes de esta corrección."
+      },
+      "period_choice": {
+        "label": "elección del período",
+        "text": "La corrección del mapa cubre las celdas de la cuadrícula, no la elección del período, la estación o la variable: cuantas más combinaciones pruebes, más probable es que alguna parezca significativa por azar. Los cuadros de “¿Se mantiene?” se solapan, así que no son repeticiones independientes."
       }
     }
   },
@@ -404,8 +414,12 @@
     },
     "trend_detected": {
       "title": "Tendencia detectada",
-      "agree": "Significativa al 5%, con corrección por autocorrelación. La prueba de Mann–Kendall coincide.",
-      "disagree": "Significativa al 5%, con corrección por autocorrelación. La prueba de Mann–Kendall no la confirma; revisa los valores atípicos."
+      "agree": "Significativa al 5% tras corregir por la persistencia de los datos. Una prueba basada en rangos (Mann–Kendall) da el mismo resultado.",
+      "disagree": "Significativa al 5% tras corregir por la persistencia de los datos. La prueba de Mann–Kendall basada en rangos no alcanza el 5%: revisa los valores atípicos y el período."
+    },
+    "significance_depends_on_period": {
+      "title": "La dirección se mantiene, la significancia varía",
+      "text": "Aquí es significativa y la mayoría de los otros pares de años inicial y final apuntan en la misma dirección, pero menos de la mitad de los períodos largos (al menos tres cuartas partes de este) son significativos. El resultado depende de los años inicial y final exactos."
     }
   },
   "answers": {
@@ -415,7 +429,8 @@
       "depends_on_period": "Depende del período.",
       "comparisonAgree": "Sí, coinciden.",
       "comparisonPartial": "En parte.",
-      "comparisonDisagree": "No, no coinciden."
+      "comparisonDisagree": "No, no coinciden.",
+      "significance_depends_on_period": "Misma dirección, pero no siempre significativa."
     },
     "places": {
       "selectedArea": "el área seleccionada",
@@ -439,15 +454,17 @@
     "fastestWarming": "Calentamiento más rápido: cerca de {latitude}°{latitudeDirection}, {longitude}°{longitudeDirection}, {slope} {unit}.",
     "confidence": {
       "periods": "{agreeing} de los otros {total} períodos con distintos años inicial y final apuntan en la misma dirección",
-      "mkAgrees": "la prueba de Mann–Kendall basada en rangos coincide",
-      "mkDisagrees": "la prueba de Mann–Kendall basada en rangos no lo confirma",
-      "summary": "Grado de certeza: {details}."
+      "mkAgrees": "una prueba basada en rangos (Mann–Kendall) da el mismo resultado",
+      "mkDisagrees": "la prueba de Mann–Kendall basada en rangos no alcanza el 5%",
+      "summary": "Grado de certeza: {details}.",
+      "periodsWithSignificant": "{agreeing} de los otros {total} períodos con distintos años inicial y final apuntan en la misma dirección, {significant} de ellos también significativos"
     },
     "how": {
       "trend": "Tendencia de {slope} {unit}, intervalo del 95% de {low} a {high}.",
       "autocorrelation": "{pValue} tras corregir por la persistencia de un mes a otro (n efectivo ≈ {effective} de {total} meses).",
-      "rankTest": "Mann–Kendall: {pValue}; pendiente de Sen: {slope}.",
-      "anomalies": "Valores mensuales menos el valor habitual de cada mes del calendario; {percent}% de datos válidos."
+      "rankTest": "Mann–Kendall: {pValue}, también corregido por persistencia; pendiente de Sen: {slope}.",
+      "anomalies": "Valores mensuales menos el valor habitual de cada mes del calendario; {percent}% de datos válidos.",
+      "autocorrelationTwoScales": "{pValue}, la más estricta de dos correcciones por persistencia: de un mes a otro (n efectivo ≈ {effective} de {total} meses) y de un año a otro ({years} medias anuales)."
     },
     "note": "Elaborado a partir de las cifras de esta página mediante reglas fijas; sin generación de texto por IA.",
     "comparison": {
@@ -518,7 +535,9 @@
     "merraLess": "MERRA-2 indica menos precipitación. Hace falta confirmarlo.",
     "merraMore": "MERRA-2 indica más precipitación. Hace falta confirmarlo.",
     "merraEstimate": "Tendencia estimada de precipitación en MERRA-2: {slope} mm/día por década ({start}–{end}, {season}).",
-    "merraCaution": "Las evaluaciones publicadas documentan discontinuidades en la precipitación corregida de MERRA-2 en Sudamérica. Comprueba otro conjunto de datos para la misma zona, estación y periodo."
+    "merraCaution": "Las evaluaciones publicadas documentan discontinuidades en la precipitación corregida de MERRA-2 en Sudamérica. Comprueba otro conjunto de datos para la misma zona, estación y periodo.",
+    "significanceDependency": "La dirección se mantiene en {agreeing} de los otros {total} períodos con distintos años inicial y final, pero solo {significant} de los {long} períodos que abarcan al menos tres cuartas partes de este son significativos, así que el resultado depende de los años inicial y final exactos.",
+    "shortRecord": "Registro corto (menos de 15 años): oscilaciones naturales lentas que duran varios años pueden parecer una tendencia en un período tan corto."
   },
   "errors": {
     "analysisFailed": "No se pudo realizar el análisis: {message}",
