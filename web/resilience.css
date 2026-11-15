@@ -10,12 +10,12 @@
 #resilience a { color: var(--accent); }
 .resilience-intro { margin: 8px 0 18px; }
 .resilience-intro h2 { margin: 0; font-size: clamp(24px, 4vw, 34px); letter-spacing: -.025em; }
-.resilience-intro p { margin: 5px 0 0; color: var(--muted); max-width: 66ch; }
 .resilience-fields { display: grid; grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)); gap: 10px 14px; }
 .resilience-fields label { display: grid; gap: 4px; align-content: start; font-weight: 600; font-size: 13px; }
 .resilience-fields select { width: 100%; min-width: 0; min-height: 38px; font-weight: 400; }
 #resilience-retry { margin-top: 8px; }
-.resilience-report-head { display: flex; align-items: end; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+#resilience-status:empty, .resilience-context { display: none; }
+.resilience-report-head { margin-top: 14px; }
 .resilience-report-head h3 { margin: 0; font-size: 19px; }
 .resilience-report-head p { margin-top: 2px; }
 .resilience-actions { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -37,13 +37,12 @@
 .resilience-metrics dt { color: var(--muted); font-size: 13px; }
 .resilience-robustness { border-top: 1px solid var(--line); padding-top: 8px; }
 .resilience-check, .resilience-advisory, .resilience-source-details { margin-top: 10px; }
-.resilience-check h4 { margin-top: 0; }
 .resilience-check p, .resilience-source-details p { margin: 4px 0; font-size: 13px; }
 .resilience-advisory { font-size: 13px; }
 .resilience-details { margin-top: 12px; }
 .resilience-details li + li { margin-top: 4px; }
-.resilience-details summary, .resilience-source-details summary { cursor: pointer; font-weight: 600; }
-.resilience-source-details { font-size: 13px; }
+.resilience-details summary, .resilience-check summary, .resilience-source-details summary { cursor: pointer; font-weight: 600; }
+.resilience-check, .resilience-source-details { font-size: 13px; }
 .resilience-open { align-self: start; margin-top: 10px; }
 
 @media (max-width: 680px) {
@@ -67,7 +66,8 @@
   #resilience #resilience-link, #resilience #resilience-share-status { display: none !important; }
   #resilience .resilience-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   #resilience .resilience-cards article { display: block; margin-bottom: 4px; }
-  #resilience .resilience-print-link { display: block; font-size: 9pt; }
+  #resilience .resilience-context, #resilience .resilience-print-link { display: block; }
+  #resilience .resilience-print-link { font-size: 9pt; }
   #resilience :is(.resilience-trend, .resilience-metrics, .resilience-check, .resilience-source-details) { break-inside: avoid; }
   #resilience .resilience-source-details, #resilience .resilience-source-details p { font-size: 9pt; }
   #resilience ul { margin: 4px 0; padding-inline-start: 16px; }

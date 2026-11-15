@@ -2,6 +2,9 @@
 import csv
 import io
 import json
+import shutil
+import subprocess
+from pathlib import Path
 from unittest.mock import Mock
 
 import numpy as np
@@ -101,3 +104,11 @@ def test_unavailable_common_period_does_not_compute_incompatible_trends(monkeypa
     assert brief["years"] is None
     assert [c["status"] for c in brief["cards"]] == ["no_common_period"] * 2 + ["missing_cube"] * 2
     analysis.assert_not_called()
+
+
+@pytest.mark.skipif(not shutil.which("node"), reason="Node is needed to exercise the frontend fallback")
+def test_legacy_server_uses_existing_analyses_and_exports_the_report():
+    root = Path(__file__).resolve().parents[1]
+    run = subprocess.run(["node", "tests/test_resilience_legacy.js"], cwd=root,
+                         capture_output=True, text=True, timeout=10)
+    assert run.returncode == 0, run.stdout + run.stderr

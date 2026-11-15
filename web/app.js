@@ -206,7 +206,10 @@ function query(withBbox) {
 }
 async function api(path, params, options) {
   const r = await fetch(`/api/${path}?${params}`, options);
-  if (!r.ok) throw new Error(I18N.text((await r.json().catch(() => ({}))).detail || r.statusText));
+  if (!r.ok) {
+    const { detail } = await r.json().catch(() => ({}));
+    throw Object.assign(new Error(I18N.text(detail || r.statusText)), { status: r.status, detail });
+  }
   return I18N.response(path, await r.json());
 }
 

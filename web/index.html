@@ -247,11 +247,9 @@
 <div id="resilience" class="panel" role="tabpanel" aria-labelledby="tab-resilience" tabindex="0">
   <header class="resilience-intro">
     <h2 data-i18n="resilience.title">Environmental Resilience Brief</h2>
-    <p data-i18n="resilience.intro"></p>
   </header>
 
-  <section class="card resilience-controls" aria-labelledby="resilience-scope">
-    <h3 id="resilience-scope" data-i18n="resilience.scope">Area and period</h3>
+  <section id="resilience-scope" class="card resilience-controls" aria-label="Area and period" data-i18n-attrs="aria-label:resilience.scope">
     <div class="resilience-fields" aria-describedby="resilience-status">
       <label><span data-i18n="detective.place">Place</span><select id="resilience-area"></select></label>
       <label><span data-i18n="common.startYear">Start year</span><select id="resilience-start" disabled></select></label>
@@ -267,12 +265,12 @@
       </label>
     </div>
     <p id="resilience-status" class="hint" role="status"></p>
-    <button id="resilience-retry" type="button" class="ghost" data-i18n="resilience.retry" hidden>Reload brief</button>
+    <button id="resilience-retry" type="button" class="ghost" hidden>Try again</button>
   </section>
 
   <div id="resilience-report" hidden>
     <div class="resilience-report-head">
-      <div>
+      <div class="resilience-context">
         <h3 id="resilience-area-name"></h3>
         <p id="resilience-parameters" class="hint"></p>
         <p id="resilience-bounds" class="hint"></p>
@@ -299,10 +297,10 @@
       <ul id="resilience-methods"></ul>
     </details>
   </div>
-  <section class="card resilience-details" aria-labelledby="resilience-limits">
-    <h3 id="resilience-limits" data-i18n="resilience.interpretation">How to read the brief</h3>
+  <details class="card resilience-details">
+    <summary id="resilience-limits" data-i18n="resilience.interpretation">Interpretation limits</summary>
     <ul id="resilience-limit-list"></ul>
-  </section>
+  </details>
   <details class="card resilience-details resilience-use">
     <summary data-i18n="resilience.who">Who can use this?</summary>
     <p data-i18n="resilience.civilian"></p>
