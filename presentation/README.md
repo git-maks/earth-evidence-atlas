@@ -15,6 +15,12 @@ Otwórz `earth-evidence-atlas.html` w przeglądarce. To samodzielny plik: font, 
 - Na slajdzie 7 kliknij ramki **Add photo**, aby dodać trzy zdjęcia zespołu. Imiona i role edytujesz kliknięciem. **Save with photos** pobiera samodzielny HTML ze zdjęciami i podpisami; otwórz pobrany plik, aby korzystać z zapisanej wersji. Po zmianach możesz też ponownie wydrukować PDF.
 - **Print / PDF** – druk siedmiu slajdów. Panele szczegółowe i notatki nie dodają stron do PDF.
 
+## Import do Canvy
+
+Do importu użyj `earth-evidence-atlas-canva-fixed.pdf` albo `earth-evidence-atlas-canva-editable.pptx`. Plik `earth-evidence-atlas-canva-editable.pdf` jest kopią poprawionego PDF. Oba formaty mają siedem slajdów i osobne teksty, kształty oraz obrazy; zrzuty interfejsu pozostają pojedynczymi obrazami. Ziemia jest osobnym, nieprzezroczystym obrazem RGB. Eksport PDF 1.3 używa prostych kolorów DeviceRGB, osadzonych fontów i ścieżek wektorowych, bez masek, profili ICC, gradientów, grup przezroczystości i stanów ExtGState. Subtelne gradienty tła zastąpiono jednolitymi wypełnieniami. W PPTX zastosowano Arial, również w nazwie aplikacji, aby ograniczyć podmianę fontów.
+
+Sprawdzono lokalny wygląd wszystkich stron PDF, zachowanie liter i cyfr ze źródła oraz otwarcie i eksport PPTX w LibreOffice. `canva-validation.json` zawiera wyniki i skróty plików. Importu w samej Canvie nie przetestowano; lokalny test nie potwierdza zachowania jej importera. Oryginalny HTML i PDF zgłoszeniowy pozostają bez zmian.
+
 ## Co zawiera materiał
 
 1. Problem i obietnica produktu.
