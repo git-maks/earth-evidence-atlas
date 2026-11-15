@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tour engine demo</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/tour.css">
+<style>
+  /* test page only: forced dark skin for checking contrast (the app itself follows the system setting) */
+  :root[data-theme="dark"] {
+    --bg: #0f1419; --panel: #171e26; --ink: #e6edf3; --muted: #9aa7b4; --line: #2a3542;
+    --accent: #5ea8ff; --accent-soft: #15283d; --good: #4ac26b; --warn: #d4a72c; --bad: #ff7b72; --on-accent: #08131f;
+  }
+  .demo-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 0; }
+  .demo-bar button, .demo-btn { font: inherit; font-size: 14px; padding: 6px 11px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--panel); color: var(--ink); cursor: pointer; }
+  .demo-btn.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 600; }
+  .demo-grid { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 14px; }
+  .demo-card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; box-shadow: var(--shadow); min-width: 0; }
+  .demo-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .demo-map { position: relative; height: 340px; border-radius: 10px; border: 1px solid var(--line); touch-action: none; cursor: crosshair; overflow: hidden;
+    background: var(--accent-soft) repeating-linear-gradient(0deg, transparent 0 39px, var(--line) 39px 40px),
+      repeating-linear-gradient(90deg, transparent 0 39px, var(--line) 39px 40px); user-select: none; }
+  .demo-map .box { position: absolute; border: 2px dashed var(--accent); background: rgba(94,168,255,.15); pointer-events: none; }
+  .demo-map .lbl { position: absolute; left: 10px; bottom: 8px; font-size: 12.5px; color: var(--muted); }
+  #dResult { margin-top: 10px; padding: 10px 12px; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 6px; }
+  #dVarInfo { font-size: 13.5px; color: var(--muted); }
+  #dChart { width: 100%; height: 200px; display: block; }
+  #dChart polyline { fill: none; stroke: var(--accent); stroke-width: 2.5; vector-effect: non-scaling-stroke; }
+  #dChart .base { stroke: var(--line); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  .demo-read { font-size: 13px; color: var(--muted); min-height: 1.4em; font-variant-numeric: tabular-nums; }
+  .demo-log { font: 12px/1.45 ui-monospace, Menlo, Consolas, monospace; color: var(--muted); max-height: 220px; overflow: auto; margin: 0; padding-left: 18px; }
+  .demo-slider { width: 100%; }
+  .demo-note { font-size: 13px; color: var(--muted); margin: 6px 0 0; }
+  @media (max-width: 900px) { .demo-grid { grid-template-columns: 1fr; } .demo-map { height: 260px; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><h1>Tour engine demo</h1></div>
+  <nav class="tabs" role="tablist" aria-label="Mock tabs">
+    <button class="tab active" id="dTabA" role="tab" aria-selected="true" data-tab="a">Globe</button>
+    <button class="tab" id="dTabB" role="tab" aria-selected="false" data-tab="b">Detective</button>
+  </nav>
+</header>
+<main class="panel active" style="display:block">
+  <div class="demo-bar" aria-label="Tour controls">
+    <button class="demo-btn primary" id="runGuided">Guided</button>
+    <button class="demo-btn" id="runWatch">Watch</button>
+    <button class="demo-btn" id="runResume">Resume</button>
+    <button class="demo-btn" id="runReset">Reset progress</button>
+    <button class="demo-btn" id="runTheme">Theme: system</button>
+  </div>
+
+  <section id="pA" class="demo-grid">
+    <div class="demo-card">
+      <div class="demo-row">
+        <label for="dVar"><b>Variable</b></label>
+        <select id="dVar">
+          <option value="ndvi">Vegetation greenness (NDVI)</option>
+          <option value="t2m">Air temperature</option>
+          <option value="lst">Daytime land surface temperature</option>
+        </select>
+        <button class="demo-btn" id="dGo">Analyse</button>
+        <span id="dStatus" class="demo-read" aria-live="polite"></span>
+      </div>
+      <p class="demo-note">Drag on the grid to draw a box.</p>
+      <div id="dMap" class="demo-map" aria-label="Mock map"><span class="lbl">Mock map</span></div>
+      <div id="dResultSlot"></div>
+    </div>
+    <div class="demo-card">
+      <p id="dVarInfo"><b>Definition.</b> Mock catalogue text for the selected variable.</p>
+      <h4>Engine log</h4>
+      <ol id="log" class="demo-log"></ol>
+    </div>
+  </section>
+
+  <section id="pB" class="demo-grid" hidden>
+    <div class="demo-card">
+      <label for="dSlider"><b>Start year</b> <span id="dYear" class="demo-read">2001</span></label>
+      <input id="dSlider" class="demo-slider" type="range" min="2001" max="2024" step="1" value="2001">
+      <svg id="dChart" viewBox="0 0 600 200" preserveAspectRatio="none" aria-label="Mock chart">
+        <line class="base" x1="0" y1="190" x2="600" y2="190"/>
+        <polyline id="dLine"/>
+      </svg>
+      <div id="dRead" class="demo-read" aria-live="polite"></div>
+    </div>
+    <div class="demo-card">
+      <p class="demo-note">Second mock tab. The hole slides here when the tab changes.</p>
+    </div>
+  </section>
+</main>
+
+<script src="/static/tour.js"></script>
+<script>
+"use strict";
+const $ = (s) => document.querySelector(s);
+document.documentElement.style.setProperty("--hdr", $(".top").offsetHeight + "px");
+const logEl = $("#log");
+function log(...a) {
+  const li = document.createElement("li");
+  li.textContent = a.map((x) => x instanceof Error ? x.message : typeof x === "object" ? JSON.stringify(x) : String(x)).join(" ");
+  logEl.prepend(li);
+}
+
+// ---------- mock app
+function openTab(tab) {
+  document.querySelectorAll(".tab").forEach((b) => { const on = b.dataset.tab === tab; b.classList.toggle("active", on); b.setAttribute("aria-selected", on); });
+  $("#pA").hidden = tab !== "a"; $("#pB").hidden = tab !== "b";
+  window.dispatchEvent(new CustomEvent("demo:tab", { detail: tab }));
+}
+document.querySelectorAll(".tab").forEach((b) => b.addEventListener("click", () => openTab(b.dataset.tab)));
+
+// draw a box on the mock map (pointer events, so the ghost's synthetic drag goes through the same code)
+const mapEl = $("#dMap");
+let drag = null;
+mapEl.addEventListener("pointerdown", (e) => {
+  const r = mapEl.getBoundingClientRect();
+  mapEl.querySelectorAll(".box").forEach((b) => b.remove());
+  const box = document.createElement("div"); box.className = "box"; mapEl.appendChild(box);
+  drag = { r, x: e.clientX - r.left, y: e.clientY - r.top, box };
+  e.preventDefault();
+});
+window.addEventListener("pointermove", (e) => {
+  if (!drag) return;
+  const x = Math.max(0, Math.min(drag.r.width, e.clientX - drag.r.left)), y = Math.max(0, Math.min(drag.r.height, e.clientY - drag.r.top));
+  Object.assign(drag.box.style, { left: Math.min(x, drag.x) + "px", top: Math.min(y, drag.y) + "px", width: Math.abs(x - drag.x) + "px", height: Math.abs(y - drag.y) + "px" });
+  drag.w = Math.abs(x - drag.x); drag.h = Math.abs(y - drag.y);
+});
+window.addEventListener("pointerup", () => {
+  if (!drag) return;
+  const d = drag; drag = null;
+  if ((d.w || 0) > 12 && (d.h || 0) > 12) window.dispatchEvent(new CustomEvent("demo:selection", { detail: { w: Math.round(d.w), h: Math.round(d.h) } }));
+  else d.box.remove();
+});
+
+// "Analyse": the result appears only after a delay, like an async API answer
+$("#dGo").addEventListener("click", () => {
+  const old = $("#dResult"); if (old) old.remove();
+  $("#dStatus").textContent = "Working…";
+  setTimeout(() => {
+    $("#dStatus").textContent = "";
+    const div = document.createElement("div"); div.id = "dResult";
+    div.innerHTML = "<b>Mock result.</b> +1.0 units per decade (placeholder, not data).";
+    $("#dResultSlot").appendChild(div);
+    tour.set({ rate: "+1.0 units per decade" });
+    window.dispatchEvent(new CustomEvent("demo:result", { detail: { rate: "+1.0" } }));
+  }, 1500);
+});
+
+const slider = $("#dSlider");
+slider.addEventListener("input", () => { $("#dYear").textContent = slider.value; });
+
+// mock chart: the ghost's path gesture follows the same points
+const LINE = [[0.02, 0.8], [0.15, 0.7], [0.28, 0.74], [0.4, 0.55], [0.55, 0.6], [0.68, 0.42], [0.82, 0.38], [0.97, 0.22]];
+$("#dLine").setAttribute("points", LINE.map((p) => `${p[0] * 600},${p[1] * 200}`).join(" "));
+$("#dChart").addEventListener("mousemove", (e) => {
+  const r = e.currentTarget.getBoundingClientRect();
+  $("#dRead").textContent = `x ${((e.clientX - r.left) / r.width * 100).toFixed(0)}% – y ${((1 - (e.clientY - r.top) / r.height) * 100).toFixed(0)}%`;
+});
+
+// ---------- tour (texts through an injected t(), as the app will do with I18N.t)
+const DICT = {
+  "demo.chapter.where": "Where?", "demo.chapter.hold": "Does it hold?",
+  "demo.intro.title": "Case file: a test run",
+  "demo.intro": "This page checks the tour engine: spotlight, ghost cursor, steps and the case board. Use <b>Do it for me</b> or act yourself.",
+  "demo.var.title": "Pick the variable",
+  "demo.var": "Choose <b>Daytime land surface temperature</b>. Two separate areas light up: the control and its definition.",
+  "demo.go": "Press <b>Analyse</b>. The answer arrives after a short delay.",
+  "demo.tab": "Open the second tab. The highlight follows the content.",
+  "demo.slider": "Move the start year to 2008 or later.",
+  "demo.chart": "The ghost traces the line. Hover the chart yourself, then press Next.",
+};
+const fill = (s, p) => String(s).replace(/\{(\w+)\}/g, (w, k) => p[k] == null ? w : p[k]);
+const t = (key, params) => fill(DICT[key] || key, params || {});
+let board = null;
+const steps = [
+  { id: "intro", chapter: "where", title: "demo.intro.title", text: "demo.intro", dwell: 2000 },
+  { id: "var", chapter: "where", tab: "a", targets: ["#dVar", "#dVarInfo"], title: "demo.var.title", text: "demo.var",
+    ghost: { to: "#dVar", gesture: "select", value: "lst" }, waitFor: { event: "change", on: "#dVar", test: (d, e) => e.target.value === "lst" },
+    assist: 4000, after: () => board.light("what", "Land temperature") },
+  { id: "draw", chapter: "where", tab: "a", targets: ["#dMap"],
+    text: (ctx) => ctx.touch ? "Drag a finger across the grid to draw a box." : "Drag across the grid to draw a box.",
+    ghost: { gesture: "drag", value: { from: [0.28, 0.3], to: [0.62, 0.72] } }, waitFor: { event: "demo:selection" },
+    assist: 5000, after: () => board.light("where", "Box A") },
+  { id: "go", chapter: "where", tab: "a", targets: ["#dGo"], text: "demo.go", ghost: { gesture: "click" },
+    waitFor: { event: "demo:result" }, assist: 4000 },
+  { id: "result", chapter: "where", tab: "a", targets: ["#dResult", "#dGo"], dwell: 1800,
+    text: (ctx) => `This element did not exist when the step was defined. It reads <b>${ctx.data.rate || "–"}</b> – the value came from the app with <code>tour.set()</code>.`,
+    after: () => board.light("howMuch", "+1.0") },
+  { id: "legend", chapter: "where", tab: "a", targets: ["#dLegend"], optional: true, readyTimeout: 600, text: "Never shown: the target does not exist." },
+  { id: "tab", chapter: "hold", targets: ["#dTabB"], text: "demo.tab", ghost: { gesture: "click" },
+    waitFor: { event: "demo:tab", test: (d) => d === "b" }, assist: 4000 },
+  { id: "slider", chapter: "hold", tab: "b", targets: ["#dSlider"], text: "demo.slider",
+    ghost: { gesture: "drag", value: { from: [0.02, 0.5], to: [0.4, 0.5] } }, waitFor: { predicate: () => +slider.value >= 2008 }, assist: 5000 },
+  { id: "chart", chapter: "hold", tab: "b", targets: ["#dChart"], text: "demo.chart", demo: true, dwell: 1200,
+    ghost: { gesture: "path", value: LINE }, after: () => board.light("significant", "demo") },
+];
+const tour = AtlasTourEngine.create({
+  steps, t, log,
+  chapters: [{ id: "where", title: "demo.chapter.where" }, { id: "hold", title: "demo.chapter.hold" }],
+  storageKey: "atlas.tour.demo.v1", readyTimeout: 3000, dwell: 1100, watchLead: 350,
+  hooks: { ensureTab: (tab) => openTab(tab) },
+});
+["start", "step", "complete", "skip", "end"].forEach((name) => tour.on(name, (d) => log(name, d.step ? d.step.id : "", d.reason || d.outcome || d.mode || "")));
+function begin(opts) {
+  if (!board) board = AtlasTourEngine.createCaseBoard({ labels: {} });
+  board.reset();
+  ["#dResult", ".demo-map .box"].forEach((s) => document.querySelectorAll(s).forEach((e) => e.remove()));
+  $("#dVar").value = "ndvi"; slider.value = 2001; $("#dYear").textContent = "2001";
+  openTab("a"); window.scrollTo(0, 0);
+  tour.start(opts);
+}
+tour.on("end", () => { if (board) { board.remove(); board = null; } });
+$("#runGuided").addEventListener("click", () => begin({ mode: "guided" }));
+$("#runWatch").addEventListener("click", () => begin({ mode: "watch" }));
+$("#runResume").addEventListener("click", () => begin({ mode: "guided", resume: true }));
+$("#runReset").addEventListener("click", () => { tour.reset(); log("progress cleared"); });
+const themes = ["system", "light", "dark"];
+$("#runTheme").addEventListener("click", (e) => {
+  const next = themes[(themes.indexOf(document.documentElement.dataset.theme || "system") + 1) % 3];
+  if (next === "system") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = next;
+  e.currentTarget.textContent = "Theme: " + next;
+});
+log("?tour= parsed as", AtlasTourEngine.parseTourParam(location.search) || "none (no autostart in stage 1)");
+</script>
+</body>
+</html>
