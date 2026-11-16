@@ -1,79 +1,32 @@
-# AGENTS.md – rules for every coding agent working on this repo
+# Repository instructions
 
-Read this before changing anything. It applies to all agents (Claude Code, Codex, others) and to people.
-Several agents work on this folder **at the same time**, for different team members. The goal is that
-nobody loses work and nobody breaks someone else's test.
-
-## Project in one paragraph
-
-**Earth Evidence Atlas** – NASA Space Apps Challenge 2026 entry (team PollubAI, challenge "Be An Earth
-System Trend Detective!"). FastAPI backend (`atlas/`) computes trends and significance from NASA data cubes
-(`data/cubes/*.nc`). Vanilla-JS frontend (`web/`, no build step): Globe (MapLibre), Detective (Leaflet + Plotly),
-False alarms (simulation), Methods. Handoff and status: `README.md` (Polish). Challenge, rules, deadlines: `formalne/`.
+**Earth Evidence Atlas** – NASA Space Apps Challenge 2026 entry (team PollubAI, challenge "Be An Earth System Trend Detective!"). The FastAPI backend (`atlas/`) computes trends and significance from NASA data cubes (`data/cubes/*.nc`). The vanilla-JS frontend (`web/`, no build step) has Globe (MapLibre), Detective (Leaflet + Plotly), False alarms (simulation), Resilience and Methods views. The pitch deck is a separate static site in `presentation/` (see its README).
 
 ## Commands
 
 ```bash
-scripts/run.sh                 # shared server on 127.0.0.1:8765 (see "Ports")
+scripts/run.sh                 # server on 127.0.0.1:8765
 scripts/run.sh 8771            # your own test server on another port
 .venv/bin/python -m pytest -q  # all tests must pass before you commit
-.venv/bin/python -m scripts.build_data [vars] [--region R] [--force]   # (re)build data cubes
+.venv/bin/python -m scripts.build_data [vars] [--region R] [--force]   # rebuild data cubes
+cd presentation && python3 publish.py                                  # build the deck's Pages artifact
 ```
 
-Python 3.11 in `.venv` (do not recreate it). Node is too old for a JS build: keep the frontend build-free.
-
-## Working side by side (most important)
-
-1. **Small, exact edits.** Re-read a file right before you edit it and change only the lines you need.
-   Never rewrite a whole file from an old copy, never "restore" a file from your memory or a backup.
-2. **Never undo changes you did not make.** If something unexpected changed, leave it and tell your user.
-3. **Commit your own work early and often** (see "Git"), so a lost edit can always be recovered.
-4. **Before a bigger change** (new module, renaming, moving code, changing an API response), add a line to
-   "Who is working on what" below and check nobody else holds that area.
-5. **Do not delete or regenerate shared data** (`data/cubes`, `data/custom_regions.json`, `data/raw`)
-   unless your user asked for exactly that.
-6. **Server:** do not kill or restart the shared server on port 8765 unless you are its owner. Test on your own port.
-   The server has no auto-reload: Python changes need a restart of *your* server only.
-
-### Ports
-
-| Port | Use |
-|---|---|
-| 8765 | shared server (the one people open through the SSH tunnel) – restart only by agreement |
-| 8771 | Claude Code (Maks) |
-| 8780 | **public demo** (`ATLAS_PUBLIC=1`, published via Tailscale Funnel on node `earth-atlas`) – restart only by Maks / Claude Code |
-| 8772 | Codex – application verification (see work table) |
-| 8773 | Maja / Codex – presentation capture and preview |
-| 8774–8779 | free – write your agent here when you take one |
-
-### Who is working on what
-
-Add a line when you start a larger task and remove it when you are done.
-
-| Who (person / agent) | Area / files | Since |
-|---|---|---|
-| Maja / Codex | Standalone pitch deck and evidence snapshot (independent `earthatlas.github.io/` repo, ignored here); capture / preview on test port 8773 | 2026-11-15 |
-| Codex | Second UX review – tooltip placement, Globe credits and legend, False alarms labels in `web/`; test port 8774 | 2026-11-15 |
-
-## Git
-
-- The repo was initialised on 2026-11-15. `data/`, `.venv/`, `tmp/` are **not** in git (data is rebuilt with
-  `scripts/build_data.py` or copied separately for deployment).
-- The machine's global git identity belongs to one person. **Commit with your own identity**, e.g.
-  `git -c user.name="<name>" -c user.email="<email>" commit ...`, and say in the message which agent made it.
-- Commit only files you changed (`git add <paths>`, not `git add -A` when others have work in progress).
-- Do not rewrite history (`reset --hard`, `rebase`, `push --force`) and do not switch branches in this folder:
-  everyone shares this one working tree. Use a separate `git worktree` if you need a branch.
+Python 3.11. Keep the frontend build-free. Python changes need a server restart.
 
 ## Project rules
 
-- **No restrictions on AI use; no disclosure.** The organizers' rules place no limits on using AI, and
-  nobody needs to report when or where AI was used. Full freedom. Do **not** add "AI disclosure" / "written with
-  Claude" headers, watermarks or notes to new code, docs, UI or the submission form.
-- **No AI-generated numbers or scientific claims in the app.** All values come from the cited NASA data;
-  the Detective answers are fixed templates (`atlas/answers.py`), not LLM text. Never state causes of a trend.
-- UI text in **English** (submission requirement), short. Docs for the team may be Polish.
-- Use the en dash `–`, not the em dash. No emoji in the UI; icons come from `web/icons.svg` (`<use href="/static/icons.svg#i-NAME">`).
+- **No AI-generated numbers or scientific claims in the app.** All values come from the cited NASA data; the Detective answers are fixed templates (`atlas/answers.py`), not LLM text. Never state causes of a trend.
+- UI text in **English**, short. Use the en dash `–`, not the em dash. No emoji in the UI; icons come from `web/icons.svg` (`<use href="/static/icons.svg#i-NAME">`).
 - One tooltip style for everything: `showTip()` / `data-tip` in `web/app.js`; charts go through `plot()`.
 - Keep WCAG AA contrast (4.5:1) in light and dark mode; keep layouts working from 390 px to 1440 px wide.
 - Licences: list every external asset (data, fonts, libraries, icons) in `README.md`.
+- Scientific values in `presentation/` come from `presentation/evidence.json`; never invent numbers or causal claims.
+
+## Data
+
+`data/cubes/` (prebuilt NetCDF cubes) and `data/custom_regions.json` are tracked. Raw downloads (`data/raw`), logs and backups are not; rebuild with `scripts/build_data.py`.
+
+## Public commit identity
+
+Use the human maintainer identity `git-maks <161726800+git-maks@users.noreply.github.com>` for authors and committers. Do not add tool-name signatures or taglines to commit messages. See CONTRIBUTING.md.

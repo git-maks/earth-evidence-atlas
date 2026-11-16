@@ -1,14 +1,16 @@
 .venv/
 __pycache__/
 *.pyc
-data/raw/
-data/*.log
-data/cubes/*.tmp.nc
-tmp/
-data/
 .pytest_cache/
-*.tmp.nc
+.env
+.env.*
+*.pem
+*.key
+tmp/
+.snapshots/
 
-# Independent organization website repository (not a submodule).
-/earthatlas.github.io/
-/.snapshots/
+# Data: prebuilt cubes and saved regions are tracked; raw downloads, logs and backups are not.
+data/*
+!data/cubes/
+!data/custom_regions.json
+*.tmp.nc
