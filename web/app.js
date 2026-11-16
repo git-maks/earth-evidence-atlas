@@ -62,19 +62,63 @@ function setHeaderHeight() { document.documentElement.style.setProperty("--hdr",
 
 // ---------------------------------------------------------------- one tooltip style for the whole app
 const ic = (name, cls = "") => `<svg class="ic ${cls}"><use href="/static/icons.svg#i-${name}"/></svg>`;
-function showTip(html, x, y) {
-  const t = $("#tip");
-  t.innerHTML = html; t.hidden = false;
-  const r = t.getBoundingClientRect(), W = innerWidth, H = innerHeight;
-  let left = x + 14, top = y + 14;
-  if (left + r.width > W - 8) left = x - r.width - 14;
-  if (top + r.height > H - 8) top = y - r.height - 14;
-  t.style.left = Math.max(8, left) + "px"; t.style.top = Math.max(8, top) + "px";
+const TIP_OBSTACLES = ".top, .language-toggle, .tour-launch, .language-panel, .gpanel, .gscroll, .drawbanner, " +
+  ".maplibregl-ctrl, .leaflet-control, .atlas-tour-welcome, .atlas-tour-board, .atlas-tour-bubble";
+function tipPosition(target, width, height, above, obstacles) {
+  const margin = 8, gap = 10;
+  const maxX = innerWidth - width - margin, maxY = innerHeight - height - margin;
+  if (maxX < margin || maxY < margin) return null;
+  const clampX = (x) => Math.min(maxX, Math.max(margin, x));
+  const clampY = (y) => Math.min(maxY, Math.max(margin, y));
+  const blocks = [target, ...obstacles];
+  const fits = ([x, y]) => blocks.every((r) => x + width + gap <= r.left || x >= r.right + gap ||
+    y + height + gap <= r.top || y >= r.bottom + gap);
+  const alignedX = target.left + (target.width ? (target.width - width) / 2 : gap);
+  const upper = [alignedX, target.top - height - gap], lower = [alignedX, target.bottom + gap];
+  const sides = [[target.right + gap, target.top], [target.left - width - gap, target.top]];
+  const candidates = (above ? [upper, lower, ...sides] : [lower, upper, ...sides])
+    .map(([x, y]) => [clampX(x), clampY(y)]);
+  const direct = candidates.find(fits);
+  if (direct) return direct;
+
+  // When adjacent positions are blocked, look along the edges of the visible UI.
+  const xs = [margin, maxX, ...candidates.map(([x]) => x)];
+  const ys = [margin, maxY, ...candidates.map(([, y]) => y)];
+  for (const block of blocks) {
+    xs.push(clampX(block.left - width - gap), clampX(block.right + gap));
+    ys.push(clampY(block.top - height - gap), clampY(block.bottom + gap));
+  }
+  const [preferredX, preferredY] = candidates[0];
+  let best = null, distance = Infinity;
+  for (const x of xs) {
+    for (const y of ys) {
+      const score = (x - preferredX) ** 2 + (y - preferredY) ** 2;
+      if (score < distance && fits([x, y])) { best = [x, y]; distance = score; }
+    }
+  }
+  return best;
+}
+function showTip(html, x, y, anchor = null, above = false) {
+  const tip = $("#tip");
+  tip.innerHTML = html;
+  tip.hidden = false;
+  const target = anchor || { left: x, right: x, top: y, bottom: y, width: 0 };
+  const obstacles = $$(TIP_OBSTACLES).flatMap((element) => {
+    if (getComputedStyle(element).visibility === "hidden" ||
+        (element.classList.contains("gpanel") && element.id !== "gLegend" && PHONE())) return [];
+    const rect = element.getBoundingClientRect();
+    return rect.width && rect.height ? [rect] : [];
+  });
+  const { width, height } = tip.getBoundingClientRect();
+  const position = tipPosition(target, width, height, above, obstacles);
+  if (!position) { tip.hidden = true; return; }
+  tip.style.left = position[0] + "px";
+  tip.style.top = position[1] + "px";
 }
 function hideTip() { $("#tip").hidden = true; }
 function showControlTip(element) {
   const r = element.getBoundingClientRect();
-  showTip(element.dataset.tiphtml || element.dataset.tip, r.left, r.bottom - 6);
+  showTip(element.dataset.tiphtml || esc(element.dataset.tip), r.left, r.bottom, r, element.dataset.tipPlacement === "above");
 }
 function wireTips(root = document) {
   // [data-tip] = short label, [data-tiphtml] = rich text set by code
@@ -89,8 +133,10 @@ function wireTips(root = document) {
     if (el) showControlTip(el);
   });
   root.addEventListener("focusout", hideTip);
-  // a tapped tooltip would otherwise stay on screen while the page scrolls under it
-  if (TOUCH) window.addEventListener("scroll", hideTip, { passive: true });
+  root.addEventListener("pointerdown", hideTip);
+  root.addEventListener("keydown", (event) => { if (event.key === "Escape") hideTip(); });
+  window.addEventListener("scroll", hideTip, { capture: true, passive: true });
+  window.addEventListener("resize", hideTip);
 }
 const monthLabel = (month, form = "short") => t(`calendar.months.${month}.${form}`);
 function fmtX(x) {
@@ -676,7 +722,7 @@ function renderSimulation(s) {
   plot("simChart", [
     { x: s.dates, y: s.values, type: "scatter", mode: "lines", name: t("lab.simulatedSeries"), line: { color: "#8aa4bf" } },
     { x: s.dates, y: s.fit, type: "scatter", mode: "lines", name: t("lab.fittedLine"), line: { color: "#d6604d", width: 2.5 } },
-  ], layoutBase({ annotations: [{ text: t("lab.simulationLabel"), xref: "paper", yref: "paper", x: 0.01, y: 0.98, showarrow: false, font: { size: 13, color: dark() ? "#d4a72c" : "#8a5a00" } }] }));
+  ], layoutBase());
   const yes = (p) => p < 0.05 ? `<span class="err">${t("lab.fooled")}</span>` : t("lab.notFooled");
   $("#simOut").innerHTML = `<div><span>${t("lab.fittedSlope")}</span><b>${fmt(s.slope)} ${t("common.perDecade")}</b>${t("lab.trueValue")}</div>
     <div><span>${t("lab.naiveTest")}</span><b>${pStr(s.naive_p)}</b>${yes(s.naive_p)}</div>
@@ -701,7 +747,7 @@ function renderSimulationBatch(r) {
   const pct = counts.map((count) => 100 * count / r.runs);
   const percent = (value) => I18N.number(value, { maximumFractionDigits: 1 }) + "%";
   const ranges = intervals.map(([low, high]) => `${percent(low)}–${percent(high)}`);
-  $("#simMulti").hidden = $("#simMultiStats").hidden = false;
+  $("#simMultiFigure").hidden = $("#simMultiStats").hidden = false;
   const ink = getComputedStyle(document.body).color;
   plot("simMulti", [{
     type: "bar", x: [...labels, t("lab.batchReference")], y: [...pct, 5],

@@ -3,6 +3,7 @@
   --bg: #f6f7f9; --panel: #ffffff; --ink: #17202a; --muted: #5d6b7a; --line: #dde3ea;
   --accent: #0b5cad; --accent-soft: #e6f0fa; --good: #1a7f37; --warn: #9a6700; --bad: #b42318;
   --on-accent: #ffffff;
+  --hud-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   --spark: #d99a00; --spark-glow: rgba(217,154,0,.7);
   --tip-bg: rgba(12,18,26,.94); --tip-ink: #e6edf3; --tip-muted: #b4c0cc; --tip-line: rgba(255,255,255,.14);
   --shadow: 0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.08);
@@ -117,10 +118,13 @@ select, input:not([type=range]):not([type=checkbox]) { font: inherit; color: var
   margin-right: 4px; }
 .source { font-size: 13px; }
 .source ul { padding-left: 18px; margin: 4px 0; }
-.lab-info-row { display: flex; justify-content: end; }
-#lab > .grid2 { margin-top: 6px; }
-.sim-info { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border-radius: 50%;
+#lab > .grid2 { margin-top: 0; }
+.sim-figure { margin: 0 0 8px; }
+.sim-caption { display: flex; align-items: center; justify-content: flex-end; gap: 6px; min-height: 24px; color: var(--muted);
+  font-size: 12px; font-weight: 600; letter-spacing: .035em; }
+.sim-info { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border-radius: 50%;
   border: 1px solid #c7901e; background: #ffdb73; color: #523600; cursor: help; }
+.sim-info .ic { width: 15px; height: 15px; }
 .sim-info:hover, .sim-info:focus-visible { background: #ffe7a2; }
 .sim-info:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .sim { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-size: 14px; }
@@ -149,7 +153,7 @@ select, input:not([type=range]):not([type=checkbox]) { font: inherit; color: var
 .gpanel .tag { background: #15283d; color: #7cc4ff; }
 .gleft { top: 14px; left: 14px; width: 330px; max-height: calc(100% - 28px); overflow: auto; }
 .gright { top: 14px; right: 60px; width: 380px; max-height: calc(100% - 28px); overflow: auto; }
-.glegend { bottom: 30px; left: 50%; transform: translateX(-50%); padding: 10px 16px; font-size: 12px;
+.glegend { position: fixed; bottom: var(--hud-bottom); left: 50%; transform: translateX(-50%); padding: 10px 16px; font-size: 12px;
   width: min(352px, calc(100% - 24px)); text-align: center; }
 .glegend:empty { display: none; }
 .gchips { flex-wrap: wrap; gap: 4px; }
@@ -258,7 +262,9 @@ input[type=range]:focus-visible { outline: 2px solid var(--accent); outline-offs
 .gchips .chip { display: inline-flex; align-items: center; gap: 4px; }
 .gchips .chip .ic { width: 14px; height: 14px; }
 /* ---------------- one tooltip for globe, map, charts and buttons */
-.tip { position: fixed; z-index: 1000; pointer-events: none; max-width: 280px; padding: 8px 10px; border-radius: 10px;
+.tip { position: fixed; z-index: 1210; pointer-events: none; width: max-content; max-width: min(280px, calc(100vw - 16px));
+  padding: 8px 10px; border-radius: 10px;
+  overflow-wrap: anywhere;
   background: var(--tip-bg); color: var(--tip-ink); border: 1px solid var(--tip-line); box-shadow: 0 8px 24px rgba(0,0,0,.28);
   backdrop-filter: blur(6px); font-size: 12.5px; line-height: 1.45; }
 .tip .muted { color: var(--tip-muted); }
@@ -369,14 +375,14 @@ html { overflow-y: scroll; }
 
 /* Language settings open above a compact button in every view. */
 .language-toggle { position: fixed; z-index: 1100; left: calc(16px + env(safe-area-inset-left, 0px));
-  bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: 44px; height: 44px;
+  bottom: var(--hud-bottom); width: 44px; height: 44px;
   display: grid; place-items: center; padding: 10px; border: 1px solid var(--line); border-radius: 12px;
   background: var(--panel); color: var(--ink); box-shadow: var(--shadow); cursor: pointer; }
 .language-toggle .ic { width: 24px; height: 24px; }
 .language-toggle:hover, .language-toggle[aria-expanded="true"] { background: var(--accent-soft); color: var(--accent); }
 .language-toggle:focus-visible, .language-panel select:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 /* guided tour launcher, next to the language button */
-.tour-launch { position: fixed; z-index: 1100; left: calc(68px + env(safe-area-inset-left, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+.tour-launch { position: fixed; z-index: 1100; left: calc(68px + env(safe-area-inset-left, 0px)); bottom: var(--hud-bottom);
   height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 0 14px 0 11px; border: 1px solid var(--line); border-radius: 12px;
   background: var(--panel); color: var(--ink); box-shadow: var(--shadow); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
 .tour-launch .ic { width: 22px; height: 22px; }
@@ -398,6 +404,7 @@ body.atlas-tour-active .tour-launch, body.atlas-tour-active .language-toggle, bo
   select, input:not([type=range]):not([type=checkbox]) { font-size: 16px; }
   .chip { padding: 6px 12px; }
   .ibtn { width: 40px; height: 40px; }
+  .sim-info { width: 40px; height: 40px; }
   input[type=range] { height: 28px; }
   .chipx { width: 22px; height: 22px; margin: -3px -8px -3px 0; }
   .answer-how summary { padding: 6px 0; }
@@ -407,6 +414,11 @@ body.atlas-tour-active .tour-launch, body.atlas-tour-active .language-toggle, bo
 /* the banner never blocks drawing under it; only its Cancel button takes clicks */
 .drawbanner { pointer-events: none; }
 .drawbanner button { pointer-events: auto; }
+@media (min-width: 901px) {
+  #globeMap .maplibregl-ctrl-bottom-right .maplibregl-ctrl-attrib {
+    margin-right: 16px; margin-bottom: var(--hud-bottom); max-width: calc(50vw - 202px);
+  }
+}
 @media (max-width: 900px) {
   /* header: logo row with the language button, tabs row below */
   .top { position: relative; flex-direction: column; align-items: stretch; gap: 0; padding: 0 12px; }

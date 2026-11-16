@@ -549,7 +549,7 @@ function renderSimilarAreas() {
   const toggle = $("#gSimilarToggle");
   toggle.setAttribute("aria-disabled", String(!a));
   if (hint) {
-    toggle.dataset.tip = esc(hint);
+    toggle.dataset.tip = hint;
     toggle.setAttribute("aria-describedby", "gSimilarHint");
   } else {
     delete toggle.dataset.tip;
@@ -644,14 +644,14 @@ function checkMonthlyTiles(template) {
 }
 function renderGlobeLegend(title, name, colors, ticks, units) {
   const text = ticks.map(([, label]) => label).join(" · ");
-  const tickLabels = ticks.map(([at, label]) =>
-    `<span style="--tick:${at}%">${esc(label)}</span>`).join("");
+  // the unit follows the last number instead of taking its own line under the scale
+  const tickLabels = ticks.map(([at, label], i) =>
+    `<span style="--tick:${at}%">${esc(units && i === ticks.length - 1 ? `${label} ${units}` : label)}</span>`).join("");
   $("#gLegend").innerHTML = `
     <div class="glegend-heading"><b>${esc(title)}</b><span>${esc(name)}</span></div>
     <div class="glegend-scale" role="img" aria-label="${esc([t("globe.colourKey"), text, units].filter(Boolean).join(" · "))}">
       <div class="bar" style="background:linear-gradient(90deg,${colors.join(",")})"></div>
       <div class="glegend-ticks">${tickLabels}</div>
-      ${units ? `<div class="glegend-unit">${esc(units)}</div>` : ""}
     </div>`;
 }
 let drawSeq = 0;
@@ -1117,10 +1117,12 @@ function setImagery() {
 
 function localiseGlobeCredits() {
   if (G.credits) G.map.removeControl(G.credits);
-  G.credits = new maplibregl.AttributionControl({ compact: true, customAttribution: t("globe.attribution", {
+  const attribution = t("globe.attribution", {
     imagery: '<a href="https://earthdata.nasa.gov/gibs" target="_blank" rel="noopener">NASA GIBS</a>',
     borders: "Natural Earth", stars: "Yale BSC",
-  }) });
+  });
+  const repository = '<a href="https://github.com/git-maks/earth-evidence-atlas" target="_blank" rel="noopener">GitHub</a>';
+  G.credits = new maplibregl.AttributionControl({ compact: true, customAttribution: `${attribution} · ${repository}` });
   G.map.addControl(G.credits, "bottom-right");
   // small screens: start with the credits folded into the (i) button
   const attrib = G.map.getContainer().querySelector(".maplibregl-ctrl-attrib");

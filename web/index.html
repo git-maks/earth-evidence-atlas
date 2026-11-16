@@ -25,10 +25,10 @@
     <button id="tab-resilience" class="tab" data-tab="resilience" role="tab" aria-controls="resilience" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-layers"/></svg><span data-i18n="navigation.resilience">Resilience</span></button>
     <button id="tab-about" class="tab" data-tab="about" role="tab" aria-controls="about" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-book"/></svg><span data-i18n="methods.methodsTitle">Methods</span></button>
   </div>
-  <button id="languageToggle" class="language-toggle" type="button" aria-expanded="false" aria-controls="languagePanel" data-i18n-attrs="aria-label:localisation.language;data-tip:localisation.language">
+  <button id="languageToggle" class="language-toggle" type="button" aria-expanded="false" aria-controls="languagePanel" data-tip-placement="above" data-i18n-attrs="aria-label:localisation.language;data-tip:localisation.language">
     <svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-language"/></svg>
   </button>
-  <button id="tourLaunch" class="tour-launch" type="button" data-i18n-attrs="aria-label:tour.launchHint;data-tip:tour.launchHint">
+  <button id="tourLaunch" class="tour-launch" type="button" data-tip-placement="above" data-i18n-attrs="aria-label:tour.launchHint;data-tip:tour.launchHint">
     <svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-help"/></svg><span data-i18n="tour.launch">Guided tour</span>
   </button>
   <aside id="languagePanel" class="language-panel" aria-labelledby="languageLabel" hidden>
@@ -235,11 +235,6 @@
 </div>
 
 <div id="lab" class="panel" role="tabpanel" aria-labelledby="tab-lab">
-  <div class="lab-info-row">
-    <button id="labSimulationInfo" class="sim-info" type="button" data-i18n-attrs="aria-label:lab.banner;data-tiphtml:lab.generationTooltipHtml">
-      <svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-info"/></svg>
-    </button>
-  </div>
   <section class="grid2">
     <div class="card">
       <h3><span data-i18n="lab.noiseTitle">Can noise look like a trend?</span></h3>
@@ -249,14 +244,25 @@
         <label class="row ginline"><span data-i18n="lab.memory">Memory</span> <input type="range" id="simPhi" min="0" max="0.9" step="0.05" value="0.7"><b id="simPhiV" class="num-out">0.7</b></label>
         <button id="simNew" class="btn"><svg class="ic"><use href="/static/icons.svg#i-shuffle"/></svg><span data-i18n="lab.newSeries">New series</span></button>
       </div>
-      <div id="simChart" class="chart"></div>
+      <figure class="sim-figure">
+        <div id="simChart" class="chart"></div>
+        <figcaption class="sim-caption">
+          <span data-i18n="lab.simulationLabel">Simulation</span>
+          <button id="labSimulationInfo" class="sim-info" type="button" data-i18n-attrs="aria-label:lab.banner;data-tiphtml:lab.generationTooltipHtml">
+            <svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-info"/></svg>
+          </button>
+        </figcaption>
+      </figure>
       <div id="simOut" class="sim"></div>
     </div>
     <div class="card">
       <h3><span data-i18n="lab.frequencyTitle">How often are we fooled?</span></h3>
       <p data-i18n="lab.frequencyDescription"></p>
       <button id="simMany" class="btn"><svg class="ic"><use href="/static/icons.svg#i-play"/></svg><span data-i18n="lab.runMany">Run 200</span></button>
-      <div id="simMulti" class="chart" hidden></div>
+      <figure id="simMultiFigure" class="sim-figure" hidden>
+        <div id="simMulti" class="chart"></div>
+        <figcaption class="sim-caption" data-i18n="lab.simulationLabel">Simulation</figcaption>
+      </figure>
       <div id="simMultiStats" class="sim" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr))" hidden></div>
       <p id="simMultiOut" class="hint" role="status"></p>
     </div>
@@ -268,7 +274,10 @@
       <button id="simSpikeNew" class="btn"><svg class="ic" aria-hidden="true"><use href="/static/icons.svg#i-shuffle"/></svg><span data-i18n="lab.spikeNew">Generate new data</span></button>
       <button id="simSpikeCompare" class="btn ghost" aria-pressed="false" aria-controls="simSpikeChart simSpikeOut" data-i18n="lab.spikeCompare" disabled>Compare without spikes</button>
     </div>
-    <div id="simSpikeChart" class="chart"></div>
+    <figure class="sim-figure">
+      <div id="simSpikeChart" class="chart"></div>
+      <figcaption class="sim-caption" data-i18n="lab.simulationLabel">Simulation</figcaption>
+    </figure>
     <div id="simSpikeOut" class="sim" role="status"></div>
     <p id="simSpikeNote" class="hint" data-i18n="lab.spikeLesson" hidden></p>
   </section>
