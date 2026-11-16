@@ -96,7 +96,7 @@ def main():
                "The public Resilience UI loaded all four cards through its compatibility fallback; the dedicated endpoint returned 404."
                if deployment.get("public_resilience_ui", {}).get("four_cards_loaded") else
                "Resilience passed locally; public availability has not been confirmed.")
-    deployment_note = html.escape(f"Public demo checked {checked}. {rollout} The deck records the current local API and UI, with source hashes; it does not restart or deploy the public server.")
+    deployment_note = html.escape(f"Public demo checked {checked}. {rollout} The deck records the current local API and UI, with source hashes; it does not restart or deploy the public server. The public demo server was taken offline after the hackathon.")
     template = (HERE / "deck.template.html").read_text()
     replacements = {
         "FONT": data_uri(INPUTS / "nasalization.ttf"),
