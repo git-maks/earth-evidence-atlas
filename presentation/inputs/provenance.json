@@ -1,0 +1,18 @@
+{
+  "nasalization.ttf": {
+    "original_path": "web/fonts/nasalization.ttf",
+    "sha256": "77d22d702de9520eec0e32c70ea2bafada0e3ef20db0129e685e77c4b6c02f32"
+  },
+  "icons.svg": {
+    "original_path": "web/icons.svg",
+    "sha256": "e90b2885a18dd2f695ae0d5e6223281f7b9ab2ea02fd5287fb70dedf1232e66b"
+  },
+  "challenge-resources.json": {
+    "original_path": "formalne/materialy/odnosniki_resources.json",
+    "sha256": "b1b0bdc147d9006c175442a287fc1f573de81f8397b86435aebde1f239ff638d"
+  },
+  "challenge-brief.txt": {
+    "original_path": "formalne/zrodla/opis_wyzwania.txt",
+    "sha256": "996ae76c02cd4afd5d965a17adeb0403f968f132796e11a5ec05909a73e28e59"
+  }
+}

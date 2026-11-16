@@ -1,0 +1,51 @@
+{
+  "captured_at": "2026-11-15T11:25:16+01:00",
+  "base_url": "http://127.0.0.1:8776",
+  "evidence_sha256": "31ba84c5b9ae653a0b4717bf15fc1a8d0e79529efd38151955eb6dc94770c08b",
+  "browser_errors": [],
+  "checks": {
+    "detective_matches_recorded_result": true,
+    "outlier_exercise_matches_current_ui": true,
+    "resilience_tab_available_locally": true,
+    "selection_reused_recorded_existing_region": true
+  },
+  "assets_sha256": {
+    "air.svg": "ce4c2f0c99e41c7c25c58ce8dcfd7193a7fe98fb3685ff89003fd60ba2439649",
+    "batch.svg": "29d4505ce2347f5f87c9ed2fe2bf0996fb80a4eefe57315aceeed9abcb0f67a2",
+    "detective-ui.png": "3f17e0864cba8ff93a1dda0502948dc2c9594193d0fa61a231e66c4afc0a866a",
+    "globe-cover.png": "f5906cea7c5b2eadbd84e2c409f282db3e1a71dc3d5377e0da2f9c3cd497f430",
+    "lab-ui.png": "a360ed46c67eaf5f2ee3cf81ddba9ea43aea0cfe11d2c6004299224778d1110d",
+    "matrix-ui.png": "77fd86b73e6bdd071c16208c67543d739c22ad8f35e7a87f0498c1617dd0eb65",
+    "resilience-ui.png": "a0e7a4151e1050ef43a9f888963fab5775393d04846699895e07ae79aa7f3142",
+    "season.svg": "7dc791b2ab5218ccf80e6246593188606881b55cf540a3306cc3b45d95bbac24",
+    "selection-ui.png": "71c38cc996c5dfb73ec5332e829a66d33ba676b6e1c6318236d57def201f2bf8",
+    "spikes.svg": "a024a9f48ac2c48c337b4351c858959527d854a4929bf0feba6bfc8bfdba6dc2"
+  },
+  "cover_refresh": {
+    "captured_at": "2026-11-15T12:33:38+01:00",
+    "base_url": "https://earth-atlas.tail969737.ts.net",
+    "state": {
+      "variable": "lst_day",
+      "monthly": {
+        "layer": "MODIS_Terra_L3_Land_Surface_Temp_Monthly_Day",
+        "legend": "MODIS_Land_Surface_Temp",
+        "ext": "png",
+        "level": 6,
+        "time": "month",
+        "from": 2000
+      },
+      "year": 2024,
+      "month": 7,
+      "imagery": "bluemarble",
+      "center": {
+        "lng": 20,
+        "lat": 15
+      },
+      "zoom": 2.5168427742890986
+    },
+    "device_scale_factor": 2,
+    "note": "Read-only capture of the actual map; controls hidden and camera framed for the cover. Scientific evidence and other figures unchanged."
+  },
+  "detective_screenshot_note": "detective-ui.png replaced by a maintainer-supplied screenshot of the same recorded Central Europe NDVI analysis (ndvi_annual: n 269 / 83, +0.0204 NDVI per decade); values match evidence.json.",
+  "selection_screenshot_note": "selection-ui.png recaptured read-only from the actual Globe at a 1600x900 viewport (about 1.9:1) so it fills the slide 6 frame; same recorded Central Europe air-temperature result (+0.51 per decade, 1981-2025) injected from evidence.json."
+}

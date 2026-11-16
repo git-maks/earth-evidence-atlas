@@ -1,0 +1,28 @@
+{
+  "slides": 7,
+  "pdf_pages": 7,
+  "captured_at": "2026-11-15T11:16:15+01:00",
+  "offline_browser_check": "passed; no remote requests",
+  "layout_check": "all seven slides clear the footer",
+  "source_hash_check": "not rerun; original application hashes retained in evidence.json",
+  "checks": [
+    "figures match frozen evidence",
+    "eight analytical series",
+    "current API values and corrected uncertainty",
+    "three lab cases",
+    "jury evidence panels without presenter notes",
+    "evidence download equality",
+    "team names and responsibilities",
+    "three embedded portraits and fixed team text",
+    "embedded SVG favicon",
+    "390 px reading view",
+    "seven-page PDF with updated text"
+  ],
+  "browser_errors": [],
+  "artifacts_sha256": {
+    "index.html": "baabec2605ffc3bb6e39a91f1df9418566107ab49df62d23c572df6d73ed340b",
+    "earth-evidence-atlas.pdf": "9d3c254856b0e870f6dda2b7606342e1bdcfa3d00aac86512f1d39dd9f644272",
+    "evidence.json": "31ba84c5b9ae653a0b4717bf15fc1a8d0e79529efd38151955eb6dc94770c08b"
+  },
+  "canva_exports": "previous revision in archive/; see README before reuse"
+}

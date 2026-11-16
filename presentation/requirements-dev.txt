@@ -1,0 +1,5 @@
+# Optional tools for refreshing screenshots and running the full browser/PDF checks.
+# Building or publishing the frozen site requires only Python 3.11+.
+Pillow==13.0.0
+playwright==1.65.2
+

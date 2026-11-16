@@ -1,0 +1,85 @@
+{
+  "source": "https://www.spaceappschallenge.org/2026/challenges/earth-system-trend-detective/?tab=resources",
+  "observed_on": "2026-11-13",
+  "method": "Browser DOM/accessibility, selected Resources tab",
+  "resources": [
+    {
+      "id": "giovanni",
+      "title": "Giovanni",
+      "url": "https://giovanni.gsfc.nasa.gov/",
+      "type": "narzędzie"
+    },
+    {
+      "id": "hydrology_time_series",
+      "title": "Hydrology Time Series",
+      "url": "https://disc.gsfc.nasa.gov/information/tools?title=Hydrology%20Time%20Series",
+      "type": "narzędzie"
+    },
+    {
+      "id": "appeears",
+      "title": "AppEEARS",
+      "url": "https://appeears.earthdatacloud.nasa.gov/",
+      "type": "narzędzie"
+    },
+    {
+      "id": "climate_data_online",
+      "title": "Climate Data Online (CDO)",
+      "url": "https://www.ncei.noaa.gov/cdo-web/",
+      "type": "narzędzie"
+    },
+    {
+      "id": "seawifs_chlorophyll_2009",
+      "title": "Time-Series Analysis of Remotely-Sensed SeaWiFS Chlorophyll in River-Influenced Coastal Regions",
+      "url": "https://ntrs.nasa.gov/api/citations/20090042747/downloads/20090042747.pdf",
+      "type": "PDF"
+    },
+    {
+      "id": "knmi_climate_explorer",
+      "title": "KNMI Climate Explorer",
+      "url": "https://climexp.knmi.nl/",
+      "type": "narzędzie"
+    },
+    {
+      "id": "statistical_trend_tests",
+      "title": "Statistical test methods to detect trends in time series data",
+      "url": "https://medium.com/@snp.kriss/statistical-test-methods-to-detect-trends-in-time-series-data-b361a0ec530b",
+      "type": "artykuł"
+    },
+    {
+      "id": "statistical_significance",
+      "title": "A Comprehensive Guide to Statistical Significance",
+      "url": "https://www.statsig.com/perspectives/a-comprehensive-guide-to-statistical-significance",
+      "type": "artykuł"
+    },
+    {
+      "id": "rcm",
+      "title": "Radarsat Constellation Mission (RCM) – Data",
+      "url": "https://donnees-data.asc-csa.gc.ca/en/dataset/rcm",
+      "type": "katalog danych"
+    },
+    {
+      "id": "geo_ca",
+      "title": "Geo.ca",
+      "url": "http://geo.ca/",
+      "type": "katalog danych"
+    },
+    {
+      "id": "swot",
+      "title": "SWOT Mission – Information",
+      "url": "https://www.asc-csa.gc.ca/eng/satellites/swot/",
+      "type": "strona informacyjna"
+    },
+    {
+      "id": "ecosystems",
+      "title": "Monitoring and protecting our ecosystem from space",
+      "url": "https://www.asc-csa.gc.ca/eng/satellites/everyday-lives/monitoring-and-protecting-our-ecosystems-from-space.asp",
+      "type": "strona informacyjna"
+    },
+    {
+      "id": "sar_tutorial",
+      "title": "Synthetic Aperture Radar python Tutorial",
+      "url": "https://github.com/asc-csa/Synthetic_Aperture_Radar_Tutorial",
+      "type": "repozytorium"
+    }
+  ]
+}
